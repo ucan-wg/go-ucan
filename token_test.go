@@ -39,8 +39,8 @@ func init() {
 	}
 }
 
-func TestPrivKeyTokens(t *testing.T) {
-	tokens, err := ucan.NewPrivKeyUCANSource(keyOne)
+func TestPrivKeySource(t *testing.T) {
+	source, err := ucan.NewPrivKeyUCANSource(keyOne)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -57,14 +57,30 @@ func TestPrivKeyTokens(t *testing.T) {
 	}
 	zero := time.Time{}
 
-	token, err := tokens.NewRootUCAN(didStr, att, nil, zero, zero)
+	root, err := source.NewOriginUCAN(didStr, att, nil, zero, zero)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	expect := `eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsInVjdiI6IjAuNC4wIn0.eyJpc3MiOiJkaWQ6a2V5Ok1JSUJJakFOQmdrcWhraUc5dzBCQVFFRkFBT0NBUThBTUlJQkNnS0NBUUVBb2FkUjRtY1U3QzBBbWg1bHRfM0hObVEyYVlDOEotYU5mNTJUNEtrLTBzbHh6LVc1LXhrREJ0NUR4RUZuSmVKNGJTMV9ZWkt3UkxKQjYzU0phcWZjMXhUTUFYMnJmcW44d3NwUmd2MEFReGU4RV9icGkzZTUyNnU2UU1VRjdYbDRKN2JkbVlZT0lCUDVCSk83eU1pX2pfU3FWaVdmOG82Y3BJTEF3dXpUNTY2X0ttUWFOclM5QmVNUHQ5NTJZUk1lejZlMFoycXR0aVRQS3hmalJ3b0VwRklldDVhZTFZY0p2VDBLQnJiZEYwNXhDc2F6RUoxSm52eUlSamNiUE9FYVljUjNPZnAxdW8ySTRKdVczQ2FKeHNqMU8yNnZyLWRUSzlqcGVFVTl5X1dUU1lNOUVsazBwZ0xZZ1M4ZHE4aTYwNDVnejByemU4QzV2YkZoSFZwa1ZRSURBUUFCIiwic3ViIjoiZGlkOmtleTpNSUlCSWpBTkJna3Foa2lHOXcwQkFRRUZBQU9DQVE4QU1JSUJDZ0tDQVFFQW9hZFI0bWNVN0MwQW1oNWx0XzNITm1RMmFZQzhKLWFOZjUyVDRLay0wc2x4ei1XNS14a0RCdDVEeEVGbkplSjRiUzFfWVpLd1JMSkI2M1NKYXFmYzF4VE1BWDJyZnFuOHdzcFJndjBBUXhlOEVfYnBpM2U1MjZ1NlFNVUY3WGw0SjdiZG1ZWU9JQlA1QkpPN3lNaV9qX1NxVmlXZjhvNmNwSUxBd3V6VDU2Nl9LbVFhTnJTOUJlTVB0OTUyWVJNZXo2ZTBaMnF0dGlUUEt4ZmpSd29FcEZJZXQ1YWUxWWNKdlQwS0JyYmRGMDV4Q3NhekVKMUpudnlJUmpjYlBPRWFZY1IzT2ZwMXVvMkk0SnVXM0NhSnhzajFPMjZ2ci1kVEs5anBlRVU5eV9XVFNZTTlFbGswcGdMWWdTOGRxOGk2MDQ1Z3owcnplOEM1dmJGaEhWcGtWUUlEQVFBQiIsImF0dCI6W3siYXBpIjoiKiIsImNhcCI6IlNVUEVSX1VTRVIifSx7ImNhcCI6IlNVUEVSX1VTRVIiLCJkYXRhc2V0IjoiYjU6d29ybGRfYmFua19wb3B1bGF0aW9uOioifV19.Z32-i-pGAtPRsG0JW4ZS8-c17x3mX3kFrmZ0BYhyWk2JH4QMwXFRtkUl8xVQtrC3JigeQeaDiz-WTUSFqJIs5dunL1Xf_SXqq8SZ7NCh6u6OEo2L1BnQkwdO8kDsFoiF42byWDBwzHRog0N-pRXgMhlo8si6Pek4KAZokQ5F-8FuLb3MXXxc9-FnhGRsKgGt_bNWS322h5gXCaXJAzbdAHwGSlORCCJI4CrbWUHs03i4viun2Ht01JO-p4ySlut6YyQ_vW4NGNSAAXGeR-ggkB0B6TGgt695CxX1zgQKV7X6JZx-NF_J-OXCIWngCfr6VdRv1_ADce9s1ODEm2N7eA`
-	if expect != token.Raw {
-		t.Errorf("token mismatch. expected: %q.\ngot: %q", expect, token.Raw)
+	if expect != root.Raw {
+		t.Errorf("token mismatch. expected: %q.\ngot: %q", expect, root.Raw)
+	}
+
+	att = ucan.Attenuations{
+		{caps.Cap("OVERWRITE"), ucan.NewStringLengthResource("dataset", "b5:world_bank_population:*")},
+	}
+
+	derivedToken, err := source.NewAttenuatedUCAN(root, didStr, att, nil, zero, zero)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cidStr := mustCidString(t, derivedToken)
+	expectCID := "bafkreifglbwtr27fbzmv3uardlygvggr722fckusfvfyfsonwkroca7efu"
+
+	if expectCID != cidStr {
+		t.Errorf("derived token CID mismatch. expected: %q.\ngot: %q", expectCID, cidStr)
 	}
 
 	// tokenWithExpiryString, err := tokens.CreateToken(pro, time.Hour)
@@ -119,4 +135,13 @@ func TestTokenParse(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+}
+
+func mustCidString(t *testing.T, tok *ucan.UCAN) string {
+	t.Helper()
+	id, err := tok.CID()
+	if err != nil {
+		t.Fatal(err)
+	}
+	return id.String()
 }

@@ -23,10 +23,10 @@ func ExampleWalkthrough() {
 	zero := time.Time{}
 
 	// create a root UCAN
-	rootToken, err := source.NewRootUCAN(subjectDID, att, nil, zero, zero)
+	origin, err := source.NewOriginUCAN(subjectDID, att, nil, zero, zero)
 	panicIfError(err)
 
-	id, err := rootToken.CID()
+	id, err := origin.CID()
 	panicIfError(err)
 
 	fmt.Printf("cid of root UCAN: %s\n", id.String())
@@ -35,17 +35,30 @@ func ExampleWalkthrough() {
 		{caps.Cap("SUPER_USER"), ucan.NewStringLengthResource("dataset", "third:resource")},
 	}
 
-	if _, err = source.NewAttenuatedUCAN(rootToken, subjectDID, att, nil, zero, zero); err != nil {
+	if _, err = source.NewAttenuatedUCAN(origin, subjectDID, att, nil, zero, zero); err != nil {
 		fmt.Println(err)
 	}
 
+	att = ucan.Attenuations{
+		{caps.Cap("OVERWRITE"), ucan.NewStringLengthResource("dataset", "b5:world_bank_population:*")},
+	}
+
+	derivedToken, err := source.NewAttenuatedUCAN(origin, subjectDID, att, nil, zero, zero)
+	panicIfError(err)
+
+	id, err = derivedToken.CID()
+	panicIfError(err)
+
+	fmt.Printf("cid of derived UCAN: %s\n", id.String())
+
 	p := exampleParser()
-	_, err = p.ParseAndVerify(context.Background(), rootToken.Raw)
+	_, err = p.ParseAndVerify(context.Background(), origin.Raw)
 	panicIfError(err)
 
 	// Output:
 	// cid of root UCAN: bafkreidhsvhlctwylgeibl2eeapdvbl3qm3mbqcqhxhvy4grmr25ji77hu
 	// scope of ucan attenuations must be less than it's parent
+	// cid of derived UCAN: bafkreifglbwtr27fbzmv3uardlygvggr722fckusfvfyfsonwkroca7efu
 }
 
 func panicIfError(err error) {

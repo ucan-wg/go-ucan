@@ -16,9 +16,9 @@ func CtxWithUCAN(ctx context.Context, t UCAN) context.Context {
 	return context.WithValue(ctx, UCANCtxKey, t)
 }
 
-// UCANFromCtx extracts a Dataset reference from a given
+// FromCtx extracts a Dataset reference from a given
 // context if one is set, returning nil otherwise
-func UCANFromCtx(ctx context.Context) *UCAN {
+func FromCtx(ctx context.Context) *UCAN {
 	iface := ctx.Value(UCANCtxKey)
 	if ref, ok := iface.(*UCAN); ok {
 		return ref
