@@ -99,7 +99,6 @@ type Fact struct {
 // func (fct *Fact) UnmarshalJSON(p []byte) error {
 // 	var str string
 // 	if json.Unmarshal(p, &str); err == nil {
-
 // 	}
 // }
 
@@ -110,39 +109,42 @@ type CIDBytesResolver interface {
 	ResolveCIDBytes(ctx context.Context, id cid.Cid) ([]byte, error)
 }
 
-// UCANSource creates tokens, and provides a verification key for all tokens
-// it creates
+// Source creates tokens, and provides a verification key for all tokens it
+// creates
 //
-// implementations of UCANSource must conform to the assertion test defined
-// in the spec subpackage
-type UCANSource interface {
+// implementations of Source must conform to the assertion test defined in the
+// spec subpackage
+type Source interface {
 	NewOriginUCAN(subjectDID string, att Attenuations, fct []Fact, notBefore, expires time.Time) (*UCAN, error)
 	NewAttenuatedUCAN(parent *UCAN, subjectDID string, att Attenuations, fct []Fact, notBefore, expires time.Time) (*UCAN, error)
 }
 
-type pkUCANSource struct {
+type pkSource struct {
 	pk            crypto.PrivKey
 	issuerDID     string
 	signingMethod jwt.SigningMethod
-	verifyKey     *rsa.PublicKey
-	signKey       *rsa.PrivateKey
+
+	verifyKey *rsa.PublicKey
+	signKey   *rsa.PrivateKey
 
 	ap       AttenuationConstructor
 	resolver CIDBytesResolver
 	store    TokenStore
 }
 
-// assert pkUCANSource implements tokens at compile time
-var _ UCANSource = (*pkUCANSource)(nil)
+// assert pkSource implements tokens at compile time
+var _ Source = (*pkSource)(nil)
 
-// NewPrivKeyUCANSource creates an authentication interface backed by a single
+// NewPrivKeySource creates an authentication interface backed by a single
 // private key. Intended for a node running as remote, or providing a public API
-func NewPrivKeyUCANSource(privKey crypto.PrivKey) (UCANSource, error) {
+func NewPrivKeySource(privKey crypto.PrivKey) (Source, error) {
 	methodStr := ""
-	keyType := privKey.Type().String()
+	keyType := privKey.Type()
 	switch keyType {
-	case "RSA":
+	case crypto.RSA:
 		methodStr = "RS256"
+	case crypto.Ed25519:
+		methodStr = "EdDSA"
 	default:
 		return nil, fmt.Errorf("unsupported key type for token creation: %q", keyType)
 	}
@@ -176,7 +178,7 @@ func NewPrivKeyUCANSource(privKey crypto.PrivKey) (UCANSource, error) {
 		return nil, err
 	}
 
-	return &pkUCANSource{
+	return &pkSource{
 		pk:            privKey,
 		signingMethod: signingMethod,
 		verifyKey:     verifyKey,
@@ -185,11 +187,11 @@ func NewPrivKeyUCANSource(privKey crypto.PrivKey) (UCANSource, error) {
 	}, nil
 }
 
-func (a *pkUCANSource) NewOriginUCAN(subjectDID string, att Attenuations, fct []Fact, nbf, exp time.Time) (*UCAN, error) {
+func (a *pkSource) NewOriginUCAN(subjectDID string, att Attenuations, fct []Fact, nbf, exp time.Time) (*UCAN, error) {
 	return a.newUCAN(subjectDID, nil, att, fct, nbf, exp)
 }
 
-func (a *pkUCANSource) NewAttenuatedUCAN(parent *UCAN, subjectDID string, att Attenuations, fct []Fact, nbf, exp time.Time) (*UCAN, error) {
+func (a *pkSource) NewAttenuatedUCAN(parent *UCAN, subjectDID string, att Attenuations, fct []Fact, nbf, exp time.Time) (*UCAN, error) {
 	if !parent.Attenuations.Contains(att) {
 		return nil, fmt.Errorf("scope of ucan attenuations must be less than it's parent")
 	}
@@ -197,7 +199,7 @@ func (a *pkUCANSource) NewAttenuatedUCAN(parent *UCAN, subjectDID string, att At
 }
 
 // CreateToken returns a new JWT token
-func (a *pkUCANSource) newUCAN(subjectDID string, prf []Proof, att Attenuations, fct []Fact, nbf, exp time.Time) (*UCAN, error) {
+func (a *pkSource) newUCAN(subjectDID string, prf []Proof, att Attenuations, fct []Fact, nbf, exp time.Time) (*UCAN, error) {
 	// create a signer for rsa 256
 	t := jwt.New(a.signingMethod)
 
