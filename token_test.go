@@ -40,7 +40,7 @@ func init() {
 }
 
 func TestPrivKeySource(t *testing.T) {
-	source, err := ucan.NewPrivKeyUCANSource(keyOne)
+	source, err := ucan.NewPrivKeySource(keyOne)
 	if err != nil {
 		t.Fatal(err)
 	}

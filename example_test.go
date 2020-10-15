@@ -9,7 +9,7 @@ import (
 )
 
 func ExampleWalkthrough() {
-	source, err := ucan.NewPrivKeyUCANSource(keyOne)
+	source, err := ucan.NewPrivKeySource(keyOne)
 	panicIfError(err)
 
 	subjectDID, err := ucan.DIDStringFromPublicKey(keyOne.GetPublic())
