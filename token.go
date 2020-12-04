@@ -42,8 +42,9 @@ const (
 	CapKey = "cap"
 )
 
-// UCAN is a JSON Web Token (JWT) that contains special keys
-type UCAN struct {
+// Token is a JSON Web Token (JWT) that contains special keys that make the
+// token a UCAN
+type Token struct {
 	// Entire UCAN as a signed JWT string
 	Raw string
 	// the "inputs" to this token, a chain UCAN tokens with broader scopes &
@@ -57,7 +58,7 @@ type UCAN struct {
 }
 
 // CID calculates the cid of a UCAN using the default prefix
-func (t *UCAN) CID() (cid.Cid, error) {
+func (t *Token) CID() (cid.Cid, error) {
 	pref := cid.Prefix{
 		Version:  1,
 		Codec:    cid.Raw,
@@ -69,7 +70,7 @@ func (t *UCAN) CID() (cid.Cid, error) {
 }
 
 // PrefixCID calculates the CID of a token with a supplied prefix
-func (t *UCAN) PrefixCID(pref cid.Prefix) (cid.Cid, error) {
+func (t *Token) PrefixCID(pref cid.Prefix) (cid.Cid, error) {
 	return pref.Sum([]byte(t.Raw))
 }
 
@@ -115,8 +116,8 @@ type CIDBytesResolver interface {
 // implementations of Source must conform to the assertion test defined in the
 // spec subpackage
 type Source interface {
-	NewOriginUCAN(subjectDID string, att Attenuations, fct []Fact, notBefore, expires time.Time) (*UCAN, error)
-	NewAttenuatedUCAN(parent *UCAN, subjectDID string, att Attenuations, fct []Fact, notBefore, expires time.Time) (*UCAN, error)
+	NewOriginToken(subjectDID string, att Attenuations, fct []Fact, notBefore, expires time.Time) (*Token, error)
+	NewAttenuatedToken(parent *Token, subjectDID string, att Attenuations, fct []Fact, notBefore, expires time.Time) (*Token, error)
 }
 
 type pkSource struct {
@@ -187,19 +188,19 @@ func NewPrivKeySource(privKey crypto.PrivKey) (Source, error) {
 	}, nil
 }
 
-func (a *pkSource) NewOriginUCAN(subjectDID string, att Attenuations, fct []Fact, nbf, exp time.Time) (*UCAN, error) {
-	return a.newUCAN(subjectDID, nil, att, fct, nbf, exp)
+func (a *pkSource) NewOriginToken(subjectDID string, att Attenuations, fct []Fact, nbf, exp time.Time) (*Token, error) {
+	return a.newToken(subjectDID, nil, att, fct, nbf, exp)
 }
 
-func (a *pkSource) NewAttenuatedUCAN(parent *UCAN, subjectDID string, att Attenuations, fct []Fact, nbf, exp time.Time) (*UCAN, error) {
+func (a *pkSource) NewAttenuatedToken(parent *Token, subjectDID string, att Attenuations, fct []Fact, nbf, exp time.Time) (*Token, error) {
 	if !parent.Attenuations.Contains(att) {
 		return nil, fmt.Errorf("scope of ucan attenuations must be less than it's parent")
 	}
-	return a.newUCAN(subjectDID, append(parent.Proofs, Proof(parent.Raw)), att, fct, nbf, exp)
+	return a.newToken(subjectDID, append(parent.Proofs, Proof(parent.Raw)), att, fct, nbf, exp)
 }
 
 // CreateToken returns a new JWT token
-func (a *pkSource) newUCAN(subjectDID string, prf []Proof, att Attenuations, fct []Fact, nbf, exp time.Time) (*UCAN, error) {
+func (a *pkSource) newToken(subjectDID string, prf []Proof, att Attenuations, fct []Fact, nbf, exp time.Time) (*Token, error) {
 	// create a signer for rsa 256
 	t := jwt.New(a.signingMethod)
 
@@ -241,7 +242,7 @@ func (a *pkSource) newUCAN(subjectDID string, prf []Proof, att Attenuations, fct
 		return nil, err
 	}
 
-	return &UCAN{
+	return &Token{
 		Raw:          raw,
 		Attenuations: att,
 		Facts:        fct,
@@ -277,14 +278,14 @@ func (StringDIDPubKeyResolver) ResolveDIDKey(ctx context.Context, didStr string)
 	return crypto.UnmarshalRsaPublicKey(data)
 }
 
-type UCANParser struct {
+type TokenParser struct {
 	ap   AttenuationConstructor
 	cidr CIDBytesResolver
 	didr DIDPubKeyResolver
 }
 
-func NewUCANParser(ap AttenuationConstructor, didr DIDPubKeyResolver, cidr CIDBytesResolver) *UCANParser {
-	return &UCANParser{
+func NewTokenParser(ap AttenuationConstructor, didr DIDPubKeyResolver, cidr CIDBytesResolver) *TokenParser {
+	return &TokenParser{
 		ap:   ap,
 		cidr: cidr,
 		didr: didr,
@@ -292,11 +293,11 @@ func NewUCANParser(ap AttenuationConstructor, didr DIDPubKeyResolver, cidr CIDBy
 }
 
 // ParseAndVerify will parse, validate and return a token
-func (p *UCANParser) ParseAndVerify(ctx context.Context, raw string) (*UCAN, error) {
+func (p *TokenParser) ParseAndVerify(ctx context.Context, raw string) (*Token, error) {
 	return p.parseAndVerify(ctx, raw, nil)
 }
 
-func (p *UCANParser) parseAndVerify(ctx context.Context, raw string, child *UCAN) (*UCAN, error) {
+func (p *TokenParser) parseAndVerify(ctx context.Context, raw string, child *Token) (*Token, error) {
 	tok, err := jwt.Parse(raw, p.matchVerifyKeyFunc(ctx))
 	if err != nil {
 		return nil, err
@@ -337,14 +338,14 @@ func (p *UCANParser) parseAndVerify(ctx context.Context, raw string, child *UCAN
 		return nil, fmt.Errorf(`"prf" key is not an array`)
 	}
 
-	return &UCAN{
+	return &Token{
 		Raw:          raw,
 		Attenuations: att,
 		Proofs:       prf,
 	}, nil
 }
 
-func (p *UCANParser) matchVerifyKeyFunc(ctx context.Context) func(tok *jwt.Token) (interface{}, error) {
+func (p *TokenParser) matchVerifyKeyFunc(ctx context.Context) func(tok *jwt.Token) (interface{}, error) {
 	return func(tok *jwt.Token) (interface{}, error) {
 		mc, ok := tok.Claims.(jwt.MapClaims)
 		if !ok {

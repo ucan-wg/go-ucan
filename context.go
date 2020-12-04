@@ -8,19 +8,19 @@ import (
 // package
 type CtxKey string
 
-// UCANCtxKey is the key for adding an access UCAN to a context.Context
-const UCANCtxKey CtxKey = "UCAN"
+// TokenCtxKey is the key for adding an access UCAN to a context.Context
+const TokenCtxKey CtxKey = "UCAN"
 
-// CtxWithUCAN adds a UCAN value to a context
-func CtxWithUCAN(ctx context.Context, t UCAN) context.Context {
-	return context.WithValue(ctx, UCANCtxKey, t)
+// CtxWithToken adds a UCAN value to a context
+func CtxWithToken(ctx context.Context, t Token) context.Context {
+	return context.WithValue(ctx, TokenCtxKey, t)
 }
 
-// FromCtx extracts a Dataset reference from a given
-// context if one is set, returning nil otherwise
-func FromCtx(ctx context.Context) *UCAN {
-	iface := ctx.Value(UCANCtxKey)
-	if ref, ok := iface.(*UCAN); ok {
+// FromCtx extracts a token from a given context if one is set, returning nil
+// otherwise
+func FromCtx(ctx context.Context) *Token {
+	iface := ctx.Value(TokenCtxKey)
+	if ref, ok := iface.(*Token); ok {
 		return ref
 	}
 	return nil

@@ -57,7 +57,7 @@ func TestPrivKeySource(t *testing.T) {
 	}
 	zero := time.Time{}
 
-	root, err := source.NewOriginUCAN(didStr, att, nil, zero, zero)
+	root, err := source.NewOriginToken(didStr, att, nil, zero, zero)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -71,7 +71,7 @@ func TestPrivKeySource(t *testing.T) {
 		{caps.Cap("OVERWRITE"), ucan.NewStringLengthResource("dataset", "b5:world_bank_population:*")},
 	}
 
-	derivedToken, err := source.NewAttenuatedUCAN(root, didStr, att, nil, zero, zero)
+	derivedToken, err := source.NewAttenuatedToken(root, didStr, att, nil, zero, zero)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -130,14 +130,14 @@ func TestTokenParse(t *testing.T) {
 	}
 
 	store := ucan.NewMemTokenStore()
-	p := ucan.NewUCANParser(ac, ucan.StringDIDPubKeyResolver{}, store.(ucan.CIDBytesResolver))
+	p := ucan.NewTokenParser(ac, ucan.StringDIDPubKeyResolver{}, store.(ucan.CIDBytesResolver))
 	_, err := p.ParseAndVerify(context.Background(), raw)
 	if err != nil {
 		t.Error(err)
 	}
 }
 
-func mustCidString(t *testing.T, tok *ucan.UCAN) string {
+func mustCidString(t *testing.T, tok *ucan.Token) string {
 	t.Helper()
 	id, err := tok.CID()
 	if err != nil {
