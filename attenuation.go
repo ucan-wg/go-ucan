@@ -36,10 +36,10 @@ LOOP:
 	return true
 }
 
-// AttenuationConstructor is a function that creates an attenuation from a map
+// AttenuationConstructorFunc is a function that creates an attenuation from a map
 // Users of this package provide an Attenuation Constructor to the parser to
 // bind attenuation logic to a UCAN
-type AttenuationConstructor func(v map[string]interface{}) (Attenuation, error)
+type AttenuationConstructorFunc func(v map[string]interface{}) (Attenuation, error)
 
 // Attenuation is a capability on a resource
 type Attenuation struct {

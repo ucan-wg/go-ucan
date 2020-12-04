@@ -128,7 +128,7 @@ type pkSource struct {
 	verifyKey *rsa.PublicKey
 	signKey   *rsa.PrivateKey
 
-	ap       AttenuationConstructor
+	ap       AttenuationConstructorFunc
 	resolver CIDBytesResolver
 	store    TokenStore
 }
@@ -250,10 +250,13 @@ func (a *pkSource) newToken(subjectDID string, prf []Proof, att Attenuations, fc
 	}, nil
 }
 
+// DIDPubKeyResolver turns did:key Decentralized IDentifiers into a public key,
+// possibly using a network request
 type DIDPubKeyResolver interface {
 	ResolveDIDKey(ctx context.Context, did string) (crypto.PubKey, error)
 }
 
+// DIDStringFromPublicKey creates a did:key identifier string from a public key
 func DIDStringFromPublicKey(pub crypto.PubKey) (string, error) {
 	rawPubBytes, err := pub.Raw()
 	if err != nil {
@@ -262,8 +265,12 @@ func DIDStringFromPublicKey(pub crypto.PubKey) (string, error) {
 	return fmt.Sprintf("did:key:%s", base64.URLEncoding.EncodeToString(rawPubBytes)), nil
 }
 
+// StringDIDPubKeyResolver implements the DIDPubKeyResolver interface without
+// any network backing. Works if the key string given contains the public key
+// itself
 type StringDIDPubKeyResolver struct{}
 
+// ResolveDIDKey extracts a public key from  a did:key string
 func (StringDIDPubKeyResolver) ResolveDIDKey(ctx context.Context, didStr string) (crypto.PubKey, error) {
 	// id, err := did.Parse(didStr)
 	// if err != nil {
@@ -278,13 +285,15 @@ func (StringDIDPubKeyResolver) ResolveDIDKey(ctx context.Context, didStr string)
 	return crypto.UnmarshalRsaPublicKey(data)
 }
 
+// TokenParser parses a raw string into a Token
 type TokenParser struct {
-	ap   AttenuationConstructor
+	ap   AttenuationConstructorFunc
 	cidr CIDBytesResolver
 	didr DIDPubKeyResolver
 }
 
-func NewTokenParser(ap AttenuationConstructor, didr DIDPubKeyResolver, cidr CIDBytesResolver) *TokenParser {
+// NewTokenParser constructs a token parser
+func NewTokenParser(ap AttenuationConstructorFunc, didr DIDPubKeyResolver, cidr CIDBytesResolver) *TokenParser {
 	return &TokenParser{
 		ap:   ap,
 		cidr: cidr,
