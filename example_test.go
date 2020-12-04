@@ -8,7 +8,7 @@ import (
 	"github.com/qri-io/ucan"
 )
 
-func ExampleWalkthrough() {
+func Example() {
 	source, err := ucan.NewPrivKeySource(keyOne)
 	panicIfError(err)
 
@@ -23,7 +23,7 @@ func ExampleWalkthrough() {
 	zero := time.Time{}
 
 	// create a root UCAN
-	origin, err := source.NewOriginUCAN(subjectDID, att, nil, zero, zero)
+	origin, err := source.NewOriginToken(subjectDID, att, nil, zero, zero)
 	panicIfError(err)
 
 	id, err := origin.CID()
@@ -35,7 +35,7 @@ func ExampleWalkthrough() {
 		{caps.Cap("SUPER_USER"), ucan.NewStringLengthResource("dataset", "third:resource")},
 	}
 
-	if _, err = source.NewAttenuatedUCAN(origin, subjectDID, att, nil, zero, zero); err != nil {
+	if _, err = source.NewAttenuatedToken(origin, subjectDID, att, nil, zero, zero); err != nil {
 		fmt.Println(err)
 	}
 
@@ -43,7 +43,7 @@ func ExampleWalkthrough() {
 		{caps.Cap("OVERWRITE"), ucan.NewStringLengthResource("dataset", "b5:world_bank_population:*")},
 	}
 
-	derivedToken, err := source.NewAttenuatedUCAN(origin, subjectDID, att, nil, zero, zero)
+	derivedToken, err := source.NewAttenuatedToken(origin, subjectDID, att, nil, zero, zero)
 	panicIfError(err)
 
 	id, err = derivedToken.CID()
@@ -67,7 +67,7 @@ func panicIfError(err error) {
 	}
 }
 
-func exampleParser() *ucan.UCANParser {
+func exampleParser() *ucan.TokenParser {
 	caps := ucan.NewNestedCapabilities("SUPER_USER", "OVERWRITE", "SOFT_DELETE", "REVISE", "CREATE")
 
 	ac := func(m map[string]interface{}) (ucan.Attenuation, error) {
@@ -95,5 +95,5 @@ func exampleParser() *ucan.UCANParser {
 	}
 
 	store := ucan.NewMemTokenStore()
-	return ucan.NewUCANParser(ac, ucan.StringDIDPubKeyResolver{}, store.(ucan.CIDBytesResolver))
+	return ucan.NewTokenParser(ac, ucan.StringDIDPubKeyResolver{}, store.(ucan.CIDBytesResolver))
 }
