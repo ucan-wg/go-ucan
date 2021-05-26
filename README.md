@@ -10,4 +10,4 @@ User Controlled Authorization Networks (UCANs) are a way of doing authorization 
 
 ![](https://ipfs.runfission.com/ipfs/QmRFXjMjVNwnYki8jGwFBh3zcY5m7zo5oAcNoyS1PSgzAY/ucan-gopher.png)
 
-Artwork by Bruno Monts. Thank you [Renee French](http://reneefrench.blogspot.com/) for creating the [Go Gopher](https://blog.golang.org/gopher)
+Artwork by [Bruno Monts](https://www.instagram.com/bruno_monts). Thank you [Renee French](http://reneefrench.blogspot.com/) for creating the [Go Gopher](https://blog.golang.org/gopher)
