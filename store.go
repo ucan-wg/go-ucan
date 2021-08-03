@@ -8,7 +8,7 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt"
 	"github.com/ipfs/go-cid"
 )
 
