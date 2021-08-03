@@ -4,7 +4,7 @@ go 1.15
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/ipfs/go-cid v0.0.7
 	github.com/libp2p/go-libp2p-core v0.7.0
 	github.com/multiformats/go-multibase v0.0.3

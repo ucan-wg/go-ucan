@@ -4,7 +4,7 @@ package spec
 // 	"context"
 // 	"testing"
 
-// 	"github.com/dgrijalva/jwt-go"
+// 	"github.com/golang-jwt/jwt"
 // 	cfgtest "github.com/qri-io/qri/config/test"
 // 	"github.com/qri-io/qri/repo/profile"
 // 	"github.com/qri-io/ucan"
