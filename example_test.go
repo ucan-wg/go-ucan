@@ -52,13 +52,16 @@ func Example() {
 	fmt.Printf("cid of derived UCAN: %s\n", id.String())
 
 	p := exampleParser()
-	_, err = p.ParseAndVerify(context.Background(), origin.Raw)
+	tok, err := p.ParseAndVerify(context.Background(), origin.Raw)
 	panicIfError(err)
+
+	fmt.Printf("issuer DID key type: %s\n", tok.Issuer.Type().String())
 
 	// Output:
 	// cid of root UCAN: bafkreih6guuxohv47s2e366l6jn6stlsukgoerkdvtsni3kxr4jjmkaf3y
 	// scope of ucan attenuations must be less than it's parent
 	// cid of derived UCAN: bafkreihpk5474uoolkqrge3yk5uy2s7rarhn5xwxfoiobcy6ye7vfxetgm
+	// issuer DID key type: RSA
 }
 
 func panicIfError(err error) {
