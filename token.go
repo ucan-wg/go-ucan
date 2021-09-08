@@ -46,7 +46,9 @@ const (
 // token a UCAN
 type Token struct {
 	// Entire UCAN as a signed JWT string
-	Raw string
+	Raw     string
+	Issuer  didkey.ID
+	Subject didkey.ID
 	// the "inputs" to this token, a chain UCAN tokens with broader scopes &
 	// deadlines than this token
 	Proofs []Proof `json:"prf,omitempty"`
@@ -313,6 +315,30 @@ func (p *TokenParser) parseAndVerify(ctx context.Context, raw string, child *Tok
 		return nil, fmt.Errorf("parser fail")
 	}
 
+	var iss didkey.ID
+	// TODO(b5): we're double parsing here b/c the jwt lib we're using doesn't expose
+	// an API (that I know of) for storing parsed issuer / subjects
+	if issStr, ok := mc["iss"].(string); ok {
+		iss, err = didkey.Parse(issStr)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		return nil, fmt.Errorf(`"iss" key is not in claims`)
+	}
+
+	var sub didkey.ID
+	// TODO(b5): we're double parsing here b/c the jwt lib we're using doesn't expose
+	// an API (that I know of) for storing parsed issuer / subjects
+	if subStr, ok := mc["sub"].(string); ok {
+		sub, err = didkey.Parse(subStr)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		return nil, fmt.Errorf(`"sub" key is not in claims`)
+	}
+
 	var att Attenuations
 	if acci, ok := mc[AttKey].([]interface{}); ok {
 		for i, a := range acci {
@@ -345,6 +371,8 @@ func (p *TokenParser) parseAndVerify(ctx context.Context, raw string, child *Tok
 
 	return &Token{
 		Raw:          raw,
+		Issuer:       iss,
+		Subject:      sub,
 		Attenuations: att,
 		Proofs:       prf,
 	}, nil
