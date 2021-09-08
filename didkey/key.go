@@ -4,6 +4,9 @@
 package didkey
 
 import (
+	"crypto/ed25519"
+	"crypto/rsa"
+	"crypto/x509"
 	"fmt"
 	"strings"
 
@@ -15,10 +18,8 @@ import (
 const (
 	// KeyPrefix indicates a decentralized identifier that uses the key method
 	KeyPrefix = "did:key"
-	// MulticodecKindRSAPubKey IS NOT A REAL MULTICODEC PREFIX.
-	// pulled from: https://github.com/w3c-ccg/lds-ed25519-2018/issues/3 because
-	// it's only slighly better than picking a random available byte prefix
-	MulticodecKindRSAPubKey = 0x5d
+	// MulticodecKindRSAPubKey rsa-x509-pub https://github.com/multiformats/multicodec/pull/226
+	MulticodecKindRSAPubKey = 0x1205
 	// MulticodecKindEd25519PubKey ed25519-pub
 	MulticodecKindEd25519PubKey = 0xed
 )
@@ -26,6 +27,16 @@ const (
 // ID is a DID:key identifier
 type ID struct {
 	crypto.PubKey
+}
+
+// NewID constructs an Identifier from a public key
+func NewID(pub crypto.PubKey) (ID, error) {
+	switch pub.Type() {
+	case crypto.Ed25519, crypto.RSA:
+		return ID{PubKey: pub}, nil
+	default:
+		return ID{}, fmt.Errorf("unsupported key type: %s", pub.Type())
+	}
 }
 
 // MulticodecType indicates the type for this multicodec
@@ -61,6 +72,31 @@ func (id ID) String() string {
 	return fmt.Sprintf("%s:%s", KeyPrefix, b58BKeyStr)
 }
 
+// VerifyKey returns the backing implementation for a public key, one of:
+// *rsa.PublicKey, ed25519.PublicKey
+func (id ID) VerifyKey() (interface{}, error) {
+	rawPubBytes, err := id.PubKey.Raw()
+	if err != nil {
+		return nil, err
+	}
+	switch id.PubKey.Type() {
+	case crypto.RSA:
+		verifyKeyiface, err := x509.ParsePKIXPublicKey(rawPubBytes)
+		if err != nil {
+			return nil, err
+		}
+		verifyKey, ok := verifyKeyiface.(*rsa.PublicKey)
+		if !ok {
+			return nil, fmt.Errorf("public key is not an RSA key. got type: %T", verifyKeyiface)
+		}
+		return verifyKey, nil
+	case crypto.Ed25519:
+		return ed25519.PublicKey(rawPubBytes), nil
+	default:
+		return nil, fmt.Errorf("unrecognized Public Key type: %s", id.PubKey.Type())
+	}
+}
+
 // Parse turns a string into a key method ID
 func Parse(keystr string) (ID, error) {
 	var id ID
@@ -70,9 +106,13 @@ func Parse(keystr string) (ID, error) {
 
 	keystr = strings.TrimPrefix(keystr, KeyPrefix+":")
 
-	_, data, err := mb.Decode(keystr)
+	enc, data, err := mb.Decode(keystr)
 	if err != nil {
-		return id, err
+		return id, fmt.Errorf("decoding multibase: %w", err)
+	}
+
+	if enc != mb.Base58BTC {
+		return id, fmt.Errorf("unexpected multibase encoding: %s", mb.EncodingToStr[enc])
 	}
 
 	keyType, n, err := varint.FromUvarint(data)
