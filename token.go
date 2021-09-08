@@ -10,18 +10,18 @@ package ucan
 
 import (
 	"context"
+	"crypto/ed25519"
 	"crypto/rsa"
 	"crypto/x509"
-	"encoding/base64"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt"
 	"github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	mh "github.com/multiformats/go-multihash"
+	"github.com/qri-io/ucan/didkey"
 )
 
 // ErrInvalidToken indicates an access token is invalid
@@ -125,12 +125,8 @@ type pkSource struct {
 	issuerDID     string
 	signingMethod jwt.SigningMethod
 
-	verifyKey *rsa.PublicKey
-	signKey   *rsa.PrivateKey
-
-	ap       AttenuationConstructorFunc
-	resolver CIDBytesResolver
-	store    TokenStore
+	verifyKey interface{} // one of: *rsa.PublicKey, *edsa.PublicKey
+	signKey   interface{} // one of: *rsa.PrivateKey,
 }
 
 // assert pkSource implements tokens at compile time
@@ -139,39 +135,49 @@ var _ Source = (*pkSource)(nil)
 // NewPrivKeySource creates an authentication interface backed by a single
 // private key. Intended for a node running as remote, or providing a public API
 func NewPrivKeySource(privKey crypto.PrivKey) (Source, error) {
-	methodStr := ""
-	keyType := privKey.Type()
+	rawPrivBytes, err := privKey.Raw()
+	if err != nil {
+		return nil, fmt.Errorf("getting private key bytes: %w", err)
+	}
+
+	var (
+		methodStr = ""
+		keyType   = privKey.Type()
+		signKey   interface{}
+		verifyKey interface{}
+	)
+
 	switch keyType {
 	case crypto.RSA:
 		methodStr = "RS256"
+		// TODO(b5) - detect if key is encoded as PEM block, here we're assuming it is
+		signKey, err = x509.ParsePKCS1PrivateKey(rawPrivBytes)
+		if err != nil {
+			return nil, err
+		}
+		rawPubBytes, err := privKey.GetPublic().Raw()
+		if err != nil {
+			return nil, fmt.Errorf("getting raw public key bytes: %w", err)
+		}
+		verifyKeyiface, err := x509.ParsePKIXPublicKey(rawPubBytes)
+		if err != nil {
+			return nil, fmt.Errorf("parsing public key bytes: %w", err)
+		}
+		var ok bool
+		verifyKey, ok = verifyKeyiface.(*rsa.PublicKey)
+		if !ok {
+			return nil, fmt.Errorf("public key is not an RSA key. got type: %T", verifyKeyiface)
+		}
 	case crypto.Ed25519:
 		methodStr = "EdDSA"
+		signKey = ed25519.PrivateKey(rawPrivBytes)
+		rawPubBytes, err := privKey.GetPublic().Raw()
+		if err != nil {
+			return nil, fmt.Errorf("getting raw public key bytes: %w", err)
+		}
+		verifyKey = ed25519.PublicKey(rawPubBytes)
 	default:
 		return nil, fmt.Errorf("unsupported key type for token creation: %q", keyType)
-	}
-
-	signingMethod := jwt.GetSigningMethod(methodStr)
-
-	rawPrivBytes, err := privKey.Raw()
-	if err != nil {
-		return nil, err
-	}
-	signKey, err := x509.ParsePKCS1PrivateKey(rawPrivBytes)
-	if err != nil {
-		return nil, err
-	}
-
-	rawPubBytes, err := privKey.GetPublic().Raw()
-	if err != nil {
-		return nil, err
-	}
-	verifyKeyiface, err := x509.ParsePKIXPublicKey(rawPubBytes)
-	if err != nil {
-		return nil, err
-	}
-	verifyKey, ok := verifyKeyiface.(*rsa.PublicKey)
-	if !ok {
-		return nil, fmt.Errorf("public key is not an RSA key. got type: %T", verifyKeyiface)
 	}
 
 	issuerDID, err := DIDStringFromPublicKey(privKey.GetPublic())
@@ -181,7 +187,7 @@ func NewPrivKeySource(privKey crypto.PrivKey) (Source, error) {
 
 	return &pkSource{
 		pk:            privKey,
-		signingMethod: signingMethod,
+		signingMethod: jwt.GetSigningMethod(methodStr),
 		verifyKey:     verifyKey,
 		signKey:       signKey,
 		issuerDID:     issuerDID,
@@ -253,16 +259,16 @@ func (a *pkSource) newToken(subjectDID string, prf []Proof, att Attenuations, fc
 // DIDPubKeyResolver turns did:key Decentralized IDentifiers into a public key,
 // possibly using a network request
 type DIDPubKeyResolver interface {
-	ResolveDIDKey(ctx context.Context, did string) (crypto.PubKey, error)
+	ResolveDIDKey(ctx context.Context, did string) (didkey.ID, error)
 }
 
 // DIDStringFromPublicKey creates a did:key identifier string from a public key
 func DIDStringFromPublicKey(pub crypto.PubKey) (string, error) {
-	rawPubBytes, err := pub.Raw()
+	id, err := didkey.NewID(pub)
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("did:key:%s", base64.URLEncoding.EncodeToString(rawPubBytes)), nil
+	return id.String(), nil
 }
 
 // StringDIDPubKeyResolver implements the DIDPubKeyResolver interface without
@@ -271,18 +277,8 @@ func DIDStringFromPublicKey(pub crypto.PubKey) (string, error) {
 type StringDIDPubKeyResolver struct{}
 
 // ResolveDIDKey extracts a public key from  a did:key string
-func (StringDIDPubKeyResolver) ResolveDIDKey(ctx context.Context, didStr string) (crypto.PubKey, error) {
-	// id, err := did.Parse(didStr)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("invalid DID: %w", err)
-	// }
-
-	data, err := base64.URLEncoding.DecodeString(strings.TrimPrefix(didStr, "did:key:"))
-	if err != nil {
-		return nil, err
-	}
-
-	return crypto.UnmarshalRsaPublicKey(data)
+func (StringDIDPubKeyResolver) ResolveDIDKey(ctx context.Context, didStr string) (didkey.ID, error) {
+	return didkey.Parse(didStr)
 }
 
 // TokenParser parses a raw string into a Token
@@ -309,7 +305,7 @@ func (p *TokenParser) ParseAndVerify(ctx context.Context, raw string) (*Token, e
 func (p *TokenParser) parseAndVerify(ctx context.Context, raw string, child *Token) (*Token, error) {
 	tok, err := jwt.Parse(raw, p.matchVerifyKeyFunc(ctx))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("parsing UCAN: %w", err)
 	}
 
 	mc, ok := tok.Claims.(jwt.MapClaims)
@@ -366,24 +362,11 @@ func (p *TokenParser) matchVerifyKeyFunc(ctx context.Context) func(tok *jwt.Toke
 			return nil, fmt.Errorf(`"iss" claims key is required`)
 		}
 
-		pubKey, err := p.didr.ResolveDIDKey(ctx, iss)
+		id, err := p.didr.ResolveDIDKey(ctx, iss)
 		if err != nil {
 			return nil, err
 		}
 
-		rawPubBytes, err := pubKey.Raw()
-		if err != nil {
-			return nil, err
-		}
-		verifyKeyiface, err := x509.ParsePKIXPublicKey(rawPubBytes)
-		if err != nil {
-			return nil, err
-		}
-		verifyKey, ok := verifyKeyiface.(*rsa.PublicKey)
-		if !ok {
-			return nil, fmt.Errorf("public key is not an RSA key. got type: %T", verifyKeyiface)
-		}
-
-		return verifyKey, nil
+		return id.VerifyKey()
 	}
 }

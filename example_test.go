@@ -56,9 +56,9 @@ func Example() {
 	panicIfError(err)
 
 	// Output:
-	// cid of root UCAN: bafkreidhsvhlctwylgeibl2eeapdvbl3qm3mbqcqhxhvy4grmr25ji77hu
+	// cid of root UCAN: bafkreih6guuxohv47s2e366l6jn6stlsukgoerkdvtsni3kxr4jjmkaf3y
 	// scope of ucan attenuations must be less than it's parent
-	// cid of derived UCAN: bafkreifglbwtr27fbzmv3uardlygvggr722fckusfvfyfsonwkroca7efu
+	// cid of derived UCAN: bafkreihpk5474uoolkqrge3yk5uy2s7rarhn5xwxfoiobcy6ye7vfxetgm
 }
 
 func panicIfError(err error) {
