@@ -101,7 +101,7 @@ func TestED25519PrivKeySource(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	subjectDID, err := ucan.DIDStringFromPublicKey(keyOne.GetPublic())
+	audienceDID, err := ucan.DIDStringFromPublicKey(keyOne.GetPublic())
 	if err != nil {
 		panic(err)
 	}
@@ -109,7 +109,7 @@ func TestED25519PrivKeySource(t *testing.T) {
 	zero := time.Time{}
 
 	// create a root UCAN
-	origin, err := source.NewOriginToken(subjectDID, nil, nil, zero, zero)
+	origin, err := source.NewOriginToken(audienceDID, nil, nil, zero, zero)
 	if err != nil {
 		panic(err)
 	}
