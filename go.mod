@@ -1,4 +1,4 @@
-module github.com/qri-io/ucan
+module github.com/ucan-wg/go-ucan
 
 go 1.15
 
