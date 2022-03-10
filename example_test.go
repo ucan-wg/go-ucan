@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/qri-io/ucan"
+	"github.com/ucan-wg/go-ucan"
 )
 
 func Example() {

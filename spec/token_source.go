@@ -7,7 +7,7 @@ package spec
 // 	"github.com/golang-jwt/jwt"
 // 	cfgtest "github.com/qri-io/qri/config/test"
 // 	"github.com/qri-io/qri/repo/profile"
-// 	"github.com/qri-io/ucan"
+// 	"github.com/ucan-wg/go-ucan"
 // )
 
 // // AssertTokenSourceSpec ensures a TokenSource implementation behaves as

@@ -21,7 +21,7 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	mh "github.com/multiformats/go-multihash"
-	"github.com/qri-io/ucan/didkey"
+	"github.com/ucan-wg/go-ucan/didkey"
 )
 
 // ErrInvalidToken indicates an access token is invalid

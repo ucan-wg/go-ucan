@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/libp2p/go-libp2p-core/crypto"
-	"github.com/qri-io/ucan"
+	"github.com/ucan-wg/go-ucan"
 )
 
 const (
