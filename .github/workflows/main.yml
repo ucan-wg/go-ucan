@@ -1,0 +1,25 @@
+on: [push, pull_request]
+name: Go Test
+
+jobs:
+  unit:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ "ubuntu" ]
+        go: [ "1.17.x", "1.18.x" ]
+    env:
+      COVERAGES: ""
+    runs-on: ${{ matrix.os }}-latest
+    name: ${{ matrix.os}} (go ${{ matrix.go }})
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go }}
+      - name: Go information
+        run: |
+          go version
+          go env
+      - name: Run tests
+        run: go test -v ./...
