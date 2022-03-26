@@ -29,7 +29,7 @@ var ErrInvalidToken = errors.New("invalid access token")
 
 const (
 	// UCANVersion is the current version of the UCAN spec
-	UCANVersion = "0.4.0"
+	UCANVersion = "0.7.0"
 	// UCANVersionKey is the key used in version headers for the UCAN spec
 	UCANVersionKey = "ucv"
 	// PrfKey denotes "Proofs" in a UCAN. Stored in JWT Claims
