@@ -12,7 +12,7 @@ func Example() {
 	source, err := ucan.NewPrivKeySource(keyOne)
 	panicIfError(err)
 
-	subjectDID, err := ucan.DIDStringFromPublicKey(keyOne.GetPublic())
+	audienceDID, err := ucan.DIDStringFromPublicKey(keyOne.GetPublic())
 	panicIfError(err)
 
 	caps := ucan.NewNestedCapabilities("SUPER_USER", "OVERWRITE", "SOFT_DELETE", "REVISE", "CREATE")
@@ -23,7 +23,7 @@ func Example() {
 	zero := time.Time{}
 
 	// create a root UCAN
-	origin, err := source.NewOriginToken(subjectDID, att, nil, zero, zero)
+	origin, err := source.NewOriginToken(audienceDID, att, nil, zero, zero)
 	panicIfError(err)
 
 	id, err := origin.CID()
@@ -35,7 +35,7 @@ func Example() {
 		{caps.Cap("SUPER_USER"), ucan.NewStringLengthResource("dataset", "third:resource")},
 	}
 
-	if _, err = source.NewAttenuatedToken(origin, subjectDID, att, nil, zero, zero); err != nil {
+	if _, err = source.NewAttenuatedToken(origin, audienceDID, att, nil, zero, zero); err != nil {
 		fmt.Println(err)
 	}
 
@@ -43,7 +43,7 @@ func Example() {
 		{caps.Cap("OVERWRITE"), ucan.NewStringLengthResource("dataset", "b5:world_bank_population:*")},
 	}
 
-	derivedToken, err := source.NewAttenuatedToken(origin, subjectDID, att, nil, zero, zero)
+	derivedToken, err := source.NewAttenuatedToken(origin, audienceDID, att, nil, zero, zero)
 	panicIfError(err)
 
 	id, err = derivedToken.CID()
@@ -58,9 +58,9 @@ func Example() {
 	fmt.Printf("issuer DID key type: %s\n", tok.Issuer.Type().String())
 
 	// Output:
-	// cid of root UCAN: bafkreid6l4npxfwei2ccpelqkhirthcaa2lpmg3xa4rz4lrsqz2rgujp5m
+	// cid of root UCAN: bafkreihl4b2ncrijeutlkppykgspz6wm3q2o4wiej6njl6tj7k2xa3zcue
 	// scope of ucan attenuations must be less than it's parent
-	// cid of derived UCAN: bafkreibeirwwbnz2cmboq5t47d3rsjxrd4rcnreptuozwcc2lr3pbnzuki
+	// cid of derived UCAN: bafkreifhpoxctmbmvocdevfbmio6cpzltwauesyyjycipnylocoykwghzu
 	// issuer DID key type: RSA
 }
 

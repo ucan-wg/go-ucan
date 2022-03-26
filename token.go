@@ -46,9 +46,9 @@ const (
 // token a UCAN
 type Token struct {
 	// Entire UCAN as a signed JWT string
-	Raw     string
-	Issuer  didkey.ID
-	Subject didkey.ID
+	Raw      string
+	Issuer   didkey.ID
+	Audience didkey.ID
 	// the "inputs" to this token, a chain UCAN tokens with broader scopes &
 	// deadlines than this token
 	Proofs []Proof `json:"prf,omitempty"`
@@ -118,8 +118,8 @@ type CIDBytesResolver interface {
 // implementations of Source must conform to the assertion test defined in the
 // spec subpackage
 type Source interface {
-	NewOriginToken(subjectDID string, att Attenuations, fct []Fact, notBefore, expires time.Time) (*Token, error)
-	NewAttenuatedToken(parent *Token, subjectDID string, att Attenuations, fct []Fact, notBefore, expires time.Time) (*Token, error)
+	NewOriginToken(audienceDID string, att Attenuations, fct []Fact, notBefore, expires time.Time) (*Token, error)
+	NewAttenuatedToken(parent *Token, audienceDID string, att Attenuations, fct []Fact, notBefore, expires time.Time) (*Token, error)
 }
 
 type pkSource struct {
@@ -196,24 +196,24 @@ func NewPrivKeySource(privKey crypto.PrivKey) (Source, error) {
 	}, nil
 }
 
-func (a *pkSource) NewOriginToken(subjectDID string, att Attenuations, fct []Fact, nbf, exp time.Time) (*Token, error) {
-	return a.newToken(subjectDID, nil, att, fct, nbf, exp)
+func (a *pkSource) NewOriginToken(audienceDID string, att Attenuations, fct []Fact, nbf, exp time.Time) (*Token, error) {
+	return a.newToken(audienceDID, nil, att, fct, nbf, exp)
 }
 
-func (a *pkSource) NewAttenuatedToken(parent *Token, subjectDID string, att Attenuations, fct []Fact, nbf, exp time.Time) (*Token, error) {
+func (a *pkSource) NewAttenuatedToken(parent *Token, audienceDID string, att Attenuations, fct []Fact, nbf, exp time.Time) (*Token, error) {
 	if !parent.Attenuations.Contains(att) {
 		return nil, fmt.Errorf("scope of ucan attenuations must be less than it's parent")
 	}
-	return a.newToken(subjectDID, append(parent.Proofs, Proof(parent.Raw)), att, fct, nbf, exp)
+	return a.newToken(audienceDID, append(parent.Proofs, Proof(parent.Raw)), att, fct, nbf, exp)
 }
 
 // CreateToken returns a new JWT token
-func (a *pkSource) newToken(subjectDID string, prf []Proof, att Attenuations, fct []Fact, nbf, exp time.Time) (*Token, error) {
+func (a *pkSource) newToken(audienceDID string, prf []Proof, att Attenuations, fct []Fact, nbf, exp time.Time) (*Token, error) {
 	// create a signer for rsa 256
 	t := jwt.New(a.signingMethod)
 
-	// if _, err := did.Parse(subjectDID); err != nil {
-	// 	return nil, fmt.Errorf("invalid subject DID: %w", err)
+	// if _, err := did.Parse(audienceDID); err != nil {
+	// 	return nil, fmt.Errorf("invalid audience DID: %w", err)
 	// }
 
 	t.Header[UCANVersionKey] = UCANVersion
@@ -234,7 +234,7 @@ func (a *pkSource) newToken(subjectDID string, prf []Proof, att Attenuations, fc
 	t.Claims = &Claims{
 		StandardClaims: &jwt.StandardClaims{
 			Issuer:    a.issuerDID,
-			Subject:   subjectDID,
+			Audience:  audienceDID,
 			NotBefore: nbfUnix,
 			// set the expire time
 			// see http://tools.ietf.org/html/draft-ietf-oauth-json-web-token-20#section-4.1.4
@@ -317,7 +317,7 @@ func (p *TokenParser) parseAndVerify(ctx context.Context, raw string, child *Tok
 
 	var iss didkey.ID
 	// TODO(b5): we're double parsing here b/c the jwt lib we're using doesn't expose
-	// an API (that I know of) for storing parsed issuer / subjects
+	// an API (that I know of) for storing parsed issuer / audience
 	if issStr, ok := mc["iss"].(string); ok {
 		iss, err = didkey.Parse(issStr)
 		if err != nil {
@@ -327,16 +327,16 @@ func (p *TokenParser) parseAndVerify(ctx context.Context, raw string, child *Tok
 		return nil, fmt.Errorf(`"iss" key is not in claims`)
 	}
 
-	var sub didkey.ID
+	var aud didkey.ID
 	// TODO(b5): we're double parsing here b/c the jwt lib we're using doesn't expose
-	// an API (that I know of) for storing parsed issuer / subjects
-	if subStr, ok := mc["sub"].(string); ok {
-		sub, err = didkey.Parse(subStr)
+	// an API (that I know of) for storing parsed issuer / audience
+	if audStr, ok := mc["aud"].(string); ok {
+		aud, err = didkey.Parse(audStr)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		return nil, fmt.Errorf(`"sub" key is not in claims`)
+		return nil, fmt.Errorf(`"aud" key is not in claims`)
 	}
 
 	var att Attenuations
@@ -372,7 +372,7 @@ func (p *TokenParser) parseAndVerify(ctx context.Context, raw string, child *Tok
 	return &Token{
 		Raw:          raw,
 		Issuer:       iss,
-		Subject:      sub,
+		Audience:     aud,
 		Attenuations: att,
 		Proofs:       prf,
 	}, nil
