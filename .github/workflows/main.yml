@@ -23,3 +23,5 @@ jobs:
           go env
       - name: Run tests
         run: go test -v ./...
+      - name: Check formatted
+        run: "! gofmt -l ."
