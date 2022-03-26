@@ -58,9 +58,9 @@ func Example() {
 	fmt.Printf("issuer DID key type: %s\n", tok.Issuer.Type().String())
 
 	// Output:
-	// cid of root UCAN: bafkreid6l4npxfwei2ccpelqkhirthcaa2lpmg3xa4rz4lrsqz2rgujp5m
+	// cid of root UCAN: bafkreihl4b2ncrijeutlkppykgspz6wm3q2o4wiej6njl6tj7k2xa3zcue
 	// scope of ucan attenuations must be less than it's parent
-	// cid of derived UCAN: bafkreibeirwwbnz2cmboq5t47d3rsjxrd4rcnreptuozwcc2lr3pbnzuki
+	// cid of derived UCAN: bafkreifhpoxctmbmvocdevfbmio6cpzltwauesyyjycipnylocoykwghzu
 	// issuer DID key type: RSA
 }
 
