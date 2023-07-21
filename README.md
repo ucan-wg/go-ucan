@@ -1,6 +1,8 @@
 # UCAN Tokens in Go
 
-Under Heavy Construction, an initial implementation of [UCAN tokens](https://whitepaper.fission.codes/access-control/ucan/ucan-tokens) from [fission](https://fission.codes)
+Originally by @b5 as one of the first from scratch implementations of UCAN outside of the Fission teams initial work in TypeScript / Haskell.
+
+**If you're interested in updating this codebase to the 1.0 version of the UCAN spec, [get involved in the discussion »](https://github.com/orgs/ucan-wg/discussions/163)**
 
 ## About UCAN Tokens
 
