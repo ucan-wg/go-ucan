@@ -1,5 +1,7 @@
 # UCAN Tokens in Go
 
+![UCAN](https://img.shields.io/badge/UCAN-v0.7.0-blue)
+
 Originally by @b5 as one of the first from scratch implementations of UCAN outside of the Fission teams initial work in TypeScript / Haskell.
 
 **If you're interested in updating this codebase to the 1.0 version of the UCAN spec, [get involved in the discussion »](https://github.com/orgs/ucan-wg/discussions/163)**
