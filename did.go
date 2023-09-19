@@ -11,9 +11,13 @@ import (
 const Prefix = "did:"
 const KeyPrefix = "did:key:"
 
+const DIDCore = 0x0d1d
 const Ed25519 = 0xed
 
+var MethodOffset = varint.UvarintSize(uint64(DIDCore))
+
 type DID struct {
+	key bool
 	str string
 }
 
@@ -37,8 +41,11 @@ func (d DID) DID() DID {
 }
 
 func (d DID) String() string {
-	key, _ := mbase.Encode(mbase.Base58BTC, []byte(d.str))
-	return "did:key:" + key
+	if d.key {
+		key, _ := mbase.Encode(mbase.Base58BTC, []byte(d.str))
+		return "did:key:" + key
+	}
+	return "did:" + d.str[MethodOffset:]
 }
 
 func Decode(bytes []byte) (DID, error) {
@@ -47,6 +54,8 @@ func Decode(bytes []byte) (DID, error) {
 		return Undef, err
 	}
 	if code == Ed25519 {
+		return DID{str: string(bytes), key: true}, nil
+	} else if code == DIDCore {
 		return DID{str: string(bytes)}, nil
 	}
 	return Undef, fmt.Errorf("decoding DID: unsupported DID encoding: 0x%x", code)
@@ -68,5 +77,9 @@ func Parse(str string) (DID, error) {
 		return Decode(bytes)
 	}
 
-	return Undef, fmt.Errorf("parsing DID: unsupported method")
+	buf := make([]byte, MethodOffset)
+	varint.PutUvarint(buf, DIDCore)
+	suffix, _ := strings.CutPrefix(str, Prefix)
+	buf = append(buf, suffix...)
+	return DID{str: string(buf)}, nil
 }

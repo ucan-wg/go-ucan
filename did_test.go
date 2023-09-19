@@ -30,6 +30,32 @@ func TestDecodeDIDKey(t *testing.T) {
 	}
 }
 
+func TestParseDIDWeb(t *testing.T) {
+	str := "did:web:up.web3.storage"
+	d, err := Parse(str)
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+	if d.String() != str {
+		t.Fatalf("expected %v to equal %v", d.String(), str)
+	}
+}
+
+func TestDecodeDIDWeb(t *testing.T) {
+	str := "did:web:up.web3.storage"
+	d0, err := Parse(str)
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+	d1, err := Decode(d0.Bytes())
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+	if d1.String() != str {
+		t.Fatalf("expected %v to equal %v", d1.String(), str)
+	}
+}
+
 func TestEquivalence(t *testing.T) {
 	u0 := DID{}
 	u1 := Undef
