@@ -58,12 +58,12 @@ func Decode(bytes []byte) (DID, error) {
 	} else if code == DIDCore {
 		return DID{str: string(bytes)}, nil
 	}
-	return Undef, fmt.Errorf("decoding DID: unsupported DID encoding: 0x%x", code)
+	return Undef, fmt.Errorf("unsupported DID encoding: 0x%x", code)
 }
 
 func Parse(str string) (DID, error) {
 	if !strings.HasPrefix(str, Prefix) {
-		return Undef, fmt.Errorf("parsing DID: must start with 'did:'")
+		return Undef, fmt.Errorf("must start with 'did:'")
 	}
 
 	if strings.HasPrefix(str, KeyPrefix) {
@@ -72,7 +72,7 @@ func Parse(str string) (DID, error) {
 			return Undef, err
 		}
 		if code != mbase.Base58BTC {
-			return Undef, fmt.Errorf("parsing DID key: not Base58BTC encoded")
+			return Undef, fmt.Errorf("not Base58BTC encoded")
 		}
 		return Decode(bytes)
 	}
