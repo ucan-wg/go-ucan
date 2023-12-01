@@ -40,6 +40,7 @@ func (d DID) DID() DID {
 	return d
 }
 
+// String formats the decentralized identity document (DID) as a string.
 func (d DID) String() string {
 	if d.key {
 		key, _ := mbase.Encode(mbase.Base58BTC, []byte(d.str))
