@@ -8,6 +8,7 @@ import (
 
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/datamodel"
+	"github.com/ipld/go-ipld-prime/schema"
 )
 
 // Selector describes a UCAN policy selector, as specified here:
@@ -238,6 +239,8 @@ func MustParse(sel string) Selector {
 	return s
 }
 
+// Select uses a selector to extract an IPLD node or set of nodes from the
+// passed subject node.
 func Select(sel Selector, subject ipld.Node) (ipld.Node, []ipld.Node, error) {
 	return resolve(sel, subject, nil)
 }
@@ -256,12 +259,12 @@ func resolve(sel Selector, subject ipld.Node, at []string) (ipld.Node, []ipld.No
 						break
 					}
 
-					i, v, err := it.Next()
+					k, v, err := it.Next()
 					if err != nil {
 						return nil, nil, err
 					}
 
-					key := fmt.Sprintf("%d", i)
+					key := fmt.Sprintf("%d", k)
 					o, m, err := resolve(sel[i+1:], v, append(at[:], key))
 					if err != nil {
 						return nil, nil, err
@@ -311,7 +314,7 @@ func resolve(sel Selector, subject ipld.Node, at []string) (ipld.Node, []ipld.No
 			if cur != nil && cur.Kind() == datamodel.Kind_Map {
 				n, err := cur.LookupByString(seg.Field())
 				if err != nil {
-					if _, ok := err.(datamodel.ErrNotExists); ok {
+					if isMissing(err) {
 						if seg.Optional() {
 							cur = nil
 						} else {
@@ -342,7 +345,7 @@ func resolve(sel Selector, subject ipld.Node, at []string) (ipld.Node, []ipld.No
 			if cur != nil && cur.Kind() == datamodel.Kind_List {
 				n, err := cur.LookupByIndex(int64(seg.Index()))
 				if err != nil {
-					if _, ok := err.(datamodel.ErrNotExists); ok {
+					if isMissing(err) {
 						if seg.Optional() {
 							cur = nil
 						} else {
@@ -369,6 +372,19 @@ func kindString(n datamodel.Node) string {
 		return "null"
 	}
 	return n.Kind().String()
+}
+
+func isMissing(err error) bool {
+	if _, ok := err.(datamodel.ErrNotExists); ok {
+		return true
+	}
+	if _, ok := err.(schema.ErrNoSuchField); ok {
+		return true
+	}
+	if _, ok := err.(schema.ErrInvalidKey); ok {
+		return true
+	}
+	return false
 }
 
 type ResolutionError interface {
