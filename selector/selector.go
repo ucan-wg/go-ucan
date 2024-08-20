@@ -40,7 +40,13 @@ type Segment interface {
 	String() string
 }
 
-var Identity = Segment(segment{".", true, false, false, nil, "", 0})
+var Identity = segment{".", true, false, false, nil, "", 0}
+
+var (
+	indexRegex = regexp.MustCompile(`^-?\d+$`)
+	sliceRegex = regexp.MustCompile(`^((\-?\d+:\-?\d*)|(\-?\d*:\-?\d+))$`)
+	fieldRegex = regexp.MustCompile(`^\.[a-zA-Z_]*?$`)
+)
 
 type segment struct {
 	str      string
@@ -105,7 +111,7 @@ func Parse(str string) (Selector, error) {
 			if strings.HasPrefix(seg, "[") && strings.HasSuffix(seg, "]") {
 				lookup := seg[1 : len(seg)-1]
 
-				if regexp.MustCompile(`^-?\d+$`).MatchString(lookup) { // index
+				if indexRegex.MatchString(lookup) { // index
 					idx, err := strconv.Atoi(lookup)
 					if err != nil {
 						return nil, NewParseError("invalid index", str, col, tok)
@@ -113,7 +119,7 @@ func Parse(str string) (Selector, error) {
 					sel = append(sel, segment{str: tok, optional: opt, index: idx})
 				} else if strings.HasPrefix(lookup, "\"") && strings.HasSuffix(lookup, "\"") { // explicit field
 					sel = append(sel, segment{str: tok, optional: opt, field: lookup[1 : len(lookup)-1]})
-				} else if regexp.MustCompile(`^((\-?\d+:\-?\d*)|(\-?\d*:\-?\d+))$`).MatchString(lookup) { // slice [3:5] or [:5] or [3:]
+				} else if sliceRegex.MatchString(lookup) { // slice [3:5] or [:5] or [3:]
 					var rng []int
 					splt := strings.Split(lookup, ":")
 					if splt[0] == "" {
@@ -136,7 +142,7 @@ func Parse(str string) (Selector, error) {
 				} else {
 					return nil, NewParseError(fmt.Sprintf("invalid segment: %s", seg), str, col, tok)
 				}
-			} else if regexp.MustCompile(`^\.[a-zA-Z_]*?$`).MatchString(seg) {
+			} else if fieldRegex.MatchString(seg) {
 				sel = append(sel, segment{str: tok, optional: opt, field: seg[1:]})
 			} else {
 				return nil, NewParseError(fmt.Sprintf("invalid segment: %s", seg), str, col, tok)
