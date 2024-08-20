@@ -3,7 +3,7 @@ package policy
 // https://github.com/ucan-wg/delegation/blob/4094d5878b58f5d35055a3b93fccda0b8329ebae/README.md#policy
 
 import (
-	"github.com/storacha-network/go-ucanto/core/policy/literal"
+	"github.com/ipld/go-ipld-prime"
 	"github.com/storacha-network/go-ucanto/core/policy/selector"
 )
 
@@ -30,13 +30,13 @@ type Statement interface {
 type EqualityStatement interface {
 	Statement
 	Selector() selector.Selector
-	Value() literal.Literal
+	Value() ipld.Node
 }
 
 type InequalityStatement interface {
 	Statement
 	Selector() selector.Selector
-	Value() literal.Literal
+	Value() ipld.Node
 }
 
 type WildcardStatement interface {
@@ -73,14 +73,14 @@ type QuantifierStatement interface {
 type equality struct {
 	kind     string
 	selector selector.Selector
-	value    literal.Literal
+	value    ipld.Node
 }
 
 func (e equality) Kind() string {
 	return e.kind
 }
 
-func (e equality) Value() literal.Literal {
+func (e equality) Value() ipld.Node {
 	return e.value
 }
 
@@ -88,23 +88,23 @@ func (e equality) Selector() selector.Selector {
 	return e.selector
 }
 
-func Equal(selector selector.Selector, value literal.Literal) EqualityStatement {
+func Equal(selector selector.Selector, value ipld.Node) EqualityStatement {
 	return equality{Kind_Equal, selector, value}
 }
 
-func GreaterThan(selector selector.Selector, value literal.Literal) InequalityStatement {
+func GreaterThan(selector selector.Selector, value ipld.Node) InequalityStatement {
 	return equality{Kind_GreaterThan, selector, value}
 }
 
-func GreaterThanOrEqual(selector selector.Selector, value literal.Literal) InequalityStatement {
+func GreaterThanOrEqual(selector selector.Selector, value ipld.Node) InequalityStatement {
 	return equality{Kind_GreaterThanOrEqual, selector, value}
 }
 
-func LessThan(selector selector.Selector, value literal.Literal) InequalityStatement {
+func LessThan(selector selector.Selector, value ipld.Node) InequalityStatement {
 	return equality{Kind_LessThan, selector, value}
 }
 
-func LessThanOrEqual(selector selector.Selector, value literal.Literal) InequalityStatement {
+func LessThanOrEqual(selector selector.Selector, value ipld.Node) InequalityStatement {
 	return equality{Kind_LessThanOrEqual, selector, value}
 }
 

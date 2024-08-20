@@ -252,6 +252,11 @@ func TestMatch(t *testing.T) {
 		ok, err = Match(pol, nd)
 		require.NoError(t, err)
 		require.False(t, ok)
+
+		pol = Policy{And()}
+		ok, err = Match(pol, nd)
+		require.NoError(t, err)
+		require.True(t, ok)
 	})
 
 	t.Run("disjunction", func(t *testing.T) {
@@ -279,5 +284,10 @@ func TestMatch(t *testing.T) {
 		ok, err = Match(pol, nd)
 		require.NoError(t, err)
 		require.False(t, ok)
+
+		pol = Policy{Or()}
+		ok, err = Match(pol, nd)
+		require.NoError(t, err)
+		require.True(t, ok)
 	})
 }
