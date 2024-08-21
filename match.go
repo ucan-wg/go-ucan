@@ -15,7 +15,7 @@ func Match(policy Policy, node ipld.Node) bool {
 	for _, stmt := range policy {
 		ok := matchStatement(stmt, node)
 		if !ok {
-			return ok
+			return false
 		}
 	}
 	return true
@@ -103,7 +103,33 @@ func matchStatement(statement Statement, node ipld.Node) bool {
 			return s.Value().Match(v)
 		}
 	case Kind_All:
+		if s, ok := statement.(QuantifierStatement); ok {
+			_, many, err := selector.Select(s.Selector(), node)
+			if err != nil || many == nil {
+				return false
+			}
+			for _, n := range many {
+				ok := Match(s.Value(), n)
+				if !ok {
+					return false
+				}
+			}
+			return true
+		}
 	case Kind_Any:
+		if s, ok := statement.(QuantifierStatement); ok {
+			_, many, err := selector.Select(s.Selector(), node)
+			if err != nil || many == nil {
+				return false
+			}
+			for _, n := range many {
+				ok := Match(s.Value(), n)
+				if ok {
+					return true
+				}
+			}
+			return false
+		}
 	}
 	panic(fmt.Errorf("unimplemented statement kind: %s", statement.Kind()))
 }

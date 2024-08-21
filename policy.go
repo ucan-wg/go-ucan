@@ -196,10 +196,10 @@ func (n quantifier) Value() Policy {
 	return n.policy
 }
 
-func All(selector selector.Selector, policy Policy) QuantifierStatement {
+func All(selector selector.Selector, policy ...Statement) QuantifierStatement {
 	return quantifier{Kind_All, selector, policy}
 }
 
-func Any(selector selector.Selector, policy Policy) QuantifierStatement {
+func Any(selector selector.Selector, policy ...Statement) QuantifierStatement {
 	return quantifier{Kind_Any, selector, policy}
 }

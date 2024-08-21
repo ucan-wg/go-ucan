@@ -6,6 +6,7 @@ import (
 
 	"github.com/gobwas/glob"
 	"github.com/ipfs/go-cid"
+	"github.com/ipld/go-ipld-prime"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
 	"github.com/storacha-network/go-ucanto/core/policy/literal"
@@ -330,5 +331,78 @@ func TestMatch(t *testing.T) {
 				})
 			}(s)
 		}
+	})
+
+	buildValueNode := func(v int64) ipld.Node {
+		np := basicnode.Prototype.Map
+		nb := np.NewBuilder()
+		ma, _ := nb.BeginMap(1)
+		ma.AssembleKey().AssignString("value")
+		ma.AssembleValue().AssignInt(v)
+		ma.Finish()
+		return nb.Build()
+	}
+
+	t.Run("quantification all", func(t *testing.T) {
+		np := basicnode.Prototype.List
+		nb := np.NewBuilder()
+		la, _ := nb.BeginList(5)
+		la.AssembleValue().AssignNode(buildValueNode(5))
+		la.AssembleValue().AssignNode(buildValueNode(10))
+		la.AssembleValue().AssignNode(buildValueNode(20))
+		la.AssembleValue().AssignNode(buildValueNode(50))
+		la.AssembleValue().AssignNode(buildValueNode(100))
+		la.Finish()
+		nd := nb.Build()
+
+		pol := Policy{
+			All(
+				selector.MustParse(".[]"),
+				GreaterThan(selector.MustParse(".value"), literal.Int(2)),
+			),
+		}
+		ok := Match(pol, nd)
+		require.True(t, ok)
+
+		pol = Policy{
+			All(
+				selector.MustParse(".[]"),
+				GreaterThan(selector.MustParse(".value"), literal.Int(20)),
+			),
+		}
+		ok = Match(pol, nd)
+		require.False(t, ok)
+	})
+
+	t.Run("quantification any", func(t *testing.T) {
+		np := basicnode.Prototype.List
+		nb := np.NewBuilder()
+		la, _ := nb.BeginList(5)
+		la.AssembleValue().AssignNode(buildValueNode(5))
+		la.AssembleValue().AssignNode(buildValueNode(10))
+		la.AssembleValue().AssignNode(buildValueNode(20))
+		la.AssembleValue().AssignNode(buildValueNode(50))
+		la.AssembleValue().AssignNode(buildValueNode(100))
+		la.Finish()
+		nd := nb.Build()
+
+		pol := Policy{
+			Any(
+				selector.MustParse(".[]"),
+				GreaterThan(selector.MustParse(".value"), literal.Int(10)),
+				LessThan(selector.MustParse(".value"), literal.Int(50)),
+			),
+		}
+		ok := Match(pol, nd)
+		require.True(t, ok)
+
+		pol = Policy{
+			Any(
+				selector.MustParse(".[]"),
+				GreaterThan(selector.MustParse(".value"), literal.Int(100)),
+			),
+		}
+		ok = Match(pol, nd)
+		require.False(t, ok)
 	})
 }
