@@ -3,6 +3,7 @@ package policy
 // https://github.com/ucan-wg/delegation/blob/4094d5878b58f5d35055a3b93fccda0b8329ebae/README.md#policy
 
 import (
+	"github.com/gobwas/glob"
 	"github.com/ipld/go-ipld-prime"
 	"github.com/storacha-network/go-ucanto/core/policy/selector"
 )
@@ -13,12 +14,12 @@ const (
 	Kind_GreaterThanOrEqual = ">="
 	Kind_LessThan           = "<"
 	Kind_LessThanOrEqual    = "<="
-	Kind_Negation           = "not"
-	Kind_Conjunction        = "and"
-	Kind_Disjunction        = "or"
-	Kind_Wildcard           = "like"
-	Kind_Universal          = "all"
-	Kind_Existential        = "any"
+	Kind_Not                = "not"
+	Kind_And                = "and"
+	Kind_Or                 = "or"
+	Kind_Like               = "like"
+	Kind_All                = "all"
+	Kind_Any                = "any"
 )
 
 type Policy = []Statement
@@ -42,7 +43,7 @@ type InequalityStatement interface {
 type WildcardStatement interface {
 	Statement
 	Selector() selector.Selector
-	Value() string
+	Value() glob.Glob
 }
 
 type ConnectiveStatement interface {
@@ -113,7 +114,7 @@ type negation struct {
 }
 
 func (n negation) Kind() string {
-	return Kind_Negation
+	return Kind_Not
 }
 
 func (n negation) Value() Statement {
@@ -129,7 +130,7 @@ type conjunction struct {
 }
 
 func (n conjunction) Kind() string {
-	return Kind_Conjunction
+	return Kind_And
 }
 
 func (n conjunction) Value() []Statement {
@@ -145,7 +146,7 @@ type disjunction struct {
 }
 
 func (n disjunction) Kind() string {
-	return Kind_Disjunction
+	return Kind_Or
 }
 
 func (n disjunction) Value() []Statement {
@@ -158,23 +159,23 @@ func Or(stmts ...Statement) DisjunctionStatement {
 
 type wildcard struct {
 	selector selector.Selector
-	pattern  string
+	glob     glob.Glob
 }
 
 func (n wildcard) Kind() string {
-	return Kind_Wildcard
+	return Kind_Like
 }
 
 func (n wildcard) Selector() selector.Selector {
 	return n.selector
 }
 
-func (n wildcard) Value() string {
-	return n.pattern
+func (n wildcard) Value() glob.Glob {
+	return n.glob
 }
 
-func Like(selector selector.Selector, pattern string) WildcardStatement {
-	return wildcard{selector, pattern}
+func Like(selector selector.Selector, glob glob.Glob) WildcardStatement {
+	return wildcard{selector, glob}
 }
 
 type quantifier struct {
@@ -196,9 +197,9 @@ func (n quantifier) Value() Policy {
 }
 
 func All(selector selector.Selector, policy Policy) QuantifierStatement {
-	return quantifier{Kind_Universal, selector, policy}
+	return quantifier{Kind_All, selector, policy}
 }
 
 func Any(selector selector.Selector, policy Policy) QuantifierStatement {
-	return quantifier{Kind_Existential, selector, policy}
+	return quantifier{Kind_Any, selector, policy}
 }

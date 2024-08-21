@@ -63,11 +63,11 @@ func matchStatement(statement Statement, node ipld.Node) bool {
 			}
 			return isOrdered(s.Value(), one, lte)
 		}
-	case Kind_Negation:
+	case Kind_Not:
 		if s, ok := statement.(NegationStatement); ok {
 			return !matchStatement(s.Value(), node)
 		}
-	case Kind_Conjunction:
+	case Kind_And:
 		if s, ok := statement.(ConjunctionStatement); ok {
 			for _, cs := range s.Value() {
 				r := matchStatement(cs, node)
@@ -77,7 +77,7 @@ func matchStatement(statement Statement, node ipld.Node) bool {
 			}
 			return true
 		}
-	case Kind_Disjunction:
+	case Kind_Or:
 		if s, ok := statement.(DisjunctionStatement); ok {
 			if len(s.Value()) == 0 {
 				return true
@@ -90,9 +90,20 @@ func matchStatement(statement Statement, node ipld.Node) bool {
 			}
 			return false
 		}
-	case Kind_Wildcard:
-	case Kind_Universal:
-	case Kind_Existential:
+	case Kind_Like:
+		if s, ok := statement.(WildcardStatement); ok {
+			one, _, err := selector.Select(s.Selector(), node)
+			if err != nil || one == nil {
+				return false
+			}
+			v, err := one.AsString()
+			if err != nil {
+				return false
+			}
+			return s.Value().Match(v)
+		}
+	case Kind_All:
+	case Kind_Any:
 	}
 	panic(fmt.Errorf("unimplemented statement kind: %s", statement.Kind()))
 }

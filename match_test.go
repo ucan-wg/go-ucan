@@ -1,8 +1,10 @@
 package policy
 
 import (
+	"fmt"
 	"testing"
 
+	"github.com/gobwas/glob"
 	"github.com/ipfs/go-cid"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
@@ -283,5 +285,50 @@ func TestMatch(t *testing.T) {
 		pol = Policy{Or()}
 		ok = Match(pol, nd)
 		require.True(t, ok)
+	})
+
+	t.Run("wildcard", func(t *testing.T) {
+		glb, err := glob.Compile(`Alice\*, Bob*, Carol.`)
+		require.NoError(t, err)
+
+		for _, s := range []string{
+			"Alice*, Bob, Carol.",
+			"Alice*, Bob, Dan, Erin, Carol.",
+			"Alice*, Bob  , Carol.",
+			"Alice*, Bob*, Carol.",
+		} {
+			func(s string) {
+				t.Run(fmt.Sprintf("pass %s", s), func(t *testing.T) {
+					np := basicnode.Prototype.String
+					nb := np.NewBuilder()
+					nb.AssignString(s)
+					nd := nb.Build()
+
+					pol := Policy{Like(selector.MustParse("."), glb)}
+					ok := Match(pol, nd)
+					require.True(t, ok)
+				})
+			}(s)
+		}
+
+		for _, s := range []string{
+			"Alice*, Bob, Carol",
+			"Alice*, Bob*, Carol!",
+			"Alice, Bob, Carol.",
+			" Alice*, Bob, Carol. ",
+		} {
+			func(s string) {
+				t.Run(fmt.Sprintf("fail %s", s), func(t *testing.T) {
+					np := basicnode.Prototype.String
+					nb := np.NewBuilder()
+					nb.AssignString(s)
+					nd := nb.Build()
+
+					pol := Policy{Like(selector.MustParse("."), glb)}
+					ok := Match(pol, nd)
+					require.False(t, ok)
+				})
+			}(s)
+		}
 	})
 }
