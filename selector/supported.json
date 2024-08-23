@@ -1,0 +1,163 @@
+{
+  "pass": [
+    {
+      "name": "Identity",
+      "selector": ".",
+      "input": "{\"x\":1}",
+      "output": "{\"x\":1}"
+    },
+    {
+      "name": "Iterator",
+      "selector": ".[]",
+      "input": "[1, 2]",
+      "output": "[1, 2]"
+    },
+    {
+      "name": "Optional Null Iterator",
+      "selector": ".[]?",
+      "input": "null",
+      "output": "()"
+    },
+    {
+      "name": "Optional Iterator",
+      "selector": ".[][]?",
+      "input": "[[1], 2, [3]]",
+      "output": "[1, 3]"
+    },
+    {
+      "name": "Object Key",
+      "selector": ".x",
+      "input": "{\"x\": 1 }",
+      "output": "1"
+    },
+    {
+      "name": "Quoted Key",
+      "selector": ".[\"x\"]",
+      "input": "{\"x\": 1}",
+      "output": "1"
+    },
+    {
+      "name": "Index",
+      "selector": ".[0]",
+      "input": "[1, 2]",
+      "output": "1"
+    },
+    {
+      "name": "Negative Index",
+      "selector": ".[-1]",
+      "input": "[1, 2]",
+      "output": "2"
+    },
+    {
+      "name": "String Index",
+      "selector": ".[0]",
+      "input": "\"Hi\"",
+      "output": "\"H\""
+    },
+    {
+      "name": "Bytes Index",
+      "selector": ".[0]",
+      "input": "{\"/\":{\"bytes\":\"AAE\"}",
+      "output": "0"
+    },
+    {
+      "name": "Array Slice",
+      "selector": ".[0:2]",
+      "input": "[0, 1, 2]",
+      "output": "[0, 1]"
+    },
+    {
+      "name": "Array Slice",
+      "selector": ".[1:]",
+      "input": "[0, 1, 2]",
+      "output": "[1, 2]"
+    },
+    {
+      "name": "Array Slice",
+      "selector": ".[:2]",
+      "input": "[0, 1, 2]",
+      "output": "[0, 1]"
+    },
+    {
+      "name": "String Slice",
+      "selector": ".[0:2]",
+      "input": "\"hello\"",
+      "output": "\"he\""
+    },
+    {
+      "name": "Bytes Index",
+      "selector": ".[1:]",
+      "input": "{\"/\":{\"bytes\":\"AAEC\"}}",
+      "output": "{\"/\":{\"bytes\":\"AQI\"}}"
+    }
+  ],
+  "null": [
+    {
+      "name": "Optional Missing Key",
+      "selector": ".x?",
+      "input": "{}"
+    },
+    {
+      "name": "Optional Null Key",
+      "selector": ".x?",
+      "input": "null"
+    },
+    {
+      "name": "Optional Array Key",
+      "selector": ".x?",
+      "input": "[]"
+    },
+    {
+      "name": "Optional Quoted Key",
+      "selector": ".[\"x\"]?",
+      "input": "{}"
+    },
+    {
+      "name": ".length?",
+      "selector": ".length?",
+      "input": "[1, 2]"
+    },
+    {
+      "name": "Optional Index",
+      "selector": ".[4]?",
+      "input": "[0, 1]"
+    }
+  ],
+  "fail": [
+    {
+      "name": "Null Iterator",
+      "selector": ".[]",
+      "input": "null"
+    },
+    {
+      "name": "Nested Iterator",
+      "selector": ".[][]",
+      "input": "[[1], 2, [3]]"
+    },
+    {
+      "name": "Missing Key",
+      "selector": ".x",
+      "input": "{}"
+    },
+    {
+      "name": "Null Key",
+      "selector": ".x",
+      "input": "null"
+    },
+    {
+      "name": "Array Key",
+      "selector": ".x",
+      "input": "[]"
+    },
+    {
+      "name": ".length",
+      "selector": ".length",
+      "input": "[1, 2]"
+    },
+    {
+      "name": "Out of bound Index",
+      "selector": ".[4]",
+      "input": "[0, 1]"
+    }
+  ]
+}
