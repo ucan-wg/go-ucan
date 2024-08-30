@@ -4,7 +4,6 @@ import (
 	"bytes"
 	_ "embed"
 	"encoding/json"
-	"fmt"
 	"strings"
 	"testing"
 
@@ -14,7 +13,6 @@ import (
 	basicnode "github.com/ipld/go-ipld-prime/node/basic"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/wI2L/jsondiff"
 
 	"github.com/ucan-wg/go-ucan/v1/capability/policy/selector"
 )
@@ -150,26 +148,16 @@ func TestSupportedForms(t *testing.T) {
 func equalIPLD(t *testing.T, expected datamodel.Node, actual datamodel.Node, msgAndArgs ...interface{}) bool {
 	t.Helper()
 
-	if !assert.ObjectsAreEqual(expected, actual) {
-		exp, act := &bytes.Buffer{}, &bytes.Buffer{}
-		if err := dagjson.Encode(expected, exp); err != nil {
-			return assert.Fail(t, "Failed to encode json for expected IPLD node")
-		}
-
-		if err := dagjson.Encode(actual, act); err != nil {
-			return assert.Fail(t, "Failed to encode JSON for actual IPLD node")
-		}
-
-		diff, err := jsondiff.CompareJSON(act.Bytes(), exp.Bytes())
-		if err != nil {
-			return assert.Fail(t, "Failed to create diff of expected and actual IPLD nodes")
-		}
-
-		return assert.Fail(t, fmt.Sprintf("Not equal: \n"+
-			"expected: %s\n"+
-			"actual: %s\n"+
-			"diff: %s", exp, act, diff), msgAndArgs)
+	exp, act := &bytes.Buffer{}, &bytes.Buffer{}
+	if err := dagjson.Encode(expected, exp); err != nil {
+		return assert.Fail(t, "Failed to encode json for expected IPLD node")
 	}
+
+	if err := dagjson.Encode(actual, act); err != nil {
+		return assert.Fail(t, "Failed to encode JSON for actual IPLD node")
+	}
+
+	require.JSONEq(t, exp.String(), act.String())
 
 	return true
 }
