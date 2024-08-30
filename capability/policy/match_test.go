@@ -11,8 +11,8 @@ import (
 	"github.com/ipld/go-ipld-prime/node/basicnode"
 	"github.com/stretchr/testify/require"
 
-	"github.com/ucan-wg/go-ucan/delegation/policy/literal"
-	"github.com/ucan-wg/go-ucan/delegation/policy/selector"
+	"github.com/ucan-wg/go-ucan/capability/policy/literal"
+	"github.com/ucan-wg/go-ucan/capability/policy/selector"
 )
 
 func TestMatch(t *testing.T) {

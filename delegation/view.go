@@ -6,7 +6,7 @@ import (
 
 	"github.com/ipld/go-ipld-prime/datamodel"
 
-	"github.com/ucan-wg/go-ucan/delegation/policy"
+	"github.com/ucan-wg/go-ucan/capability/policy"
 	"github.com/ucan-wg/go-ucan/did"
 )
 

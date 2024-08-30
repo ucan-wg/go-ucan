@@ -6,7 +6,7 @@ import (
 	"github.com/gobwas/glob"
 	"github.com/ipld/go-ipld-prime"
 
-	"github.com/ucan-wg/go-ucan/delegation/policy/selector"
+	"github.com/ucan-wg/go-ucan/capability/policy/selector"
 )
 
 const (
