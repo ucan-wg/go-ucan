@@ -6,8 +6,8 @@ import (
 
 	"github.com/ipld/go-ipld-prime/datamodel"
 
-	"github.com/ucan-wg/go-ucan/capability/policy"
-	"github.com/ucan-wg/go-ucan/did"
+	"github.com/ucan-wg/go-ucan/v1/capability/policy"
+	"github.com/ucan-wg/go-ucan/v1/did"
 )
 
 type View struct {
@@ -90,6 +90,7 @@ func (view *View) Capability() *Capability {
 }
 
 // Capability is a subset of a delegation formed by the triple (subject, command, policy).
+// TODO: useful?
 type Capability struct {
 	// Principal that the chain is about (the Subject)
 	Subject did.DID

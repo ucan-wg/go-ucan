@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/wI2L/jsondiff"
 
-	"github.com/ucan-wg/go-ucan/capability/policy/selector"
+	"github.com/ucan-wg/go-ucan/v1/capability/policy/selector"
 )
 
 //go:embed supported.json
