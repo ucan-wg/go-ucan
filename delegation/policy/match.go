@@ -7,7 +7,8 @@ import (
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/datamodel"
 	"github.com/ipld/go-ipld-prime/must"
-	"github.com/storacha-network/go-ucanto/core/policy/selector"
+
+	"github.com/ucan-wg/go-ucan/delegation/policy/selector"
 )
 
 // Match determines if the IPLD node matches the policy document.

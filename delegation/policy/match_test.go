@@ -9,9 +9,10 @@ import (
 	"github.com/ipld/go-ipld-prime"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
-	"github.com/storacha-network/go-ucanto/core/policy/literal"
-	"github.com/storacha-network/go-ucanto/core/policy/selector"
 	"github.com/stretchr/testify/require"
+
+	"github.com/ucan-wg/go-ucan/delegation/policy/literal"
+	"github.com/ucan-wg/go-ucan/delegation/policy/selector"
 )
 
 func TestMatch(t *testing.T) {

@@ -1,0 +1,32 @@
+type DID string
+
+# The Delegation payload MUST describe the authorization claims, who is involved, and its validity period.
+type Payload struct {
+    # Issuer DID (sender)
+    iss DID
+    # Audience DID (receiver)
+    aud DID
+    # Principal that the chain is about (the Subject)
+    sub optional DID
+
+    # The Command to eventually invoke
+    cmd String
+
+    # The delegation policy
+    pol Policy
+
+    # A unique, random nonce
+    nonce Bytes
+
+    # Arbitrary Metadata
+    meta {String : Any}
+
+    # "Not before" UTC Unix Timestamp in seconds (valid from), 53-bits integer
+    nbf optional Int
+    # The timestamp at which the Invocation becomes invalid
+    exp nullable Int
+}
+
+type Policy struct {
+
+}

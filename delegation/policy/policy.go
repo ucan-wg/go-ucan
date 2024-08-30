@@ -5,7 +5,8 @@ package policy
 import (
 	"github.com/gobwas/glob"
 	"github.com/ipld/go-ipld-prime"
-	"github.com/storacha-network/go-ucanto/core/policy/selector"
+
+	"github.com/ucan-wg/go-ucan/delegation/policy/selector"
 )
 
 const (

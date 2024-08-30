@@ -12,10 +12,11 @@ import (
 	"github.com/ipld/go-ipld-prime/codec/dagjson"
 	"github.com/ipld/go-ipld-prime/datamodel"
 	basicnode "github.com/ipld/go-ipld-prime/node/basic"
-	"github.com/storacha-network/go-ucanto/core/policy/selector"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/wI2L/jsondiff"
+
+	"github.com/ucan-wg/go-ucan/delegation/policy/selector"
 )
 
 //go:embed supported.json
