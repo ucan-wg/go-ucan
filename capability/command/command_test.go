@@ -3,12 +3,12 @@ package command_test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/ucan-wg/go-ucan/pkg/command"
+
+	"github.com/ucan-wg/go-ucan/capability/command"
 )
 
-func TestCommand_String(t *testing.T) {
+func TestTop(t *testing.T) {
 	require.Equal(t, "/", command.Top().String())
 }
 
@@ -73,9 +73,9 @@ func TestParseCommand(t *testing.T) {
 				t.Parallel()
 
 				cmd, err := command.Parse(testcase.inp)
-				assert.ErrorIs(t, err, command.ErrParse)
-				assert.ErrorIs(t, err, testcase.err)
-				assert.Nil(t, cmd)
+				require.ErrorIs(t, err, command.ErrParse)
+				require.ErrorIs(t, err, testcase.err)
+				require.Nil(t, cmd)
 			})
 		}
 	})
