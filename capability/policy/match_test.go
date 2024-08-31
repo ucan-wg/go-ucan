@@ -320,6 +320,7 @@ func TestMatch(t *testing.T) {
 		for _, s := range []string{
 			"Alice*, Bob, Carol",
 			"Alice*, Bob*, Carol!",
+			"Alice Cooper, Bob, Carol.",
 			"Alice, Bob, Carol.",
 			" Alice*, Bob, Carol. ",
 		} {
