@@ -13,7 +13,7 @@ import (
 
 // Selector describes a UCAN policy selector, as specified here:
 // https://github.com/ucan-wg/delegation/blob/4094d5878b58f5d35055a3b93fccda0b8329ebae/README.md#selectors
-type Selector []Segment
+type Selector []segment
 
 func (s Selector) String() string {
 	var str string
@@ -21,23 +21,6 @@ func (s Selector) String() string {
 		str += seg.String()
 	}
 	return str
-}
-
-type Segment interface {
-	// Identity flags that this selector is the identity selector.
-	Identity() bool
-	// Optional flags that this selector is optional.
-	Optional() bool
-	// Iterator flags that this selector is an iterator segment.
-	Iterator() bool
-	// Slice flags that this segemnt targets a range of a slice.
-	Slice() []int
-	// Field is the name of a field in a struct/map.
-	Field() string
-	// Index is an index of a slice.
-	Index() int
-	// String returns the segment's string representation.
-	String() string
 }
 
 var Identity = segment{".", true, false, false, nil, "", 0}
@@ -58,37 +41,44 @@ type segment struct {
 	index    int
 }
 
+// String returns the segment's string representation.
 func (s segment) String() string {
 	return s.str
 }
 
+// Identity flags that this selector is the identity selector.
 func (s segment) Identity() bool {
 	return s.identity
 }
 
+// Optional flags that this selector is optional.
 func (s segment) Optional() bool {
 	return s.optional
 }
 
+// Iterator flags that this selector is an iterator segment.
 func (s segment) Iterator() bool {
 	return s.iterator
 }
 
+// Slice flags that this segment targets a range of a slice.
 func (s segment) Slice() []int {
 	return s.slice
 }
 
+// Field is the name of a field in a struct/map.
 func (s segment) Field() string {
 	return s.field
 }
 
+// Index is an index of a slice.
 func (s segment) Index() int {
 	return s.index
 }
 
 func Parse(str string) (Selector, error) {
 	if string(str[0]) != "." {
-		return nil, NewParseError("selector must start with identity segment '.'", str, 0, string(str[0]))
+		return nil, newParseError("selector must start with identity segment '.'", str, 0, string(str[0]))
 	}
 
 	col := 0
@@ -102,7 +92,7 @@ func Parse(str string) (Selector, error) {
 		switch seg {
 		case ".":
 			if len(sel) > 0 && sel[len(sel)-1].Identity() {
-				return nil, NewParseError("selector contains unsupported recursive descent segment: '..'", str, col, tok)
+				return nil, newParseError("selector contains unsupported recursive descent segment: '..'", str, col, tok)
 			}
 			sel = append(sel, Identity)
 		case "[]":
@@ -114,7 +104,7 @@ func Parse(str string) (Selector, error) {
 				if indexRegex.MatchString(lookup) { // index
 					idx, err := strconv.Atoi(lookup)
 					if err != nil {
-						return nil, NewParseError("invalid index", str, col, tok)
+						return nil, newParseError("invalid index", str, col, tok)
 					}
 					sel = append(sel, segment{str: tok, optional: opt, index: idx})
 				} else if strings.HasPrefix(lookup, "\"") && strings.HasSuffix(lookup, "\"") { // explicit field
@@ -127,25 +117,25 @@ func Parse(str string) (Selector, error) {
 					} else {
 						i, err := strconv.Atoi(splt[0])
 						if err != nil {
-							return nil, NewParseError("invalid slice index", str, col, tok)
+							return nil, newParseError("invalid slice index", str, col, tok)
 						}
 						rng = append(rng, i)
 					}
 					if splt[1] != "" {
 						i, err := strconv.Atoi(splt[1])
 						if err != nil {
-							return nil, NewParseError("invalid slice index", str, col, tok)
+							return nil, newParseError("invalid slice index", str, col, tok)
 						}
 						rng = append(rng, i)
 					}
 					sel = append(sel, segment{str: tok, optional: opt, slice: rng})
 				} else {
-					return nil, NewParseError(fmt.Sprintf("invalid segment: %s", seg), str, col, tok)
+					return nil, newParseError(fmt.Sprintf("invalid segment: %s", seg), str, col, tok)
 				}
 			} else if fieldRegex.MatchString(seg) {
 				sel = append(sel, segment{str: tok, optional: opt, field: seg[1:]})
 			} else {
-				return nil, NewParseError(fmt.Sprintf("invalid segment: %s", seg), str, col, tok)
+				return nil, newParseError(fmt.Sprintf("invalid segment: %s", seg), str, col, tok)
 			}
 		}
 		col += len(tok)
@@ -193,15 +183,6 @@ func tokenize(str string) []string {
 	return toks
 }
 
-type ParseError interface {
-	error
-	Name() string
-	Message() string
-	Source() string
-	Column() int
-	Token() string
-}
-
 type parseerr struct {
 	msg string
 	src string
@@ -233,7 +214,7 @@ func (p parseerr) Token() string {
 	return p.tok
 }
 
-func NewParseError(message string, source string, column int, token string) error {
+func newParseError(message string, source string, column int, token string) error {
 	return parseerr{message, source, column, token}
 }
 
@@ -312,7 +293,7 @@ func resolve(sel Selector, subject ipld.Node, at []string) (ipld.Node, []ipld.No
 			} else if seg.Optional() {
 				cur = nil
 			} else {
-				return nil, nil, NewResolutionError(fmt.Sprintf("can not iterate over kind: %s", kindString(cur)), at)
+				return nil, nil, newResolutionError(fmt.Sprintf("can not iterate over kind: %s", kindString(cur)), at)
 			}
 
 		} else if seg.Field() != "" {
@@ -324,7 +305,7 @@ func resolve(sel Selector, subject ipld.Node, at []string) (ipld.Node, []ipld.No
 						if seg.Optional() {
 							cur = nil
 						} else {
-							return nil, nil, NewResolutionError(fmt.Sprintf("object has no field named: %s", seg.Field()), at)
+							return nil, nil, newResolutionError(fmt.Sprintf("object has no field named: %s", seg.Field()), at)
 						}
 					} else {
 						return nil, nil, err
@@ -334,17 +315,17 @@ func resolve(sel Selector, subject ipld.Node, at []string) (ipld.Node, []ipld.No
 			} else if seg.Optional() {
 				cur = nil
 			} else {
-				return nil, nil, NewResolutionError(fmt.Sprintf("can not access field: %s on kind: %s", seg.Field(), kindString(cur)), at)
+				return nil, nil, newResolutionError(fmt.Sprintf("can not access field: %s on kind: %s", seg.Field(), kindString(cur)), at)
 			}
 		} else if seg.Slice() != nil {
 			if cur != nil && cur.Kind() == datamodel.Kind_List {
-				return nil, nil, NewResolutionError("list slice selection not yet implemented", at)
+				return nil, nil, newResolutionError("list slice selection not yet implemented", at)
 			} else if cur != nil && cur.Kind() == datamodel.Kind_Bytes {
-				return nil, nil, NewResolutionError("bytes slice selection not yet implemented", at)
+				return nil, nil, newResolutionError("bytes slice selection not yet implemented", at)
 			} else if seg.Optional() {
 				cur = nil
 			} else {
-				return nil, nil, NewResolutionError(fmt.Sprintf("can not index: %s on kind: %s", seg.Field(), kindString(cur)), at)
+				return nil, nil, newResolutionError(fmt.Sprintf("can not index: %s on kind: %s", seg.Field(), kindString(cur)), at)
 			}
 		} else {
 			at = append(at, fmt.Sprintf("%d", seg.Index()))
@@ -355,7 +336,7 @@ func resolve(sel Selector, subject ipld.Node, at []string) (ipld.Node, []ipld.No
 						if seg.Optional() {
 							cur = nil
 						} else {
-							return nil, nil, NewResolutionError(fmt.Sprintf("index out of bounds: %d", seg.Index()), at)
+							return nil, nil, newResolutionError(fmt.Sprintf("index out of bounds: %d", seg.Index()), at)
 						}
 					} else {
 						return nil, nil, err
@@ -365,7 +346,7 @@ func resolve(sel Selector, subject ipld.Node, at []string) (ipld.Node, []ipld.No
 			} else if seg.Optional() {
 				cur = nil
 			} else {
-				return nil, nil, NewResolutionError(fmt.Sprintf("can not access field: %s on kind: %s", seg.Field(), kindString(cur)), at)
+				return nil, nil, newResolutionError(fmt.Sprintf("can not access field: %s on kind: %s", seg.Field(), kindString(cur)), at)
 			}
 		}
 	}
@@ -393,13 +374,6 @@ func isMissing(err error) bool {
 	return false
 }
 
-type ResolutionError interface {
-	error
-	Name() string
-	Message() string
-	At() []string
-}
-
 type resolutionerr struct {
 	msg string
 	at  []string
@@ -421,6 +395,6 @@ func (r resolutionerr) Error() string {
 	return r.Message()
 }
 
-func NewResolutionError(message string, at []string) error {
+func newResolutionError(message string, at []string) error {
 	return resolutionerr{message, at}
 }

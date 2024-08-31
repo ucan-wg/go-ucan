@@ -377,9 +377,7 @@ func TestSelect(t *testing.T) {
 
 		fmt.Println(err)
 
-		if _, ok := err.(ResolutionError); !ok {
-			t.Fatalf("error was not a resolution error")
-		}
+		require.ErrorAs(t, err, &resolutionerr{}, "error was not a resolution error")
 	})
 
 	t.Run("optional not exists", func(t *testing.T) {
