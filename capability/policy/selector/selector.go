@@ -333,7 +333,11 @@ func resolve(sel Selector, subject ipld.Node, at []string) (ipld.Node, []ipld.No
 		} else {
 			at = append(at, fmt.Sprintf("%d", seg.Index()))
 			if cur != nil && cur.Kind() == datamodel.Kind_List {
-				n, err := cur.LookupByIndex(int64(seg.Index()))
+				idx := int64(seg.Index())
+				if idx < 0 {
+					idx = cur.Length() + idx
+				}
+				n, err := cur.LookupByIndex(idx)
 				if err != nil {
 					if isMissing(err) {
 						if seg.Optional() {
