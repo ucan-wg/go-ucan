@@ -23,7 +23,7 @@ const (
 	KindAny                = "any"
 )
 
-type Policy = []Statement
+type Policy []Statement
 
 type Statement interface {
 	Kind() string
@@ -126,41 +126,31 @@ func Not(stmt Statement) NegationStatement {
 	return negation{stmt}
 }
 
-type conjunction struct {
+type connective struct {
+	kind       string
 	statements []Statement
 }
 
-func (n conjunction) Kind() string {
-	return KindAnd
+func (c connective) Kind() string {
+	return c.kind
 }
 
-func (n conjunction) Value() []Statement {
-	return n.statements
+func (c connective) Value() []Statement {
+	return c.statements
 }
 
 func And(stmts ...Statement) ConjunctionStatement {
-	return conjunction{stmts}
-}
-
-type disjunction struct {
-	statements []Statement
-}
-
-func (n disjunction) Kind() string {
-	return KindOr
-}
-
-func (n disjunction) Value() []Statement {
-	return n.statements
+	return connective{KindAnd, stmts}
 }
 
 func Or(stmts ...Statement) DisjunctionStatement {
-	return disjunction{stmts}
+	return connective{KindOr, stmts}
 }
 
 type wildcard struct {
 	selector selector.Selector
-	glob     glob.Glob
+	pattern  string
+	glob     glob.Glob // not serialized
 }
 
 func (n wildcard) Kind() string {
@@ -175,14 +165,18 @@ func (n wildcard) Value() glob.Glob {
 	return n.glob
 }
 
-func Like(selector selector.Selector, glob glob.Glob) WildcardStatement {
-	return wildcard{selector, glob}
+func Like(selector selector.Selector, pattern string) (WildcardStatement, error) {
+	g, err := glob.Compile(pattern)
+	if err != nil {
+		return nil, err
+	}
+	return wildcard{selector, pattern, g}, nil
 }
 
 type quantifier struct {
-	kind     string
-	selector selector.Selector
-	policy   Policy
+	kind       string
+	selector   selector.Selector
+	statements []Statement
 }
 
 func (n quantifier) Kind() string {
@@ -194,7 +188,7 @@ func (n quantifier) Selector() selector.Selector {
 }
 
 func (n quantifier) Value() Policy {
-	return n.policy
+	return n.statements
 }
 
 func All(selector selector.Selector, policy ...Statement) QuantifierStatement {

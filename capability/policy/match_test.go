@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/gobwas/glob"
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
@@ -294,8 +293,7 @@ func TestMatch(t *testing.T) {
 	})
 
 	t.Run("wildcard", func(t *testing.T) {
-		glb, err := glob.Compile(`Alice\*, Bob*, Carol.`)
-		require.NoError(t, err)
+		pattern := `Alice\*, Bob*, Carol.`
 
 		for _, s := range []string{
 			"Alice*, Bob, Carol.",
@@ -310,7 +308,10 @@ func TestMatch(t *testing.T) {
 					nb.AssignString(s)
 					nd := nb.Build()
 
-					pol := Policy{Like(selector.MustParse("."), glb)}
+					statement, err := Like(selector.MustParse("."), pattern)
+					require.NoError(t, err)
+
+					pol := Policy{statement}
 					ok := Match(pol, nd)
 					require.True(t, ok)
 				})
@@ -331,7 +332,10 @@ func TestMatch(t *testing.T) {
 					nb.AssignString(s)
 					nd := nb.Build()
 
-					pol := Policy{Like(selector.MustParse("."), glb)}
+					statement, err := Like(selector.MustParse("."), pattern)
+					require.NoError(t, err)
+
+					pol := Policy{statement}
 					ok := Match(pol, nd)
 					require.False(t, ok)
 				})
