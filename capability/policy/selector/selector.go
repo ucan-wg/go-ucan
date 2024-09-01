@@ -15,11 +15,11 @@ import (
 type Selector []segment
 
 func (s Selector) String() string {
-	var str string
+	var res strings.Builder
 	for _, seg := range s {
-		str += seg.String()
+		res.WriteString(seg.String())
 	}
-	return str
+	return res.String()
 }
 
 var Identity = segment{".", true, false, false, nil, "", 0}
