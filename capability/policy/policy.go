@@ -10,17 +10,17 @@ import (
 )
 
 const (
-	Kind_Equal              = "=="
-	Kind_GreaterThan        = ">"
-	Kind_GreaterThanOrEqual = ">="
-	Kind_LessThan           = "<"
-	Kind_LessThanOrEqual    = "<="
-	Kind_Not                = "not"
-	Kind_And                = "and"
-	Kind_Or                 = "or"
-	Kind_Like               = "like"
-	Kind_All                = "all"
-	Kind_Any                = "any"
+	KindEqual              = "=="
+	KindGreaterThan        = ">"
+	KindGreaterThanOrEqual = ">="
+	KindLessThan           = "<"
+	KindLessThanOrEqual    = "<="
+	KindNot                = "not"
+	KindAnd                = "and"
+	KindOr                 = "or"
+	KindLike               = "like"
+	KindAll                = "all"
+	KindAny                = "any"
 )
 
 type Policy = []Statement
@@ -91,23 +91,23 @@ func (e equality) Selector() selector.Selector {
 }
 
 func Equal(selector selector.Selector, value ipld.Node) EqualityStatement {
-	return equality{Kind_Equal, selector, value}
+	return equality{KindEqual, selector, value}
 }
 
 func GreaterThan(selector selector.Selector, value ipld.Node) InequalityStatement {
-	return equality{Kind_GreaterThan, selector, value}
+	return equality{KindGreaterThan, selector, value}
 }
 
 func GreaterThanOrEqual(selector selector.Selector, value ipld.Node) InequalityStatement {
-	return equality{Kind_GreaterThanOrEqual, selector, value}
+	return equality{KindGreaterThanOrEqual, selector, value}
 }
 
 func LessThan(selector selector.Selector, value ipld.Node) InequalityStatement {
-	return equality{Kind_LessThan, selector, value}
+	return equality{KindLessThan, selector, value}
 }
 
 func LessThanOrEqual(selector selector.Selector, value ipld.Node) InequalityStatement {
-	return equality{Kind_LessThanOrEqual, selector, value}
+	return equality{KindLessThanOrEqual, selector, value}
 }
 
 type negation struct {
@@ -115,7 +115,7 @@ type negation struct {
 }
 
 func (n negation) Kind() string {
-	return Kind_Not
+	return KindNot
 }
 
 func (n negation) Value() Statement {
@@ -131,7 +131,7 @@ type conjunction struct {
 }
 
 func (n conjunction) Kind() string {
-	return Kind_And
+	return KindAnd
 }
 
 func (n conjunction) Value() []Statement {
@@ -147,7 +147,7 @@ type disjunction struct {
 }
 
 func (n disjunction) Kind() string {
-	return Kind_Or
+	return KindOr
 }
 
 func (n disjunction) Value() []Statement {
@@ -164,7 +164,7 @@ type wildcard struct {
 }
 
 func (n wildcard) Kind() string {
-	return Kind_Like
+	return KindLike
 }
 
 func (n wildcard) Selector() selector.Selector {
@@ -198,9 +198,9 @@ func (n quantifier) Value() Policy {
 }
 
 func All(selector selector.Selector, policy ...Statement) QuantifierStatement {
-	return quantifier{Kind_All, selector, policy}
+	return quantifier{KindAll, selector, policy}
 }
 
 func Any(selector selector.Selector, policy ...Statement) QuantifierStatement {
-	return quantifier{Kind_Any, selector, policy}
+	return quantifier{KindAny, selector, policy}
 }

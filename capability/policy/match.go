@@ -24,7 +24,7 @@ func Match(policy Policy, node ipld.Node) bool {
 
 func matchStatement(statement Statement, node ipld.Node) bool {
 	switch statement.Kind() {
-	case Kind_Equal:
+	case KindEqual:
 		if s, ok := statement.(EqualityStatement); ok {
 			one, _, err := selector.Select(s.Selector(), node)
 			if err != nil || one == nil {
@@ -32,7 +32,7 @@ func matchStatement(statement Statement, node ipld.Node) bool {
 			}
 			return datamodel.DeepEqual(s.Value(), one)
 		}
-	case Kind_GreaterThan:
+	case KindGreaterThan:
 		if s, ok := statement.(InequalityStatement); ok {
 			one, _, err := selector.Select(s.Selector(), node)
 			if err != nil || one == nil {
@@ -40,7 +40,7 @@ func matchStatement(statement Statement, node ipld.Node) bool {
 			}
 			return isOrdered(s.Value(), one, gt)
 		}
-	case Kind_GreaterThanOrEqual:
+	case KindGreaterThanOrEqual:
 		if s, ok := statement.(InequalityStatement); ok {
 			one, _, err := selector.Select(s.Selector(), node)
 			if err != nil || one == nil {
@@ -48,7 +48,7 @@ func matchStatement(statement Statement, node ipld.Node) bool {
 			}
 			return isOrdered(s.Value(), one, gte)
 		}
-	case Kind_LessThan:
+	case KindLessThan:
 		if s, ok := statement.(InequalityStatement); ok {
 			one, _, err := selector.Select(s.Selector(), node)
 			if err != nil || one == nil {
@@ -56,7 +56,7 @@ func matchStatement(statement Statement, node ipld.Node) bool {
 			}
 			return isOrdered(s.Value(), one, lt)
 		}
-	case Kind_LessThanOrEqual:
+	case KindLessThanOrEqual:
 		if s, ok := statement.(InequalityStatement); ok {
 			one, _, err := selector.Select(s.Selector(), node)
 			if err != nil || one == nil {
@@ -64,11 +64,11 @@ func matchStatement(statement Statement, node ipld.Node) bool {
 			}
 			return isOrdered(s.Value(), one, lte)
 		}
-	case Kind_Not:
+	case KindNot:
 		if s, ok := statement.(NegationStatement); ok {
 			return !matchStatement(s.Value(), node)
 		}
-	case Kind_And:
+	case KindAnd:
 		if s, ok := statement.(ConjunctionStatement); ok {
 			for _, cs := range s.Value() {
 				r := matchStatement(cs, node)
@@ -78,7 +78,7 @@ func matchStatement(statement Statement, node ipld.Node) bool {
 			}
 			return true
 		}
-	case Kind_Or:
+	case KindOr:
 		if s, ok := statement.(DisjunctionStatement); ok {
 			if len(s.Value()) == 0 {
 				return true
@@ -91,7 +91,7 @@ func matchStatement(statement Statement, node ipld.Node) bool {
 			}
 			return false
 		}
-	case Kind_Like:
+	case KindLike:
 		if s, ok := statement.(WildcardStatement); ok {
 			one, _, err := selector.Select(s.Selector(), node)
 			if err != nil || one == nil {
@@ -103,7 +103,7 @@ func matchStatement(statement Statement, node ipld.Node) bool {
 			}
 			return s.Value().Match(v)
 		}
-	case Kind_All:
+	case KindAll:
 		if s, ok := statement.(QuantifierStatement); ok {
 			_, many, err := selector.Select(s.Selector(), node)
 			if err != nil || many == nil {
@@ -117,7 +117,7 @@ func matchStatement(statement Statement, node ipld.Node) bool {
 			}
 			return true
 		}
-	case Kind_Any:
+	case KindAny:
 		if s, ok := statement.(QuantifierStatement); ok {
 			_, many, err := selector.Select(s.Selector(), node)
 			if err != nil || many == nil {
