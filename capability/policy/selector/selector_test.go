@@ -2,10 +2,13 @@ package selector
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/ipld/go-ipld-prime"
+	"github.com/ipld/go-ipld-prime/codec/dagjson"
 	"github.com/ipld/go-ipld-prime/must"
+	basicnode "github.com/ipld/go-ipld-prime/node/basic"
 	"github.com/ipld/go-ipld-prime/node/bindnode"
 	"github.com/ipld/go-ipld-prime/printer"
 	"github.com/stretchr/testify/require"
@@ -425,5 +428,72 @@ func TestSelect(t *testing.T) {
 
 		require.Equal(t, alice.Interests[0].Name, must.String(many[0]))
 		require.Equal(t, alice.Interests[0].Experience, int(must.Int(many[2])))
+	})
+}
+
+func FuzzParse(f *testing.F) {
+	selectorCorpus := []string{
+		`.`, `.[]`, `.[]?`, `.[][]?`, `.x`, `.["x"]`, `.[0]`, `.[-1]`, `.[0]`,
+		`.[0]`, `.[0:2]`, `.[1:]`, `.[:2]`, `.[0:2]`, `.[1:]`, `.x?`, `.x?`,
+		`.x?`, `.["x"]?`, `.length?`, `.[4]?`, `.[]`, `.[][]`, `.x`, `.x`, `.x`,
+		`.length`, `.[4]`,
+	}
+	for _, selector := range selectorCorpus {
+		f.Add(selector)
+	}
+	f.Fuzz(func(t *testing.T, selector string) {
+		// only look for panic()
+		_, _ = Parse(selector)
+	})
+}
+
+func FuzzParseAndSelect(f *testing.F) {
+	selectorCorpus := []string{
+		`.`, `.[]`, `.[]?`, `.[][]?`, `.x`, `.["x"]`, `.[0]`, `.[-1]`, `.[0]`,
+		`.[0]`, `.[0:2]`, `.[1:]`, `.[:2]`, `.[0:2]`, `.[1:]`, `.x?`, `.x?`,
+		`.x?`, `.["x"]?`, `.length?`, `.[4]?`, `.[]`, `.[][]`, `.x`, `.x`, `.x`,
+		`.length`, `.[4]`,
+	}
+	subjectCorpus := []string{
+		`{"x":1}`, `[1, 2]`, `null`, `[[1], 2, [3]]`, `{"x": 1 }`, `{"x": 1}`,
+		`[1, 2]`, `[1, 2]`, `"Hi"`, `{"/":{"bytes":"AAE"}`, `[0, 1, 2]`,
+		`[0, 1, 2]`, `[0, 1, 2]`, `"hello"`, `{"/":{"bytes":"AAEC"}}`, `{}`,
+		`null`, `[]`, `{}`, `[1, 2]`, `[0, 1]`, `null`, `[[1], 2, [3]]`, `{}`,
+		`null`, `[]`, `[1, 2]`, `[0, 1]`,
+	}
+	for i := 0; ; i++ {
+		switch {
+		case i < len(selectorCorpus) && i < len(subjectCorpus):
+			f.Add(selectorCorpus[i], subjectCorpus[i])
+			continue
+		case i > len(selectorCorpus):
+			f.Add("", subjectCorpus[i])
+			continue
+		case i > len(subjectCorpus):
+			f.Add(selectorCorpus[i], "")
+			continue
+		}
+		break
+	}
+
+	f.Fuzz(func(t *testing.T, selector, subject string) {
+		sel, err := Parse(selector)
+		if err != nil {
+			t.Skip()
+		}
+
+		np := basicnode.Prototype.Any
+		nb := np.NewBuilder()
+		err = dagjson.Decode(nb, strings.NewReader(subject))
+		if err != nil {
+			t.Skip()
+		}
+		node := nb.Build()
+		if node == nil {
+			t.Skip()
+		}
+
+		// look for panic()
+		_, _, _ = Select(sel, node)
 	})
 }
