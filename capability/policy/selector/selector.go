@@ -77,6 +77,9 @@ func (s segment) Index() int {
 }
 
 func Parse(str string) (Selector, error) {
+	if len(str) == 0 {
+		return nil, newParseError("empty selector", str, 0, "")
+	}
 	if string(str[0]) != "." {
 		return nil, newParseError("selector must start with identity segment '.'", str, 0, string(str[0]))
 	}
