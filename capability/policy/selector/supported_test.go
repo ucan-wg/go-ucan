@@ -2,8 +2,6 @@ package selector_test
 
 import (
 	"bytes"
-	_ "embed"
-	"encoding/json"
 	"strings"
 	"testing"
 
@@ -17,135 +15,124 @@ import (
 	"github.com/ucan-wg/go-ucan/v1/capability/policy/selector"
 )
 
-//go:embed supported.json
-var supported []byte
-
-type Testcase struct {
-	Name     string `json:"name"`
-	Selector string `json:"selector"`
-	Input    string `json:"input"`
-}
-
-func (tc Testcase) Select(t *testing.T) (datamodel.Node, []datamodel.Node, error) {
-	t.Helper()
-
-	sel, err := selector.Parse(tc.Selector)
-	require.NoError(t, err)
-
-	return selector.Select(sel, node(t, tc.Input))
-}
-
-type SuccessTestcase struct {
-	Testcase
-	Output *string `json:"output"`
-}
-
-func (tc SuccessTestcase) SelectAndCompare(t *testing.T) {
-	t.Helper()
-
-	exp := node(t, *tc.Output)
-
-	node, nodes, err := tc.Select(t)
-	require.NoError(t, err)
-	require.NotEqual(t, node != nil, len(nodes) > 0) // XOR (only one of node or nodes should be set)
-
-	if node == nil {
-		nb := basicnode.Prototype.List.NewBuilder()
-		la, err := nb.BeginList(int64(len(nodes)))
-		require.NoError(t, err)
-
-		for _, n := range nodes {
-			// TODO: This code is probably not needed if the Select operation properly prunes nil values - e.g.: Optional Iterator
-			if n == nil {
-				n = datamodel.Null
-			}
-
-			require.NoError(t, la.AssembleValue().AssignNode(n))
-		}
-
-		require.NoError(t, la.Finish())
-
-		node = nb.Build()
-	}
-
-	equalIPLD(t, exp, node)
-}
-
-type Testcases struct {
-	SuccessTestcases []SuccessTestcase `json:"pass"`
-	NullTestcases    []Testcase        `json:"null"`
-	ErrorTestcases   []Testcase        `json:"fail"`
-}
-
 // TestSupported Forms runs tests against the Selector according to the
 // proposed "Supported Forms" presented in this GitHub issue:
 // https://github.com/ucan-wg/delegation/issues/5#issue-2154766496
 func TestSupportedForms(t *testing.T) {
-	t.Parallel()
+	type Testcase struct {
+		Name     string
+		Selector string
+		Input    string
+		Output   string
+	}
 
-	var testcases Testcases
+	// Pass
+	for _, testcase := range []Testcase{
+		{Name: "Identity", Selector: `.`, Input: `{"x":1}`, Output: `{"x":1}`},
+		{Name: "Iterator", Selector: `.[]`, Input: `[1, 2]`, Output: `[1, 2]`},
+		{Name: "Optional Null Iterator", Selector: `.[]?`, Input: `null`, Output: `()`},
+		{Name: "Optional Iterator", Selector: `.[][]?`, Input: `[[1], 2, [3]]`, Output: `[1, 3]`},
+		{Name: "Object Key", Selector: `.x`, Input: `{"x": 1 }`, Output: `1`},
+		{Name: "Quoted Key", Selector: `.["x"]`, Input: `{"x": 1}`, Output: `1`},
+		{Name: "Index", Selector: `.[0]`, Input: `[1, 2]`, Output: `1`},
+		{Name: "Negative Index", Selector: `.[-1]`, Input: `[1, 2]`, Output: `2`},
+		{Name: "String Index", Selector: `.[0]`, Input: `"Hi"`, Output: `"H"`},
+		{Name: "Bytes Index", Selector: `.[0]`, Input: `{"/":{"bytes":"AAE"}`, Output: `0`},
+		{Name: "Array Slice", Selector: `.[0:2]`, Input: `[0, 1, 2]`, Output: `[0, 1]`},
+		{Name: "Array Slice", Selector: `.[1:]`, Input: `[0, 1, 2]`, Output: `[1, 2]`},
+		{Name: "Array Slice", Selector: `.[:2]`, Input: `[0, 1, 2]`, Output: `[0, 1]`},
+		{Name: "String Slice", Selector: `.[0:2]`, Input: `"hello"`, Output: `"he"`},
+		{Name: "Bytes Index", Selector: `.[1:]`, Input: `{"/":{"bytes":"AAEC"}}`, Output: `{"/":{"bytes":"AQI"}}`},
+	} {
+		tc := testcase
+		t.Run("Pass: "+tc.Name, func(t *testing.T) {
+			t.Parallel()
 
-	require.NoError(t, json.Unmarshal(supported, &testcases))
+			sel, err := selector.Parse(tc.Selector)
+			require.NoError(t, err)
 
-	t.Run("node(s)", func(t *testing.T) {
-		t.Parallel()
+			// attempt to select
+			node, nodes, err := selector.Select(sel, makeNode(t, tc.Input))
+			require.NoError(t, err)
+			require.NotEqual(t, node != nil, len(nodes) > 0) // XOR (only one of node or nodes should be set)
 
-		for _, testcase := range testcases.SuccessTestcases {
-			testcase := testcase
-
-			t.Run(testcase.Name, func(t *testing.T) {
-				t.Parallel()
-
-				// TODO: This test case panics during Select, though Parse works - reports
-				// "index out of range [-1]" so a bit of subtraction and some bounds checking
-				// should fix this testcase.
-				if testcase.Name == "Negative Index" {
-					t.Skip()
-				}
-
-				testcase.SelectAndCompare(t)
-			})
-		}
-	})
-
-	t.Run("null", func(t *testing.T) {
-		t.Parallel()
-
-		for _, testcase := range testcases.NullTestcases {
-			testcase := testcase
-
-			t.Run(testcase.Name, func(t *testing.T) {
-				t.Parallel()
-
-				node, nodes, err := testcase.Select(t)
+			// make an IPLD List node from a []datamodel.Node
+			if node == nil {
+				nb := basicnode.Prototype.List.NewBuilder()
+				la, err := nb.BeginList(int64(len(nodes)))
 				require.NoError(t, err)
-				// TODO: should Select return a single node which is sometimes a list or null?
-				// require.Equal(t, datamodel.Null, node)
-				assert.Nil(t, node)
-				assert.Empty(t, nodes)
-			})
-		}
-	})
 
-	t.Run("error", func(t *testing.T) {
-		t.Parallel()
+				for _, n := range nodes {
+					// TODO: This code is probably not needed if the Select operation properly prunes nil values - e.g.: Optional Iterator
+					if n == nil {
+						n = datamodel.Null
+					}
 
-		for _, testcase := range testcases.ErrorTestcases {
-			testcase := testcase
+					require.NoError(t, la.AssembleValue().AssignNode(n))
+				}
+				require.NoError(t, la.Finish())
 
-			t.Run(testcase.Name, func(t *testing.T) {
-				t.Parallel()
+				node = nb.Build()
+			}
 
-				node, nodes, err := testcase.Select(t)
-				require.Error(t, err)
-				assert.Nil(t, node)
-				assert.Empty(t, nodes)
-			})
-		}
-	})
+			exp := makeNode(t, tc.Output)
+			equalIPLD(t, exp, node)
+		})
+	}
+
+	// null
+	for _, testcase := range []Testcase{
+		{Name: "Optional Missing Key", Selector: `.x?`, Input: `{}`},
+		{Name: "Optional Null Key", Selector: `.x?`, Input: `null`},
+		{Name: "Optional Array Key", Selector: `.x?`, Input: `[]`},
+		{Name: "Optional Quoted Key", Selector: `.["x"]?`, Input: `{}`},
+		{Name: ".length?", Selector: `.length?`, Input: `[1, 2]`},
+		{Name: "Optional Index", Selector: `.[4]?`, Input: `[0, 1]`},
+	} {
+		tc := testcase
+		t.Run("Null: "+tc.Name, func(t *testing.T) {
+			t.Parallel()
+
+			sel, err := selector.Parse(tc.Selector)
+			require.NoError(t, err)
+
+			// attempt to select
+			node, nodes, err := selector.Select(sel, makeNode(t, tc.Input))
+			require.NoError(t, err)
+			// TODO: should Select return a single node which is sometimes a list or null?
+			// require.Equal(t, datamodel.Null, node)
+			assert.Nil(t, node)
+			assert.Empty(t, nodes)
+		})
+	}
+
+	// error
+	for _, testcase := range []Testcase{
+		{Name: "Null Iterator", Selector: `.[]`, Input: `null`},
+		{Name: "Nested Iterator", Selector: `.[][]`, Input: `[[1], 2, [3]]`},
+		{Name: "Missing Key", Selector: `.x`, Input: `{}`},
+		{Name: "Null Key", Selector: `.x`, Input: `null`},
+		{Name: "Array Key", Selector: `.x`, Input: `[]`},
+		{Name: ".length", Selector: `.length`, Input: `[1, 2]`},
+		{Name: "Out of bound Index", Selector: `.[4]`, Input: `[0, 1]`},
+	} {
+		tc := testcase
+		t.Run("Null: "+tc.Name, func(t *testing.T) {
+			t.Parallel()
+
+			sel, err := selector.Parse(tc.Selector)
+			require.NoError(t, err)
+
+			// attempt to select
+			node, nodes, err := selector.Select(sel, makeNode(t, tc.Input))
+			require.Error(t, err)
+			assert.Nil(t, node)
+			assert.Empty(t, nodes)
+		})
+	}
 }
 
-func equalIPLD(t *testing.T, expected datamodel.Node, actual datamodel.Node, msgAndArgs ...interface{}) bool {
+func equalIPLD(t *testing.T, expected datamodel.Node, actual datamodel.Node) bool {
 	t.Helper()
 
 	exp, act := &bytes.Buffer{}, &bytes.Buffer{}
@@ -162,12 +149,12 @@ func equalIPLD(t *testing.T, expected datamodel.Node, actual datamodel.Node, msg
 	return true
 }
 
-func node(t *testing.T, json string) ipld.Node {
+func makeNode(t *testing.T, dagJsonInput string) ipld.Node {
 	t.Helper()
 
 	np := basicnode.Prototype.Any
 	nb := np.NewBuilder()
-	require.NoError(t, dagjson.Decode(nb, strings.NewReader(json)))
+	require.NoError(t, dagjson.Decode(nb, strings.NewReader(dagJsonInput)))
 
 	node := nb.Build()
 	require.NotNil(t, node)
