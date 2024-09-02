@@ -10,66 +10,23 @@ import (
 )
 
 const (
-	KindEqual              = "=="
-	KindGreaterThan        = ">"
-	KindGreaterThanOrEqual = ">="
-	KindLessThan           = "<"
-	KindLessThanOrEqual    = "<="
-	KindNot                = "not"
-	KindAnd                = "and"
-	KindOr                 = "or"
-	KindLike               = "like"
-	KindAll                = "all"
-	KindAny                = "any"
+	KindEqual              = "=="   // implemented by equality
+	KindGreaterThan        = ">"    // implemented by equality
+	KindGreaterThanOrEqual = ">="   // implemented by equality
+	KindLessThan           = "<"    // implemented by equality
+	KindLessThanOrEqual    = "<="   // implemented by equality
+	KindNot                = "not"  // implemented by negation
+	KindAnd                = "and"  // implemented by connective
+	KindOr                 = "or"   // implemented by connective
+	KindLike               = "like" // implemented by wildcard
+	KindAll                = "all"  // implemented by quantifier
+	KindAny                = "any"  // implemented by quantifier
 )
 
 type Policy []Statement
 
 type Statement interface {
 	Kind() string
-}
-
-type EqualityStatement interface {
-	Statement
-	Selector() selector.Selector
-	Value() ipld.Node
-}
-
-type InequalityStatement interface {
-	Statement
-	Selector() selector.Selector
-	Value() ipld.Node
-}
-
-type WildcardStatement interface {
-	Statement
-	Selector() selector.Selector
-	Value() glob.Glob
-}
-
-type ConnectiveStatement interface {
-	Statement
-}
-
-type NegationStatement interface {
-	ConnectiveStatement
-	Value() Statement
-}
-
-type ConjunctionStatement interface {
-	ConnectiveStatement
-	Value() []Statement
-}
-
-type DisjunctionStatement interface {
-	ConnectiveStatement
-	Value() []Statement
-}
-
-type QuantifierStatement interface {
-	Statement
-	Selector() selector.Selector
-	Value() Policy
 }
 
 type equality struct {
@@ -82,31 +39,23 @@ func (e equality) Kind() string {
 	return e.kind
 }
 
-func (e equality) Value() ipld.Node {
-	return e.value
-}
-
-func (e equality) Selector() selector.Selector {
-	return e.selector
-}
-
-func Equal(selector selector.Selector, value ipld.Node) EqualityStatement {
+func Equal(selector selector.Selector, value ipld.Node) Statement {
 	return equality{KindEqual, selector, value}
 }
 
-func GreaterThan(selector selector.Selector, value ipld.Node) InequalityStatement {
+func GreaterThan(selector selector.Selector, value ipld.Node) Statement {
 	return equality{KindGreaterThan, selector, value}
 }
 
-func GreaterThanOrEqual(selector selector.Selector, value ipld.Node) InequalityStatement {
+func GreaterThanOrEqual(selector selector.Selector, value ipld.Node) Statement {
 	return equality{KindGreaterThanOrEqual, selector, value}
 }
 
-func LessThan(selector selector.Selector, value ipld.Node) InequalityStatement {
+func LessThan(selector selector.Selector, value ipld.Node) Statement {
 	return equality{KindLessThan, selector, value}
 }
 
-func LessThanOrEqual(selector selector.Selector, value ipld.Node) InequalityStatement {
+func LessThanOrEqual(selector selector.Selector, value ipld.Node) Statement {
 	return equality{KindLessThanOrEqual, selector, value}
 }
 
@@ -118,11 +67,7 @@ func (n negation) Kind() string {
 	return KindNot
 }
 
-func (n negation) Value() Statement {
-	return n.statement
-}
-
-func Not(stmt Statement) NegationStatement {
+func Not(stmt Statement) Statement {
 	return negation{stmt}
 }
 
@@ -135,15 +80,11 @@ func (c connective) Kind() string {
 	return c.kind
 }
 
-func (c connective) Value() []Statement {
-	return c.statements
-}
-
-func And(stmts ...Statement) ConjunctionStatement {
+func And(stmts ...Statement) Statement {
 	return connective{KindAnd, stmts}
 }
 
-func Or(stmts ...Statement) DisjunctionStatement {
+func Or(stmts ...Statement) Statement {
 	return connective{KindOr, stmts}
 }
 
@@ -157,15 +98,7 @@ func (n wildcard) Kind() string {
 	return KindLike
 }
 
-func (n wildcard) Selector() selector.Selector {
-	return n.selector
-}
-
-func (n wildcard) Value() glob.Glob {
-	return n.glob
-}
-
-func Like(selector selector.Selector, pattern string) (WildcardStatement, error) {
+func Like(selector selector.Selector, pattern string) (Statement, error) {
 	g, err := glob.Compile(pattern)
 	if err != nil {
 		return nil, err
@@ -183,18 +116,10 @@ func (n quantifier) Kind() string {
 	return n.kind
 }
 
-func (n quantifier) Selector() selector.Selector {
-	return n.selector
-}
-
-func (n quantifier) Value() Policy {
-	return n.statements
-}
-
-func All(selector selector.Selector, policy ...Statement) QuantifierStatement {
+func All(selector selector.Selector, policy ...Statement) Statement {
 	return quantifier{KindAll, selector, policy}
 }
 
-func Any(selector selector.Selector, policy ...Statement) QuantifierStatement {
+func Any(selector selector.Selector, policy ...Statement) Statement {
 	return quantifier{KindAny, selector, policy}
 }
