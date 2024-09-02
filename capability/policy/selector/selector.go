@@ -183,6 +183,12 @@ func resolve(sel Selector, subject ipld.Node, at []string) (ipld.Node, []ipld.No
 				if idx < 0 {
 					idx = cur.Length() + idx
 				}
+				if idx < 0 {
+					// necessary until https://github.com/ipld/go-ipld-prime/pull/571
+					// after, isMissing() below will work
+					// TODO: remove
+					return nil, nil, newResolutionError(fmt.Sprintf("index out of bounds: %d", seg.Index()), at)
+				}
 				n, err := cur.LookupByIndex(idx)
 				if err != nil {
 					if isMissing(err) {
