@@ -46,7 +46,7 @@ type PayloadModel struct {
 	Cmd string
 
 	// The delegation policy
-	Pol PolicyModel
+	Pol datamodel.Node
 
 	// A unique, random nonce
 	Nonce []byte
@@ -66,11 +66,4 @@ type PayloadModel struct {
 type MetaModel struct {
 	Keys   []string
 	Values map[string]datamodel.Node
-}
-
-type PolicyModel struct {
-}
-
-func PointerTo[T any](v T) *T {
-	return &v
 }

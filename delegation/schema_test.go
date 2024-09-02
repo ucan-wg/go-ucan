@@ -5,51 +5,62 @@ import (
 	"testing"
 
 	"github.com/ipld/go-ipld-prime"
-	"github.com/ipld/go-ipld-prime/datamodel"
-	"github.com/ipld/go-ipld-prime/node/bindnode"
 	"github.com/stretchr/testify/require"
 )
 
 func TestSchemaRoundTrip(t *testing.T) {
-	p := &PayloadModel{
-		Iss:   "did:key:abc123",
-		Aud:   "did:key:def456",
-		Sub:   PointerTo(""),
-		Cmd:   "/foo/bar",
-		Pol:   PolicyModel{}, // TODO: have something here
-		Nonce: []byte("super-random"),
-		Meta: MetaModel{
-			Keys: []string{"foo", "bar"},
-			Values: map[string]datamodel.Node{
-				"foo": bindnode.Wrap(PointerTo("fooo"), nil),
-				"bar": bindnode.Wrap(PointerTo("baaar"), nil),
-			},
-		},
-		Nbf: PointerTo(int64(123456)),
-		Exp: PointerTo(int64(123456)),
-	}
+	const delegationJson = `
+{
+  "aud":"did:key:def456",
+  "cmd":"/foo/bar",
+  "exp":123456,
+  "iss":"did:key:abc123",
+  "meta":{
+    "bar":"baaar",
+    "foo":"fooo"
+  },
+  "nbf":123456,
+  "nonce":{
+    "/":{
+      "bytes":"c3VwZXItcmFuZG9t"
+    }
+  },
+  "pol":[
+    ["==", ".status", "draft"],
+    ["all", ".reviewer", [
+		["like", ".email", "*@example.com"]]
+	],
+    ["any", ".tags", [ 
+		["or", [
+			["==", ".", "news"], 
+			["==", ".", "press"]]
+      ]]
+	]
+  ],
+  "sub":""
+}
+`
+	// format:    dagJson   -->   PayloadModel   -->   dagCbor   -->   PayloadModel   -->   dagJson
+	// function:      DecodeDagJson()      EncodeDagCbor()   DecodeDagCbor()     EncodeDagJson()
 
-	cborBytes, err := p.EncodeDagCbor()
+	p1, err := DecodeDagJson([]byte(delegationJson))
+	require.NoError(t, err)
+
+	cborBytes, err := p1.EncodeDagCbor()
 	require.NoError(t, err)
 	fmt.Println("cborBytes length", len(cborBytes))
 	fmt.Println("cbor", string(cborBytes))
 
-	jsonBytes, err := p.EncodeDagJson()
+	p2, err := DecodeDagCbor(cborBytes)
 	require.NoError(t, err)
-	fmt.Println("jsonBytes length", len(jsonBytes))
-	fmt.Println("json: ", string(jsonBytes))
+	fmt.Println("read Cbor", p2)
 
-	fmt.Println()
-
-	readCbor, err := DecodeDagCbor(cborBytes)
+	readJson, err := p2.EncodeDagJson()
 	require.NoError(t, err)
-	fmt.Println("readCbor", readCbor)
-	require.Equal(t, p, readCbor)
+	fmt.Println("readJson length", len(readJson))
+	fmt.Println("json: ", string(readJson))
 
-	readJson, err := DecodeDagJson(jsonBytes)
-	require.NoError(t, err)
-	fmt.Println("readJson", readJson)
-	require.Equal(t, p, readJson)
+	require.JSONEq(t, delegationJson, string(readJson))
 }
 
 func BenchmarkSchemaLoad(b *testing.B) {
