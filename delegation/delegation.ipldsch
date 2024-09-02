@@ -13,7 +13,8 @@ type Payload struct {
     cmd String
 
     # The delegation policy
-    pol Policy
+    # It doesn't seem possible to represent it with a schema.
+    pol Any
 
     # A unique, random nonce
     nonce Bytes
@@ -25,8 +26,4 @@ type Payload struct {
     nbf optional Int
     # The timestamp at which the Invocation becomes invalid
     exp nullable Int
-}
-
-type Policy struct {
-
 }

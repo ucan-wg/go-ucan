@@ -6,6 +6,7 @@ import (
 
 	"github.com/ipld/go-ipld-prime/datamodel"
 
+	"github.com/ucan-wg/go-ucan/v1/capability/command"
 	"github.com/ucan-wg/go-ucan/v1/capability/policy"
 	"github.com/ucan-wg/go-ucan/v1/did"
 )
@@ -18,7 +19,7 @@ type View struct {
 	// Principal that the chain is about (the Subject)
 	Subject did.DID
 	// The Command to eventually invoke
-	Command string
+	Command *command.Command
 	// The delegation policy
 	Policy policy.Policy
 	// A unique, random nonce
@@ -56,11 +57,15 @@ func ViewFromModel(m PayloadModel) (*View, error) {
 		view.Subject = did.Undef
 	}
 
-	// TODO: make that a Command object, and validate it
-	view.Command = m.Cmd
+	view.Command, err = command.Parse(m.Cmd)
+	if err != nil {
+		return nil, fmt.Errorf("parse command: %w", err)
+	}
 
-	// TODO: parsing + validation
-	view.Policy = policy.Policy{}
+	view.Policy, err = policy.FromIPLD(m.Pol)
+	if err != nil {
+		return nil, fmt.Errorf("parse policy: %w", err)
+	}
 
 	if len(m.Nonce) == 0 {
 		return nil, fmt.Errorf("nonce is required")
@@ -79,23 +84,4 @@ func ViewFromModel(m PayloadModel) (*View, error) {
 	}
 
 	return &view, nil
-}
-
-func (view *View) Capability() *Capability {
-	return &Capability{
-		Subject: view.Subject,
-		Command: view.Command,
-		Policy:  view.Policy,
-	}
-}
-
-// Capability is a subset of a delegation formed by the triple (subject, command, policy).
-// TODO: useful?
-type Capability struct {
-	// Principal that the chain is about (the Subject)
-	Subject did.DID
-	// The Command to eventually invoke
-	Command string
-	// The delegation policy
-	Policy policy.Policy
 }
