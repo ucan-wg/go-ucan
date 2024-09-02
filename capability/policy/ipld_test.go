@@ -1,8 +1,6 @@
 package policy
 
 import (
-	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/ipld/go-ipld-prime"
@@ -11,31 +9,30 @@ import (
 )
 
 func TestIpldRoundTrip(t *testing.T) {
-	const illustrativeExample = `[
+	const illustrativeExample = `
+[
     ["==", ".status", "draft"],
-    ["all", ".reviewer", [["like", ".email", "*@example.com"]]],
-    ["any", ".tags", 
-      ["or", [
-        ["==", ".", "news"], 
-        ["==", ".", "press"]]
+    ["all", ".reviewer", [
+		["like", ".email", "*@example.com"]]
+	],
+    ["any", ".tags", [ 
+		["or", [
+			["==", ".", "news"], 
+			["==", ".", "press"]]
       ]]
+	]
 ]`
 
 	for _, tc := range []struct {
-		name, dagjson string
+		name, dagJsonStr string
 	}{
 		{"illustrativeExample", illustrativeExample},
 	} {
-		// strip all spaces and carriage return
-		asDagJson := strings.Join(strings.Fields(tc.dagjson), "")
-
-		nodes, err := ipld.Decode([]byte(asDagJson), dagjson.Decode)
+		nodes, err := ipld.Decode([]byte(tc.dagJsonStr), dagjson.Decode)
 		require.NoError(t, err)
 
-		pol, err := PolicyFromIPLD(nodes)
+		pol, err := FromIPLD(nodes)
 		require.NoError(t, err)
-
-		fmt.Println(pol)
 
 		wroteIpld, err := pol.ToIPLD()
 		require.NoError(t, err)
@@ -43,6 +40,6 @@ func TestIpldRoundTrip(t *testing.T) {
 		wroteAsDagJson, err := ipld.Encode(wroteIpld, dagjson.Encode)
 		require.NoError(t, err)
 
-		require.Equal(t, asDagJson, string(wroteAsDagJson))
+		require.JSONEq(t, tc.dagJsonStr, string(wroteAsDagJson))
 	}
 }

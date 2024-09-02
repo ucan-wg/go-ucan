@@ -3,6 +3,8 @@ package policy
 import (
 	"fmt"
 
+	"github.com/ipld/go-ipld-prime"
+	"github.com/ipld/go-ipld-prime/codec/dagjson"
 	"github.com/ipld/go-ipld-prime/datamodel"
 	"github.com/ipld/go-ipld-prime/must"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
@@ -10,8 +12,16 @@ import (
 	"github.com/ucan-wg/go-ucan/v1/capability/policy/selector"
 )
 
-func PolicyFromIPLD(node datamodel.Node) (Policy, error) {
+func FromIPLD(node datamodel.Node) (Policy, error) {
 	return statementsFromIPLD("/", node)
+}
+
+func FromDagJson(json string) (Policy, error) {
+	nodes, err := ipld.Decode([]byte(json), dagjson.Decode)
+	if err != nil {
+		return nil, err
+	}
+	return FromIPLD(nodes)
 }
 
 func statementFromIPLD(path string, node datamodel.Node) (Statement, error) {
