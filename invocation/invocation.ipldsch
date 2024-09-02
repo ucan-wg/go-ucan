@@ -1,0 +1,37 @@
+# The Invocation Payload attaches sender, receiver, and provenance to the Task.
+# type Payload struct {
+#   # The DID of the Invoker
+#   iss DID
+#   # The Subject being invoked
+#   sub DID
+#   # The DID of the intended Executor if different from the Subject
+#   aud optional DID
+#
+#   # The Command
+#   cmd Command
+#   # The Command's Arguments
+#   args {String : Any}
+#
+#   # A unique, random nonce
+#   nonce optional String
+#
+#   # Arbitrary Metadata
+#   meta optional {String : Any}
+#   # Delegations that prove the chain of authority
+#   prf [&Delegation]
+#   # The timestamp at which the Invocation becomes invalid
+#   exp optional Integer
+#   # An OPTIONAL timestamp at which the Invocation was created
+#   iat optional Integer
+#
+#   # An OPTIONAL CID of the Receipt that enqueued the Task
+#   cause optional &Receipt
+# }
+
+type DID string
+
+type Foo struct {
+    iss DID
+    exp optional Int
+    prf [String]
+}
