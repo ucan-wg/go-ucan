@@ -110,7 +110,7 @@ func matchStatement(statement Statement, node ipld.Node) bool {
 				return false
 			}
 			for _, n := range many {
-				ok := Match(s.statements, n)
+				ok := matchStatement(s.statement, n)
 				if !ok {
 					return false
 				}
@@ -124,7 +124,7 @@ func matchStatement(statement Statement, node ipld.Node) bool {
 				return false
 			}
 			for _, n := range many {
-				ok := Match(s.statements, n)
+				ok := matchStatement(s.statement, n)
 				if ok {
 					return true
 				}

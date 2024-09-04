@@ -400,8 +400,7 @@ func TestMatch(t *testing.T) {
 			pol := Policy{
 				Any(
 					selector.MustParse(".[]"),
-					GreaterThan(selector.MustParse(".value"), literal.Int(10)),
-					LessThan(selector.MustParse(".value"), literal.Int(50)),
+					GreaterThan(selector.MustParse(".value"), literal.Int(60)),
 				),
 			}
 			ok := Match(pol, nd)

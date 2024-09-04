@@ -104,9 +104,9 @@ func statementFromIPLD(path string, node datamodel.Node) (Statement, error) {
 			if err != nil {
 				return nil, err
 			}
-			statementsNodes, _ := node.LookupByIndex(2)
-			statements, err := statementsFromIPLD(path+"1/", statementsNodes)
-			return quantifier{kind: op, selector: sel, statements: statements}, nil
+			statementsNode, _ := node.LookupByIndex(2)
+			statement, err := statementFromIPLD(path+"1/", statementsNode)
+			return quantifier{kind: op, selector: sel, statement: statement}, nil
 
 		default:
 			return nil, ErrUnrecognizedOperator(path, op)
@@ -243,7 +243,7 @@ func statementToIPLD(statement Statement) (datamodel.Node, error) {
 		if err != nil {
 			return nil, err
 		}
-		args, err := statementsToIPLD(statement.statements)
+		args, err := statementToIPLD(statement.statement)
 		if err != nil {
 			return nil, err
 		}
