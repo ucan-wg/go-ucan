@@ -6,6 +6,7 @@ import (
 
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime"
+	"github.com/ipld/go-ipld-prime/codec/dagjson"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
 	"github.com/stretchr/testify/require"
@@ -415,5 +416,77 @@ func TestMatch(t *testing.T) {
 			ok = Match(pol, nd)
 			require.False(t, ok)
 		})
+	})
+}
+
+func TestPolicyExamples(t *testing.T) {
+	makeNode := func(data string) ipld.Node {
+		nd, err := ipld.Decode([]byte(data), dagjson.Decode)
+		require.NoError(t, err)
+		return nd
+	}
+
+	evaluate := func(statement string, data ipld.Node) bool {
+		// we need to wrap statement with [] to make them a policy
+		policy := fmt.Sprintf("[%s]", statement)
+
+		pol, err := FromDagJson(policy)
+		require.NoError(t, err)
+		return Match(pol, data)
+	}
+
+	t.Run("And", func(t *testing.T) {
+		data := makeNode(`{ "name": "Katie", "age": 35, "nationalities": ["Canadian", "South African"] }`)
+
+		require.True(t, evaluate(`["and", []]`, data))
+		require.True(t, evaluate(`
+["and", [
+  ["==", ".name", "Katie"], 
+  [">=", ".age", 21]
+]]`, data))
+		require.False(t, evaluate(`
+["and", [
+  ["==", ".name", "Katie"], 
+  [">=", ".age", 21], 
+  ["==", ".nationalities", ["American"]]
+]]`, data))
+	})
+
+	t.Run("Or", func(t *testing.T) {
+		data := makeNode(`{ "name": "Katie", "age": 35, "nationalities": ["Canadian", "South African"] }`)
+
+		require.True(t, evaluate(`["or", []]`, data))
+		require.True(t, evaluate(`
+		["or", [
+		  ["==", ".name", "Katie"],
+		  [">", ".age", 45]
+		]]
+		`, data))
+
+	})
+
+	t.Run("Not", func(t *testing.T) {
+		data := makeNode(`{ "name": "Katie", "nationalities": ["Canadian", "South African"] }`)
+
+		require.True(t, evaluate(`
+["not", 
+  ["and", [
+    ["==", ".name", "Katie"], 
+    ["==", ".nationalities", ["American"]]
+  ]]
+]
+`, data))
+	})
+
+	t.Run("All", func(t *testing.T) {
+		data := makeNode(`{"a": [{"b": 1}, {"b": 2}, {"z": [7, 8, 9]}]}`)
+
+		require.False(t, evaluate(`["all", ".a", [">", ".b", 0]]`, data))
+	})
+
+	t.Run("Any", func(t *testing.T) {
+		data := makeNode(`{"a": [{"b": 1}, {"b": 2}, {"z": [7, 8, 9]}]}`)
+
+		require.True(t, evaluate(`["any", ".a", ["==", ".b", 2]]`, data))
 	})
 }

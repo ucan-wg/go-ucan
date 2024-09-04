@@ -119,6 +119,7 @@ func matchStatement(statement Statement, node ipld.Node) bool {
 		}
 	case KindAny:
 		if s, ok := statement.(quantifier); ok {
+			// FIXME: line below return a single node, not many
 			_, many, err := selector.Select(s.selector, node)
 			if err != nil || many == nil {
 				return false
