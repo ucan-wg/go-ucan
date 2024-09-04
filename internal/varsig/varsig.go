@@ -57,8 +57,8 @@ var (
 // library are supported.
 //
 // [go-libp2p/core/crypto]: github.com/libp2p/go-libp2p/core/crypto
-func Decode(header string) (pb.KeyType, error) {
-	keyType, ok := decMap[header]
+func Decode(header []byte) (pb.KeyType, error) {
+	keyType, ok := decMap[string(header)]
 	if !ok {
 		return -1, fmt.Errorf("%w: %s", ErrUnknownHeader, header)
 	}
@@ -73,13 +73,13 @@ func Decode(header string) (pb.KeyType, error) {
 // library are supported.
 //
 // [go-libp2p/core/crypto]: github.com/libp2p/go-libp2p/core/crypto
-func Encode(keyType pb.KeyType) (string, error) {
+func Encode(keyType pb.KeyType) ([]byte, error) {
 	header, ok := encMap[keyType]
 	if !ok {
-		return "", fmt.Errorf("%w: %s", ErrUnknownKeyType, keyType.String())
+		return nil, fmt.Errorf("%w: %s", ErrUnknownKeyType, keyType.String())
 	}
 
-	return header, nil
+	return []byte(header), nil
 }
 
 func keyTypeToHeader() map[pb.KeyType]string {
