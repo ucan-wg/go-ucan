@@ -1,4 +1,4 @@
-module github.com/ucan-wg/go-ucan/v1
+module github.com/ucan-wg/go-ucan
 
 go 1.21
 
