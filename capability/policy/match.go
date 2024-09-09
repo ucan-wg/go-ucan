@@ -8,7 +8,7 @@ import (
 	"github.com/ipld/go-ipld-prime/datamodel"
 	"github.com/ipld/go-ipld-prime/must"
 
-	"github.com/ucan-wg/go-ucan/v1/capability/policy/selector"
+	"github.com/ucan-wg/go-ucan/capability/policy/selector"
 )
 
 // Match determines if the IPLD node matches the policy document.
@@ -110,7 +110,7 @@ func matchStatement(statement Statement, node ipld.Node) bool {
 				return false
 			}
 			for _, n := range many {
-				ok := Match(s.statements, n)
+				ok := matchStatement(s.statement, n)
 				if !ok {
 					return false
 				}
@@ -119,12 +119,13 @@ func matchStatement(statement Statement, node ipld.Node) bool {
 		}
 	case KindAny:
 		if s, ok := statement.(quantifier); ok {
+			// FIXME: line below return a single node, not many
 			_, many, err := selector.Select(s.selector, node)
 			if err != nil || many == nil {
 				return false
 			}
 			for _, n := range many {
-				ok := Match(s.statements, n)
+				ok := matchStatement(s.statement, n)
 				if ok {
 					return true
 				}

@@ -35,10 +35,6 @@ func ErrNotATuple(path string) error {
 	return errWithPath{path: path, msg: "not a tuple"}
 }
 
-func ErrEmptyList(path string) error {
-	return errWithPath{path: path, msg: "empty list"}
-}
-
 func safeStr(str string) string {
 	if len(str) > 10 {
 		return str[:10]

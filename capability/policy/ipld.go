@@ -9,7 +9,7 @@ import (
 	"github.com/ipld/go-ipld-prime/must"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
 
-	"github.com/ucan-wg/go-ucan/v1/capability/policy/selector"
+	"github.com/ucan-wg/go-ucan/capability/policy/selector"
 )
 
 func FromIPLD(node datamodel.Node) (Policy, error) {
@@ -40,14 +40,14 @@ func statementFromIPLD(path string, node datamodel.Node) (Statement, error) {
 	}
 	op := must.String(opNode)
 
-	arg2AsSelector := func() (selector.Selector, error) {
+	arg2AsSelector := func(op string) (selector.Selector, error) {
 		nd, _ := node.LookupByIndex(1)
 		if nd.Kind() != datamodel.Kind_String {
-			return nil, ErrNotAString(path + "1/")
+			return nil, ErrNotAString(combinePath(path, op, 1))
 		}
 		sel, err := selector.Parse(must.String(nd))
 		if err != nil {
-			return nil, ErrInvalidSelector(path+"1/", err)
+			return nil, ErrInvalidSelector(combinePath(path, op, 1), err)
 		}
 		return sel, nil
 	}
@@ -57,7 +57,7 @@ func statementFromIPLD(path string, node datamodel.Node) (Statement, error) {
 		switch op {
 		case KindNot:
 			arg2, _ := node.LookupByIndex(1)
-			statement, err := statementFromIPLD(path+"1/", arg2)
+			statement, err := statementFromIPLD(combinePath(path, op, 1), arg2)
 			if err != nil {
 				return nil, err
 			}
@@ -65,7 +65,7 @@ func statementFromIPLD(path string, node datamodel.Node) (Statement, error) {
 
 		case KindAnd, KindOr:
 			arg2, _ := node.LookupByIndex(1)
-			statement, err := statementsFromIPLD(path+"1/", arg2)
+			statement, err := statementsFromIPLD(combinePath(path, op, 1), arg2)
 			if err != nil {
 				return nil, err
 			}
@@ -77,7 +77,7 @@ func statementFromIPLD(path string, node datamodel.Node) (Statement, error) {
 	case 3:
 		switch op {
 		case KindEqual, KindLessThan, KindLessThanOrEqual, KindGreaterThan, KindGreaterThanOrEqual:
-			sel, err := arg2AsSelector()
+			sel, err := arg2AsSelector(op)
 			if err != nil {
 				return nil, err
 			}
@@ -85,28 +85,31 @@ func statementFromIPLD(path string, node datamodel.Node) (Statement, error) {
 			return equality{kind: op, selector: sel, value: arg3}, nil
 
 		case KindLike:
-			sel, err := arg2AsSelector()
+			sel, err := arg2AsSelector(op)
 			if err != nil {
 				return nil, err
 			}
 			pattern, _ := node.LookupByIndex(2)
 			if pattern.Kind() != datamodel.Kind_String {
-				return nil, ErrNotAString(path + "2/")
+				return nil, ErrNotAString(combinePath(path, op, 2))
 			}
 			res, err := Like(sel, must.String(pattern))
 			if err != nil {
-				return nil, ErrInvalidPattern(path+"2/", err)
+				return nil, ErrInvalidPattern(combinePath(path, op, 2), err)
 			}
 			return res, nil
 
 		case KindAll, KindAny:
-			sel, err := arg2AsSelector()
+			sel, err := arg2AsSelector(op)
 			if err != nil {
 				return nil, err
 			}
-			statementsNodes, _ := node.LookupByIndex(2)
-			statements, err := statementsFromIPLD(path+"1/", statementsNodes)
-			return quantifier{kind: op, selector: sel, statements: statements}, nil
+			statementsNode, _ := node.LookupByIndex(2)
+			statement, err := statementFromIPLD(combinePath(path, op, 1), statementsNode)
+			if err != nil {
+				return nil, err
+			}
+			return quantifier{kind: op, selector: sel, statement: statement}, nil
 
 		default:
 			return nil, ErrUnrecognizedOperator(path, op)
@@ -123,7 +126,7 @@ func statementsFromIPLD(path string, node datamodel.Node) ([]Statement, error) {
 		return nil, ErrNotATuple(path)
 	}
 	if node.Length() == 0 {
-		return nil, ErrEmptyList(path)
+		return nil, nil
 	}
 
 	res := make([]Statement, node.Length())
@@ -243,7 +246,7 @@ func statementToIPLD(statement Statement) (datamodel.Node, error) {
 		if err != nil {
 			return nil, err
 		}
-		args, err := statementsToIPLD(statement.statements)
+		args, err := statementToIPLD(statement.statement)
 		if err != nil {
 			return nil, err
 		}
@@ -259,4 +262,8 @@ func statementToIPLD(statement Statement) (datamodel.Node, error) {
 	}
 
 	return list.Build(), nil
+}
+
+func combinePath(prev string, operator string, index int) string {
+	return fmt.Sprintf("%s%d-%s/", prev, index, operator)
 }

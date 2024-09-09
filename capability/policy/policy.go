@@ -6,7 +6,7 @@ import (
 	"github.com/gobwas/glob"
 	"github.com/ipld/go-ipld-prime"
 
-	"github.com/ucan-wg/go-ucan/v1/capability/policy/selector"
+	"github.com/ucan-wg/go-ucan/capability/policy/selector"
 )
 
 const (
@@ -40,23 +40,23 @@ func (e equality) Kind() string {
 }
 
 func Equal(selector selector.Selector, value ipld.Node) Statement {
-	return equality{KindEqual, selector, value}
+	return equality{kind: KindEqual, selector: selector, value: value}
 }
 
 func GreaterThan(selector selector.Selector, value ipld.Node) Statement {
-	return equality{KindGreaterThan, selector, value}
+	return equality{kind: KindGreaterThan, selector: selector, value: value}
 }
 
 func GreaterThanOrEqual(selector selector.Selector, value ipld.Node) Statement {
-	return equality{KindGreaterThanOrEqual, selector, value}
+	return equality{kind: KindGreaterThanOrEqual, selector: selector, value: value}
 }
 
 func LessThan(selector selector.Selector, value ipld.Node) Statement {
-	return equality{KindLessThan, selector, value}
+	return equality{kind: KindLessThan, selector: selector, value: value}
 }
 
 func LessThanOrEqual(selector selector.Selector, value ipld.Node) Statement {
-	return equality{KindLessThanOrEqual, selector, value}
+	return equality{kind: KindLessThanOrEqual, selector: selector, value: value}
 }
 
 type negation struct {
@@ -68,7 +68,7 @@ func (n negation) Kind() string {
 }
 
 func Not(stmt Statement) Statement {
-	return negation{stmt}
+	return negation{statement: stmt}
 }
 
 type connective struct {
@@ -81,11 +81,11 @@ func (c connective) Kind() string {
 }
 
 func And(stmts ...Statement) Statement {
-	return connective{KindAnd, stmts}
+	return connective{kind: KindAnd, statements: stmts}
 }
 
 func Or(stmts ...Statement) Statement {
-	return connective{KindOr, stmts}
+	return connective{kind: KindOr, statements: stmts}
 }
 
 type wildcard struct {
@@ -103,23 +103,23 @@ func Like(selector selector.Selector, pattern string) (Statement, error) {
 	if err != nil {
 		return nil, err
 	}
-	return wildcard{selector, pattern, g}, nil
+	return wildcard{selector: selector, pattern: pattern, glob: g}, nil
 }
 
 type quantifier struct {
-	kind       string
-	selector   selector.Selector
-	statements []Statement
+	kind      string
+	selector  selector.Selector
+	statement Statement
 }
 
 func (n quantifier) Kind() string {
 	return n.kind
 }
 
-func All(selector selector.Selector, policy ...Statement) Statement {
-	return quantifier{KindAll, selector, policy}
+func All(selector selector.Selector, statement Statement) Statement {
+	return quantifier{kind: KindAll, selector: selector, statement: statement}
 }
 
-func Any(selector selector.Selector, policy ...Statement) Statement {
-	return quantifier{KindAny, selector, policy}
+func Any(selector selector.Selector, statement Statement) Statement {
+	return quantifier{kind: KindAny, selector: selector, statement: statement}
 }

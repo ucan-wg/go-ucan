@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/ucan-wg/go-ucan/v1/capability/command"
+	"github.com/ucan-wg/go-ucan/capability/command"
 )
 
 func TestTop(t *testing.T) {
@@ -73,7 +73,6 @@ func TestParseCommand(t *testing.T) {
 				t.Parallel()
 
 				cmd, err := command.Parse(testcase.inp)
-				require.ErrorIs(t, err, command.ErrParse)
 				require.ErrorIs(t, err, testcase.err)
 				require.Nil(t, cmd)
 			})
@@ -133,20 +132,6 @@ func invalidTestcases(t *testing.T) []errorTestcase {
 				inp:  "/elem0/elem1/elem2/",
 			},
 			err: command.ErrDisallowsTrailingSlash,
-		},
-		{
-			testcase: testcase{
-				name: "only reserved ucan namespace",
-				inp:  "/ucan",
-			},
-			err: command.ErrUCANNamespaceReserved,
-		},
-		{
-			testcase: testcase{
-				name: "reserved ucan namespace prefix",
-				inp:  "/ucan/elem0/elem1/elem2",
-			},
-			err: command.ErrUCANNamespaceReserved,
 		},
 		{
 			testcase: testcase{

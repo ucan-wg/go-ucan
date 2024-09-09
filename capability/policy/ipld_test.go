@@ -11,16 +11,12 @@ import (
 func TestIpldRoundTrip(t *testing.T) {
 	const illustrativeExample = `
 [
-    ["==", ".status", "draft"],
-    ["all", ".reviewer", [
-		["like", ".email", "*@example.com"]]
-	],
-    ["any", ".tags", [ 
-		["or", [
-			["==", ".", "news"], 
-			["==", ".", "press"]]
-      ]]
-	]
+  ["==", ".status", "draft"],
+  ["all", ".reviewer", ["like", ".email", "*@example.com"]],
+  ["any", ".tags", 
+    ["or", [
+      ["==", ".", "news"], 
+      ["==", ".", "press"]]]
 ]`
 
 	for _, tc := range []struct {

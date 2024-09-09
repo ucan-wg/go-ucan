@@ -7,7 +7,8 @@ import (
 
 	"github.com/libp2p/go-libp2p/core/crypto/pb"
 	"github.com/stretchr/testify/assert"
-	"github.com/ucan-wg/go-ucan/v1/internal/varsig"
+
+	"github.com/ucan-wg/go-ucan/internal/varsig"
 )
 
 func TestDecode(t *testing.T) {
