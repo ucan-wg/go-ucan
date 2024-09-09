@@ -1,0 +1,6 @@
+type DID string
+
+type Example struct {
+  hello String
+  id DID
+}
