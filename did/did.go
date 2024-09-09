@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	mbase "github.com/multiformats/go-multibase"
+	"github.com/multiformats/go-multicodec"
 	varint "github.com/multiformats/go-varint"
 )
 
@@ -13,12 +14,16 @@ const KeyPrefix = "did:key:"
 
 const DIDCore = 0x0d1d
 const Ed25519 = 0xed
+const RSA = uint64(multicodec.RsaPub)
 
 var MethodOffset = varint.UvarintSize(uint64(DIDCore))
 
+//
+// [did:key format]: https://w3c-ccg.github.io/did-method-key/
 type DID struct {
-	key bool
-	str string
+	key  bool
+	code uint64
+	str  string
 }
 
 // Undef can be used to represent a nil or undefined DID, using DID{}
@@ -34,6 +39,10 @@ func (d DID) Bytes() []byte {
 		return nil
 	}
 	return []byte(d.str)
+}
+
+func (d DID) Code() uint64 {
+	return d.code
 }
 
 func (d DID) DID() DID {
@@ -54,8 +63,8 @@ func Decode(bytes []byte) (DID, error) {
 	if err != nil {
 		return Undef, err
 	}
-	if code == Ed25519 {
-		return DID{str: string(bytes), key: true}, nil
+	if code == Ed25519 || code == RSA {
+		return DID{str: string(bytes), code: code, key: true}, nil
 	} else if code == DIDCore {
 		return DID{str: string(bytes)}, nil
 	}
