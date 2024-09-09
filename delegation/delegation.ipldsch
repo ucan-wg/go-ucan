@@ -27,3 +27,34 @@ type Payload struct {
     # The timestamp at which the Invocation becomes invalid
     exp nullable Int
 }
+
+type Delegation struct {
+    # Issuer DID (sender)
+    issuer DID (rename "iss")
+    # Audience DID (receiver)
+    audience DID (rename "aud")
+    # Principal that the chain is about (the Subject)
+    subject optional DID (rename "sub")
+
+    # The Command to eventually invoke
+    command String (rename "cmd")
+
+    # The delegation policy
+    # It doesn't seem possible to represent it with a schema.
+    policy Any (rename "pol")
+
+    # A unique, random nonce
+    nonce Bytes
+    
+    # Arbitrary Metadata
+    meta {String : Any}
+
+    # "Not before" UTC Unix Timestamp in seconds (valid from), 53-bits integer
+    notBefore optional Int (rename "nbf")
+    # The timestamp at which the Invocation becomes invalid
+    expiration nullable Int (rename "exp")
+}
+
+type Save struct {
+
+}
