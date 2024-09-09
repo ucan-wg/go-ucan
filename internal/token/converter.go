@@ -7,9 +7,9 @@ import (
 
 	"github.com/ipld/go-ipld-prime/datamodel"
 	"github.com/ipld/go-ipld-prime/node/bindnode"
-	"github.com/ucan-wg/go-ucan/v1/capability/command"
-	"github.com/ucan-wg/go-ucan/v1/capability/policy"
-	"github.com/ucan-wg/go-ucan/v1/did"
+	"github.com/ucan-wg/go-ucan/capability/command"
+	"github.com/ucan-wg/go-ucan/capability/policy"
+	"github.com/ucan-wg/go-ucan/did"
 )
 
 func BindnodeOptions() []bindnode.Option {

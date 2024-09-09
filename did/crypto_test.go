@@ -8,7 +8,7 @@ import (
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/multiformats/go-multicodec"
 	"github.com/stretchr/testify/require"
-	"github.com/ucan-wg/go-ucan/v1/did"
+	"github.com/ucan-wg/go-ucan/did"
 )
 
 func TestFromPubKey(t *testing.T) {

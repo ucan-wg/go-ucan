@@ -11,8 +11,8 @@ import (
 	"github.com/ipld/go-ipld-prime/schema"
 	crypto "github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/libp2p/go-libp2p/core/crypto/pb"
-	"github.com/ucan-wg/go-ucan/v1/internal/token"
-	"github.com/ucan-wg/go-ucan/v1/internal/varsig"
+	"github.com/ucan-wg/go-ucan/internal/token"
+	"github.com/ucan-wg/go-ucan/internal/varsig"
 )
 
 // Tokener represents a type that can be wrapped in a UCAN Envelope.

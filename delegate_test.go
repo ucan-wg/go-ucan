@@ -12,10 +12,10 @@ import (
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/ucan-wg/go-ucan/v1"
-	"github.com/ucan-wg/go-ucan/v1/capability/command"
-	"github.com/ucan-wg/go-ucan/v1/capability/policy"
-	"github.com/ucan-wg/go-ucan/v1/did"
+	"github.com/ucan-wg/go-ucan"
+	"github.com/ucan-wg/go-ucan/capability/command"
+	"github.com/ucan-wg/go-ucan/capability/policy"
+	"github.com/ucan-wg/go-ucan/did"
 )
 
 const (

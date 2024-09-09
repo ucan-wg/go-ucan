@@ -5,7 +5,7 @@ package delegation
 import "fmt"
 
 import (
-	"github.com/ucan-wg/go-ucan/v1/did"
+	"github.com/ucan-wg/go-ucan/did"
 	"time"
 )
 

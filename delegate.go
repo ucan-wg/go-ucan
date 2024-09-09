@@ -5,12 +5,12 @@ import (
 	"time"
 
 	"github.com/libp2p/go-libp2p/core/crypto"
-	"github.com/ucan-wg/go-ucan/v1/capability/command"
-	"github.com/ucan-wg/go-ucan/v1/capability/policy"
-	"github.com/ucan-wg/go-ucan/v1/delegation"
-	"github.com/ucan-wg/go-ucan/v1/did"
-	"github.com/ucan-wg/go-ucan/v1/internal/envelope"
-	"github.com/ucan-wg/go-ucan/v1/issue"
+	"github.com/ucan-wg/go-ucan/capability/command"
+	"github.com/ucan-wg/go-ucan/capability/policy"
+	"github.com/ucan-wg/go-ucan/delegation"
+	"github.com/ucan-wg/go-ucan/did"
+	"github.com/ucan-wg/go-ucan/internal/envelope"
+	"github.com/ucan-wg/go-ucan/issue"
 )
 
 const (

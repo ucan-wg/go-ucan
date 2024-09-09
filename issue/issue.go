@@ -3,8 +3,8 @@ package issue
 import (
 	"time"
 
-	"github.com/ucan-wg/go-ucan/v1/delegation"
-	"github.com/ucan-wg/go-ucan/v1/did"
+	"github.com/ucan-wg/go-ucan/delegation"
+	"github.com/ucan-wg/go-ucan/did"
 )
 
 //go:generate -command options go run github.com/launchdarkly/go-options

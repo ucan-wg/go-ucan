@@ -6,11 +6,11 @@ import (
 	"github.com/ipld/go-ipld-prime/datamodel"
 	"github.com/ipld/go-ipld-prime/node/bindnode"
 	"github.com/ipld/go-ipld-prime/schema"
-	"github.com/ucan-wg/go-ucan/v1/capability/command"
-	"github.com/ucan-wg/go-ucan/v1/capability/policy"
-	"github.com/ucan-wg/go-ucan/v1/did"
-	"github.com/ucan-wg/go-ucan/v1/internal/envelope"
-	"github.com/ucan-wg/go-ucan/v1/internal/token"
+	"github.com/ucan-wg/go-ucan/capability/command"
+	"github.com/ucan-wg/go-ucan/capability/policy"
+	"github.com/ucan-wg/go-ucan/did"
+	"github.com/ucan-wg/go-ucan/internal/envelope"
+	"github.com/ucan-wg/go-ucan/internal/token"
 )
 
 const (
@@ -18,7 +18,7 @@ const (
 )
 
 //go:generate -command options go run github.com/launchdarkly/go-options
-//go:generate options -type=config -prefix=With -output=delegatiom_options.go -cmp=false -imports=time,github.com/ucan-wg/go-ucan/v1/did
+//go:generate options -type=config -prefix=With -output=delegatiom_options.go -cmp=false -imports=time,github.com/ucan-wg/go-ucan/did
 
 type config struct {
 	Expiration   *time.Time

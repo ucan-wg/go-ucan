@@ -16,9 +16,9 @@ import (
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/ucan-wg/go-ucan/v1/did"
-	"github.com/ucan-wg/go-ucan/v1/internal/envelope"
-	"github.com/ucan-wg/go-ucan/v1/internal/token"
+	"github.com/ucan-wg/go-ucan/did"
+	"github.com/ucan-wg/go-ucan/internal/envelope"
+	"github.com/ucan-wg/go-ucan/internal/token"
 	"gotest.tools/v3/golden"
 )
 

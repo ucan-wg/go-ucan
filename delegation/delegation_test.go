@@ -8,8 +8,8 @@ import (
 	"github.com/ipld/go-ipld-prime/node/bindnode"
 	"github.com/ipld/go-ipld-prime/schema"
 	"github.com/stretchr/testify/require"
-	"github.com/ucan-wg/go-ucan/v1/delegation"
-	"github.com/ucan-wg/go-ucan/v1/internal/token"
+	"github.com/ucan-wg/go-ucan/delegation"
+	"github.com/ucan-wg/go-ucan/internal/token"
 )
 
 func TestToken_Proto(t *testing.T) {
