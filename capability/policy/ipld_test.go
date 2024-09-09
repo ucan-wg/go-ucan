@@ -16,7 +16,9 @@ func TestIpldRoundTrip(t *testing.T) {
   ["any", ".tags", 
     ["or", [
       ["==", ".", "news"], 
-      ["==", ".", "press"]]]
+      ["==", ".", "press"]
+    ]]
+  ]
 ]`
 
 	for _, tc := range []struct {
