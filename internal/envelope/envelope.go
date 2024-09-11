@@ -4,39 +4,35 @@ import (
 	"bytes"
 	"errors"
 
+	"github.com/ipfs/go-cid"
+	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/codec/dagcbor"
 	"github.com/ipld/go-ipld-prime/datamodel"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
 	"github.com/ipld/go-ipld-prime/node/bindnode"
-	"github.com/ipld/go-ipld-prime/schema"
 	crypto "github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/libp2p/go-libp2p/core/crypto/pb"
+	"github.com/multiformats/go-multibase"
+	"github.com/multiformats/go-multicodec"
+	"github.com/multiformats/go-multihash"
+	"github.com/multiformats/go-varint"
 	"github.com/ucan-wg/go-ucan/internal/token"
 	"github.com/ucan-wg/go-ucan/internal/varsig"
 )
 
-// Tokener represents a type that can be wrapped in a UCAN Envelope.
-type Tokener interface {
-	// Tag returns the a string that indicates which of the sub-
-	// specifications define the structure of the underlying type.
-	Tag() string
-
-	Prototype() schema.TypedPrototype
-}
-
 // [Envelope] is a signed enclosure for types implementing Tokener.
 //
 // [Envelope]: https://github.com/ucan-wg/spec#envelope
-type Envelope[T Tokener] struct {
+type Envelope struct {
 	signature  []byte
-	sigPayload *sigPayload[T]
+	sigPayload *sigPayload
 }
 
 // New creates an Envelope containing a VarsigHeader and Signature for
 // the data resulting from wrapping the provided Tokener in and IPLD
 // datamodel.Node and encoding it using DAG-CBOR
-func New[T Tokener](privKey crypto.PrivKey, token T) (*Envelope[T], error) {
-	sigPayload, err := newSigPayload[T](privKey.Type(), token)
+func New(privKey crypto.PrivKey, token *token.Token, tag string) (*Envelope, error) {
+	sigPayload, err := newSigPayload(privKey.Type(), token, tag)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +47,7 @@ func New[T Tokener](privKey crypto.PrivKey, token T) (*Envelope[T], error) {
 		return nil, err
 	}
 
-	return &Envelope[T]{
+	return &Envelope{
 		signature:  signature,
 		sigPayload: sigPayload,
 	}, nil
@@ -64,8 +60,8 @@ func New[T Tokener](privKey crypto.PrivKey, token T) (*Envelope[T], error) {
 // the IPLD datamodel.Node is used directly.  If the Envelope is also
 // required, use New followed by Envelope.Wrap to avoid the need to
 // unwrap the newly created datamodel.Node.
-func Wrap[T Tokener](privKey crypto.PrivKey, token T) (datamodel.Node, error) {
-	env, err := New[T](privKey, token)
+func Wrap(privKey crypto.PrivKey, token *token.Token, tag string) (datamodel.Node, error) {
+	env, err := New(privKey, token, tag)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +69,7 @@ func Wrap[T Tokener](privKey crypto.PrivKey, token T) (datamodel.Node, error) {
 	return env.Wrap()
 }
 
-func Unwrap[T Tokener](node datamodel.Node) (*Envelope[T], error) {
+func Unwrap(node datamodel.Node, tag string) (*Envelope, error) {
 	signatureNode, err := node.LookupByIndex(0)
 	if err != nil {
 		return nil, err
@@ -89,24 +85,46 @@ func Unwrap[T Tokener](node datamodel.Node) (*Envelope[T], error) {
 		return nil, err
 	}
 
-	sigPayload, err := unwrapSigPayload[T](sigPayloadNode)
+	sigPayload, err := unwrapSigPayload(sigPayloadNode, tag)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Envelope[T]{
+	return &Envelope{
 		signature:  signature,
 		sigPayload: sigPayload,
 	}, nil
 }
 
+func (e *Envelope) CID() (cid.Cid, error) {
+	node, err := e.Wrap()
+	if err != nil {
+		return cid.Undef, nil
+	}
+
+	cbor, err := ipld.Encode(node, dagcbor.Encode)
+	if err != nil {
+		return cid.Undef, nil
+	}
+
+	data := varint.ToUvarint(uint64(multicodec.DagCbor))
+	data = append(data, cbor...)
+
+	hash, err := multihash.Sum(data, uint64(multicodec.Sha2_256), -1)
+	if err != nil {
+		return cid.Undef, err
+	}
+
+	return cid.NewCidV1(multibase.Base58BTC, hash), nil
+}
+
 // Signature is an accessor that returns the cryptographic signature
 // that was created when the Envelope was created or unwrapped.
-func (e *Envelope[T]) Signature() []byte {
+func (e *Envelope) Signature() []byte {
 	return e.signature
 }
 
-func (e *Envelope[T]) Token() T {
+func (e *Envelope) Token() *token.Token {
 	return e.sigPayload.tokenPayload
 }
 
@@ -116,7 +134,7 @@ func (e *Envelope[T]) Token() T {
 // [Envelope]: https://github.com/ucan-wg/spec#envelope
 // [SigPayload]: https://github.com/ucan-wg/spec#envelope
 // [VarsigHeader]: https://github.com/ucan-wg/spec#envelope
-func (e *Envelope[T]) VarsigHeader() []byte {
+func (e *Envelope) VarsigHeader() []byte {
 	return e.sigPayload.varsigHeader
 }
 
@@ -128,7 +146,7 @@ func (e *Envelope[T]) VarsigHeader() []byte {
 // is retrieved from the DID's method specific identifier.
 //
 // [Envelope]: https://github.com/ucan-wg/spec#envelope
-func (e *Envelope[T]) Verify(pubKey crypto.PubKey) (bool, error) {
+func (e *Envelope) Verify(pubKey crypto.PubKey) (bool, error) {
 	cbor, err := e.sigPayload.cbor()
 	if err != nil {
 		return false, err
@@ -138,7 +156,7 @@ func (e *Envelope[T]) Verify(pubKey crypto.PubKey) (bool, error) {
 }
 
 // Wrap encodes the Envelope as an IPLD datamodel.Node.
-func (e *Envelope[T]) Wrap() (datamodel.Node, error) {
+func (e *Envelope) Wrap() (datamodel.Node, error) {
 	sn := bindnode.Wrap(&e.signature, nil)
 
 	spn, err := e.sigPayload.wrap()
@@ -176,25 +194,27 @@ func (e *Envelope[T]) Wrap() (datamodel.Node, error) {
 // accessors to the internals of these types.
 //
 
-type sigPayload[T Tokener] struct {
+type sigPayload struct {
 	varsigHeader []byte
-	tokenPayload T
+	tokenPayload *token.Token
+	tag          string
 }
 
-func newSigPayload[T Tokener](keyType pb.KeyType, token T) (*sigPayload[T], error) {
+func newSigPayload(keyType pb.KeyType, token *token.Token, tag string) (*sigPayload, error) {
 	varsigHeader, err := varsig.Encode(keyType)
 	if err != nil {
 		return nil, err
 	}
 
-	return &sigPayload[T]{
+	return &sigPayload{
 		varsigHeader: varsigHeader,
 		tokenPayload: token,
+		tag:          tag,
 	}, nil
 }
 
-func unwrapSigPayload[T Tokener](node datamodel.Node) (*sigPayload[T], error) {
-	tokenPayloadNode, err := node.LookupByString((*new(T)).Tag())
+func unwrapSigPayload(node datamodel.Node, tag string) (*sigPayload, error) {
+	tokenPayloadNode, err := node.LookupByString(tag)
 	if err != nil {
 		return nil, err
 	}
@@ -204,7 +224,7 @@ func unwrapSigPayload[T Tokener](node datamodel.Node) (*sigPayload[T], error) {
 		return nil, errors.New("unexpected type") // TODO
 	}
 
-	token, ok := tokenPayload.(T)
+	token, ok := tokenPayload.(*token.Token)
 	if !ok {
 		return nil, errors.New("unexpected type") // TODO
 	}
@@ -219,13 +239,13 @@ func unwrapSigPayload[T Tokener](node datamodel.Node) (*sigPayload[T], error) {
 		return nil, err
 	}
 
-	return &sigPayload[T]{
+	return &sigPayload{
 		varsigHeader: header,
 		tokenPayload: token,
-	}, nil // TODO
+	}, nil
 }
 
-func (sp *sigPayload[T]) cbor() ([]byte, error) {
+func (sp *sigPayload) cbor() ([]byte, error) {
 	node, err := sp.wrap()
 	if err != nil {
 		return nil, err
@@ -239,8 +259,8 @@ func (sp *sigPayload[T]) cbor() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func (sp *sigPayload[T]) wrap() (datamodel.Node, error) {
-	tpn := bindnode.Wrap(sp.tokenPayload, sp.tokenPayload.Prototype().Type(), token.BindnodeOptions()...)
+func (sp *sigPayload) wrap() (datamodel.Node, error) {
+	tpn := bindnode.Wrap(sp.tokenPayload, token.Prototype().Type())
 
 	np := basicnode.Prototype.Any
 	mb := np.NewBuilder()
@@ -256,11 +276,11 @@ func (sp *sigPayload[T]) wrap() (datamodel.Node, error) {
 	}
 	ha.AssignBytes(sp.varsigHeader)
 
-	ta, err := ma.AssembleEntry(sp.tokenPayload.Tag())
+	ta, err := ma.AssembleEntry(sp.tag)
 	if err != nil {
 		return nil, err
 	}
-	ta.AssignNode(tpn)
+	ta.AssignNode(tpn.Representation())
 
 	if err := ma.Finish(); err != nil {
 		return nil, err
