@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	crypto "github.com/libp2p/go-libp2p/core/crypto"
 	mbase "github.com/multiformats/go-multibase"
 	"github.com/multiformats/go-multicodec"
 	varint "github.com/multiformats/go-varint"
@@ -47,6 +48,24 @@ func (d DID) Code() uint64 {
 
 func (d DID) DID() DID {
 	return d
+}
+
+func (d DID) PubKey() (crypto.PubKey, error) {
+	if !d.key {
+		return nil, fmt.Errorf("unsupported did type: %s", d.String())
+	}
+
+	unmarshaler, ok := map[multicodec.Code]crypto.PubKeyUnmarshaller{
+		multicodec.Ed25519Pub:   crypto.UnmarshalEd25519PublicKey,
+		multicodec.RsaPub:       crypto.UnmarshalRsaPublicKey,
+		multicodec.Secp256k1Pub: crypto.UnmarshalSecp256k1PublicKey,
+		multicodec.Es256:        crypto.UnmarshalECDSAPublicKey,
+	}[multicodec.Code(d.code)]
+	if !ok {
+		return nil, fmt.Errorf("unsupported multicodec: %d", d.code)
+	}
+
+	return unmarshaler(d.Bytes()[varint.UvarintSize(d.code):])
 }
 
 // String formats the decentralized identity document (DID) as a string.

@@ -37,3 +37,12 @@ func FromPubKey(pubKey crypto.PubKey) (DID, error) {
 		key:  true,
 	}, nil
 }
+
+func ToPubKey(s string) (crypto.PubKey, error) {
+	id, err := Parse(s)
+	if err != nil {
+		return nil, err
+	}
+
+	return id.PubKey()
+}
