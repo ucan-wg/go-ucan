@@ -1,0 +1,63 @@
+
+type CID string
+
+type Command string
+
+type DID string
+
+# Field requirements:
+#
+# | Name  |     Delegation      |     Invocation      |  Token   |
+# |       | Required | Nullable | Required | Nullable |          |  
+# | ----- | -------- | -------- | -------- | -------- | -------- |
+# | iss   | Yes      | No       | Yes      | No       |          |
+# | aud   | Yes      | No       | No       | N/A      | Optional |
+# | sub   | Yes      | Yes      | Yes      | No       | Nullable |
+# | cmd   | Yes      | No       | Yes      | No       |          |
+# | pol   | Yes      | No       | X        | X        | Optional |
+# | nonce | Yes      | No       | No       | N/A      | Optional |
+# | meta  | No       | N/A      | No       | N/A      | Optional |
+# | nbf   | No       | N/A      | X        | X        | Optional |
+# | exp   | Yes      | Yes      | Yes      | Yes      |          |
+# | args  | X        | X        | Yes      | No       | Optional |
+# | prf   | X        | X        | Yes      | No       | Optional |
+# | iat   | X        | X        | No       | N/A      | Optional |
+# | cause | X        | X        | No       | N/A      | Optional |
+
+type Token struct {
+    # Issuer DID (sender)
+    issuer DID (rename "iss")
+    # Audience DID (receiver)
+    audience optional DID (rename "aud")
+    # Principal that the chain is about (the Subject)
+    subject nullable DID (rename "sub")
+
+    # The Command to eventually invoke
+    command Command (rename "cmd")
+
+    # The delegation policy
+    # It doesn't seem possible to represent it with a schema.
+    policy optional Any (rename "pol")
+
+    # The invocation's arguments
+    args optional {String: Any}
+
+    # Delegations that prove the chain of authority
+    prf optional [CID]
+
+    # A unique, random nonce
+    nonce optional Bytes
+    
+    # Arbitrary Metadata
+    meta optional {String : Any}
+
+    # "Not before" UTC Unix Timestamp in seconds (valid from), 53-bits integer
+    notBefore optional Int (rename "nbf")
+    # The timestamp at which the delegation becomes invalid
+    expiration nullable Int (rename "exp")
+    # The timestamp at which the invocation was created
+    issuedAt optional Int
+
+    # An optional CID of the receipt that enqueued this invocation
+    cause optional CID
+}
