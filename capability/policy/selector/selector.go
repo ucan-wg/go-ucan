@@ -7,6 +7,7 @@ import (
 
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/datamodel"
+	"github.com/ipld/go-ipld-prime/node/basicnode"
 	"github.com/ipld/go-ipld-prime/schema"
 )
 
@@ -202,6 +203,25 @@ func resolve(sel Selector, subject ipld.Node, at []string) (ipld.Node, []ipld.No
 					}
 				}
 				cur = n
+			} else if cur != nil && cur.Kind() == datamodel.Kind_String {
+				str, err := cur.AsString()
+				if err != nil {
+					return nil, nil, err
+				}
+				idx := seg.Index()
+				// handle negative indices by adjusting them to count from the end of the string
+				if idx < 0 {
+					idx = len(str) + idx
+				}
+				if idx < 0 || idx >= len(str) {
+					if seg.Optional() {
+						cur = nil
+					} else {
+						return nil, nil, newResolutionError(fmt.Sprintf("index out of bounds: %d", seg.Index()), at)
+					}
+				} else {
+					cur = basicnode.NewString(string(str[idx]))
+				}
 			} else if seg.Optional() {
 				cur = nil
 			} else {
