@@ -20,8 +20,8 @@ type Token struct {
 	Subject    *string
 	Command    string
 	Policy     *datamodel.Node
-	Args       *Map__String__Any
-	Prf        *List__CID
+	Arguments  *Map__String__Any
+	Proofs     *List__CID
 	Nonce      *[]uint8
 	Meta       *Map__String__Any
 	NotBefore  *int

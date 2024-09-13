@@ -3,5 +3,5 @@
 package tools
 
 import (
-	_ "github.com/launchdarkly/go-options"
+	_ "github.com/selesy/go-options"
 )

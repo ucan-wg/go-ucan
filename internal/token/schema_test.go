@@ -77,6 +77,7 @@ func TestSchemaRoundTrip(t *testing.T) {
 
 func BenchmarkSchemaLoad(b *testing.B) {
 	b.ReportAllocs()
+
 	for i := 0; i < b.N; i++ {
 		_, _ = ipld.LoadSchemaBytes(schemaBytes)
 	}

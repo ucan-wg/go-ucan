@@ -8,7 +8,7 @@ type DID string
 # Field requirements:
 #
 # | Name  |     Delegation      |     Invocation      |  Token   |
-# |       | Required | Nullable | Required | Nullable |          |  
+# |       | Required | Nullable | Required | Nullable |          |
 # | ----- | -------- | -------- | -------- | -------- | -------- |
 # | iss   | Yes      | No       | Yes      | No       |          |
 # | aud   | Yes      | No       | No       | N/A      | Optional |
@@ -18,7 +18,7 @@ type DID string
 # | nonce | Yes      | No       | No       | N/A      | Optional |
 # | meta  | No       | N/A      | No       | N/A      | Optional |
 # | nbf   | No       | N/A      | X        | X        | Optional |
-# | exp   | Yes      | Yes      | Yes      | Yes      |          |
+# | exp   | Yes      | Yes      | Yes      | Yes      | Nullable |
 # | args  | X        | X        | Yes      | No       | Optional |
 # | prf   | X        | X        | Yes      | No       | Optional |
 # | iat   | X        | X        | No       | N/A      | Optional |
@@ -40,10 +40,10 @@ type Token struct {
     policy optional Any (rename "pol")
 
     # The invocation's arguments
-    args optional {String: Any}
+    arguments optional {String: Any} (rename "args")
 
     # Delegations that prove the chain of authority
-    prf optional [CID]
+    Proofs optional [CID] (rename "prf")
 
     # A unique, random nonce
     nonce optional Bytes
