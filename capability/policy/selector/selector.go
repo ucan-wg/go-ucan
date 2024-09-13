@@ -169,7 +169,55 @@ func resolve(sel Selector, subject ipld.Node, at []string) (ipld.Node, []ipld.No
 			}
 		} else if seg.Slice() != nil {
 			if cur != nil && cur.Kind() == datamodel.Kind_List {
-				return nil, nil, newResolutionError("list slice selection not yet implemented", at)
+				slice := seg.Slice()
+				start, end := int64(0), cur.Length()
+
+				if len(slice) > 0 {
+					start = int64(slice[0])
+					if start < 0 {
+						start = cur.Length() + start
+						if start < 0 {
+							start = 0
+						}
+					}
+				}
+
+				if len(slice) > 1 {
+					end = int64(slice[1])
+					if end <= 0 {
+						end = cur.Length() + end
+						if end < start {
+							end = start
+						}
+					}
+				}
+
+				if start < 0 || start >= cur.Length() || end < start || end > cur.Length() {
+					if seg.Optional() {
+						cur = nil
+					} else {
+						return nil, nil, newResolutionError(fmt.Sprintf("slice out of bounds: [%d:%d]", start, end), at)
+					}
+				} else {
+					nb := basicnode.Prototype.List.NewBuilder()
+					assembler, err := nb.BeginList(int64(end - start))
+					if err != nil {
+						return nil, nil, err
+					}
+					for i := start; i < end; i++ {
+						item, err := cur.LookupByIndex(int64(i))
+						if err != nil {
+							return nil, nil, err
+						}
+						if err := assembler.AssembleValue().AssignNode(item); err != nil {
+							return nil, nil, err
+						}
+					}
+					if err := assembler.Finish(); err != nil {
+						return nil, nil, err
+					}
+					cur = nb.Build()
+				}
 			} else if cur != nil && cur.Kind() == datamodel.Kind_Bytes {
 				return nil, nil, newResolutionError("bytes slice selection not yet implemented", at)
 			} else if seg.Optional() {
