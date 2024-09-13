@@ -93,9 +93,20 @@ func resolve(sel Selector, subject ipld.Node, at []string) (ipld.Node, []ipld.No
 		// 2nd level: handle different node kinds (list, map, string, bytes)
 		switch {
 		case seg.Iterator():
-			if cur == nil {
+			if cur == nil || cur.Kind() == datamodel.Kind_Null {
 				if seg.Optional() {
-					cur = nil
+					// build empty list
+					nb := basicnode.Prototype.List.NewBuilder()
+					assembler, err := nb.BeginList(0)
+					if err != nil {
+						return nil, nil, err
+					}
+
+					if err = assembler.Finish(); err != nil {
+						return nil, nil, err
+					}
+
+					return nb.Build(), nil, nil
 				} else {
 					return nil, nil, newResolutionError(fmt.Sprintf("can not iterate over kind: %s", kindString(cur)), at)
 				}

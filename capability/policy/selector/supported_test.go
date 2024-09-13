@@ -30,7 +30,7 @@ func TestSupportedForms(t *testing.T) {
 	for _, testcase := range []Testcase{
 		{Name: "Identity", Selector: `.`, Input: `{"x":1}`, Output: `{"x":1}`},
 		{Name: "Iterator", Selector: `.[]`, Input: `[1, 2]`, Output: `[1, 2]`},
-		{Name: "Optional Null Iterator", Selector: `.[]?`, Input: `null`, Output: `()`},
+		{Name: "Optional Null Iterator", Selector: `.[]?`, Input: `null`, Output: `[]`},
 		{Name: "Optional Iterator", Selector: `.[][]?`, Input: `[[1], 2, [3]]`, Output: `[1, 3]`},
 		{Name: "Object Key", Selector: `.x`, Input: `{"x": 1 }`, Output: `1`},
 		{Name: "Quoted Key", Selector: `.["x"]`, Input: `{"x": 1}`, Output: `1`},
