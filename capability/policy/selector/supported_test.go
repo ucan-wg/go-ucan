@@ -37,7 +37,7 @@ func TestSupportedForms(t *testing.T) {
 		{Name: "Index", Selector: `.[0]`, Input: `[1, 2]`, Output: `1`},
 		{Name: "Negative Index", Selector: `.[-1]`, Input: `[1, 2]`, Output: `2`},
 		{Name: "String Index", Selector: `.[0]`, Input: `"Hi"`, Output: `"H"`},
-		{Name: "Bytes Index", Selector: `.[0]`, Input: `{"/":{"bytes":"AAE"}`, Output: `0`},
+		{Name: "Bytes Index", Selector: `.[0]`, Input: `{"/":{"bytes":"AAE"}}`, Output: `0`},
 		{Name: "Array Slice", Selector: `.[0:2]`, Input: `[0, 1, 2]`, Output: `[0, 1]`},
 		{Name: "Array Slice", Selector: `.[1:]`, Input: `[0, 1, 2]`, Output: `[1, 2]`},
 		{Name: "Array Slice", Selector: `.[:2]`, Input: `[0, 1, 2]`, Output: `[0, 1]`},

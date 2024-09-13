@@ -222,6 +222,24 @@ func resolve(sel Selector, subject ipld.Node, at []string) (ipld.Node, []ipld.No
 				} else {
 					cur = basicnode.NewString(string(str[idx]))
 				}
+			} else if cur != nil && cur.Kind() == datamodel.Kind_Bytes {
+				b, err := cur.AsBytes()
+				if err != nil {
+					return nil, nil, err
+				}
+				idx := seg.Index()
+				if idx < 0 {
+					idx = len(b) + idx
+				}
+				if idx < 0 || idx >= len(b) {
+					if seg.Optional() {
+						cur = nil
+					} else {
+						return nil, nil, newResolutionError(fmt.Sprintf("index out of bounds: %d", seg.Index()), at)
+					}
+				} else {
+					cur = basicnode.NewInt(int64(b[idx]))
+				}
 			} else if seg.Optional() {
 				cur = nil
 			} else {
