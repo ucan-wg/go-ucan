@@ -116,41 +116,78 @@ func resolve(sel Selector, subject ipld.Node, at []string) (ipld.Node, []ipld.No
 				case datamodel.Kind_List:
 					it := cur.ListIterator()
 					for !it.Done() {
-						k, v, err := it.Next()
+						_, v, err := it.Next()
 						if err != nil {
 							return nil, nil, err
 						}
 
-						key := fmt.Sprintf("%d", k)
-						o, m, err := resolve(sel[i+1:], v, append(at[:], key))
-						if err != nil {
-							return nil, nil, err
-						}
-
-						if m != nil {
-							many = append(many, m...)
+						// check if there are more iterator segments
+						if len(sel) > i+1 && sel[i+1].Iterator() {
+							if v.Kind() == datamodel.Kind_List {
+								// recursively resolve the remaining selector segments
+								var o ipld.Node
+								var m []ipld.Node
+								o, m, err = resolve(sel[i+1:], v, at)
+								if err != nil {
+									// if the segment is optional and an error occurs, skip the current iteration.
+									if seg.Optional() {
+										continue
+									} else {
+										return nil, nil, err
+									}
+								}
+								if m != nil {
+									many = append(many, m...)
+								} else if o != nil {
+									many = append(many, o)
+								}
+							} else {
+								// if the current value is not a list and the next segment is optional, skip the current iteration
+								if sel[i+1].Optional() {
+									continue
+								} else {
+									return nil, nil, newResolutionError(fmt.Sprintf("can not iterate over kind: %s", kindString(v)), at)
+								}
+							}
 						} else {
-							many = append(many, o)
+							// if there are no more iterator segments, append the current value to the result
+							many = append(many, v)
 						}
 					}
 				case datamodel.Kind_Map:
 					it := cur.MapIterator()
 					for !it.Done() {
-						k, v, err := it.Next()
+						_, v, err := it.Next()
 						if err != nil {
 							return nil, nil, err
 						}
 
-						key, _ := k.AsString()
-						o, m, err := resolve(sel[i+1:], v, append(at[:], key))
-						if err != nil {
-							return nil, nil, err
-						}
-
-						if m != nil {
-							many = append(many, m...)
+						if len(sel) > i+1 && sel[i+1].Iterator() {
+							if v.Kind() == datamodel.Kind_List {
+								var o ipld.Node
+								var m []ipld.Node
+								o, m, err = resolve(sel[i+1:], v, at)
+								if err != nil {
+									if seg.Optional() {
+										continue
+									} else {
+										return nil, nil, err
+									}
+								}
+								if m != nil {
+									many = append(many, m...)
+								} else if o != nil {
+									many = append(many, o)
+								}
+							} else {
+								if sel[i+1].Optional() {
+									continue
+								} else {
+									return nil, nil, newResolutionError(fmt.Sprintf("can not iterate over kind: %s", kindString(v)), at)
+								}
+							}
 						} else {
-							many = append(many, o)
+							many = append(many, v)
 						}
 					}
 				default:
