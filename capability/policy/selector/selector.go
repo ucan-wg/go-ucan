@@ -190,11 +190,14 @@ func resolve(sel Selector, subject ipld.Node, at []string) (ipld.Node, []ipld.No
 				case datamodel.Kind_Bytes:
 					b, _ := cur.AsBytes()
 					start, end = resolveSliceIndices(slice, int64(len(b)))
+				case datamodel.Kind_String:
+					str, _ := cur.AsString()
+					start, end = resolveSliceIndices(slice, int64(len(str)))
 				default:
 					return nil, nil, newResolutionError(fmt.Sprintf("can not slice on kind: %s", kindString(cur)), at)
 				}
 
-				if start < 0 || end < start || end > cur.Length() {
+				if start < 0 || end < start {
 					if seg.Optional() {
 						cur = nil
 					} else {
@@ -203,21 +206,31 @@ func resolve(sel Selector, subject ipld.Node, at []string) (ipld.Node, []ipld.No
 				} else {
 					switch cur.Kind() {
 					case datamodel.Kind_List:
+						if end > cur.Length() {
+							end = cur.Length()
+						}
 						nb := basicnode.Prototype.List.NewBuilder()
-						assembler, _ := nb.BeginList(end - start)
+						assembler, _ := nb.BeginList(int64(end - start))
 						for i := start; i < end; i++ {
-							item, _ := cur.LookupByIndex(i)
-							if err := assembler.AssembleValue().AssignNode(item); err != nil {
-								return nil, nil, err
-							}
+							item, _ := cur.LookupByIndex(int64(i))
+							assembler.AssembleValue().AssignNode(item)
 						}
-						if err := assembler.Finish(); err != nil {
-							return nil, nil, err
-						}
+						assembler.Finish()
 						cur = nb.Build()
 					case datamodel.Kind_Bytes:
 						b, _ := cur.AsBytes()
+						l := int64(len(b))
+						if end > l {
+							end = l
+						}
 						cur = basicnode.NewBytes(b[start:end])
+					case datamodel.Kind_String:
+						str, _ := cur.AsString()
+						l := int64(len(str))
+						if end > l {
+							end = l
+						}
+						cur = basicnode.NewString(str[start:end])
 					}
 				}
 			}
