@@ -98,10 +98,16 @@ func Unwrap(node datamodel.Node) (*Envelope, error) {
 		return nil, err
 	}
 
-	return &Envelope{
+	envel := &Envelope{
 		signature:  signature,
 		sigPayload: sigPayload,
-	}, nil
+	}
+
+	if ok, err := envel.Verify(); !ok || err != nil {
+		return nil, fmt.Errorf("envelope was not signed by issuer")
+	}
+
+	return envel, nil
 }
 
 // Signature returns the cryptographic signature of the Envelope's

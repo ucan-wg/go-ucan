@@ -1,11 +1,12 @@
 package delegation
 
 import (
+	"errors"
+	"fmt"
 	"time"
 
 	"github.com/ipld/go-ipld-prime/datamodel"
-	"github.com/ipld/go-ipld-prime/node/bindnode"
-	"github.com/ipld/go-ipld-prime/schema"
+	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/ucan-wg/go-ucan/capability/command"
 	"github.com/ucan-wg/go-ucan/capability/policy"
 	"github.com/ucan-wg/go-ucan/did"
@@ -14,15 +15,19 @@ import (
 )
 
 const (
-	Tag = "ucan/dlg@"
+	Tag = "ucan/dlg@1.0.0-rc.1"
 )
 
-//go:generate -command options go run github.com/launchdarkly/go-options
-//go:generate options -type=config -prefix=With -output=delegatiom_options.go -cmp=false -imports=time,github.com/ucan-wg/go-ucan/did
+type Delegation struct {
+	envel *envelope.Envelope
+}
+
+//go:generate -command options go run github.com/selesy/go-options
+//go:generate options -type=config -prefix=With -output=delegatiom_options.go -cmp=false -stringer=false -imports=time,github.com/ucan-wg/go-ucan/did,github.com/ipld/go-ipld-prime/datamodel
 
 type config struct {
 	Expiration   *time.Time
-	Meta         map[string]any
+	Meta         map[string]datamodel.Node
 	NoExpiration bool
 	NotBefore    *time.Time
 	// is a did.DID representing the Subject.
@@ -30,81 +35,105 @@ type config struct {
 	Powerline bool
 }
 
-type Meta struct {
-	Keys   []string
-	Values map[string]datamodel.Node
-}
+// Required fields for delegation
 
-func NewMeta(meta map[string]any) Meta {
-	keys := make([]string, len(meta))
-	values := make(map[string]datamodel.Node, len(meta))
-	i := 0
+// Requirements for root
 
-	for k, v := range meta {
-		keys[i] = k
-		values[k] = bindnode.Wrap(&v, nil)
-	}
-
-	return Meta{
-		Keys:   keys,
-		Values: values,
-	}
-}
-
-var _ envelope.Tokener = (*Token)(nil)
-
-type Token struct {
-	// Issuer DID (sender)
-	Issuer did.DID
-	// Audience DID (receiver)
-	Audience did.DID
-	// Principal that the chain is about (the Subject)
-	Subject *did.DID
-	// The Command to eventually invoke
-	Command *command.Command
-	// The delegation policy
-	Policy *policy.Policy
-	// A unique, random nonce
-	Nonce []byte
-	// Arbitrary Metadata
-	Meta Meta
-	// "Not before" UTC Unix Timestamp in seconds (valid from), 53-bits integer
-	NotBefore *time.Time
-	// The timestamp at which the Invocation becomes invalid
-	Expiration *time.Time
-}
-
-func New(iss did.DID, aud did.DID, prf []Token, cmd *command.Command, pol *policy.Policy, exp *time.Time, nonce []byte, opts ...Option) (*Token, error) {
+func New(privKey crypto.PrivKey, iss did.DID, aud did.DID, cmd *command.Command, pol *policy.Policy, exp *time.Time, nonce []byte, opts ...Option) (*Delegation, error) {
 	cfg, err := newConfig(opts...)
 	if err != nil {
 		return nil, err
 	}
 
-	tkn := &Token{
-		Issuer:    iss,
-		Audience:  aud,
-		Subject:   cfg.Subject,
-		Command:   cmd,
-		Policy:    pol,
-		Nonce:     nonce,
-		NotBefore: cfg.NotBefore,
+	if !iss.Defined() {
+		return nil, fmt.Errorf("%w: %s", token.ErrMissingRequiredDID, "iss")
 	}
 
+	if !aud.Defined() {
+		return nil, fmt.Errorf("%w: %s", token.ErrMissingRequiredDID, "aud")
+	}
+	audience := aud.String()
+
+	var subject *string
+	if cfg.Subject != nil && cfg.Subject.Defined() {
+		s := cfg.Subject.String()
+		subject = &s
+	}
+
+	policy, err := pol.ToIPLD()
+	if err != nil {
+		return nil, err
+	}
+
+	nonce = []uint8(nonce)
+
+	var notBefore *int
+	if cfg.NotBefore != nil {
+		n := int(cfg.NotBefore.Unix())
+		notBefore = &n
+	}
+
+	var meta *token.Map__String__Any
 	if len(cfg.Meta) > 0 {
-		tkn.Meta = NewMeta(cfg.Meta)
+		m := token.ToIPLDMapStringAny(cfg.Meta)
+		meta = &m
 	}
 
+	var expiration *int
 	if exp != nil && !cfg.NoExpiration {
-		tkn.Expiration = exp
+		e := int(cfg.NotBefore.Unix())
+		expiration = &e
 	}
 
-	return tkn, nil
+	tkn := &token.Token{
+		Issuer:     iss.String(),
+		Audience:   &audience,
+		Subject:    subject,
+		Command:    cmd.String(),
+		Policy:     &policy,
+		Nonce:      &nonce,
+		Meta:       meta,
+		NotBefore:  notBefore,
+		Expiration: expiration,
+	}
+
+	envel, err := envelope.New(privKey, tkn, Tag)
+	if err != nil {
+		return nil, err
+	}
+
+	dlg := &Delegation{envel: envel}
+
+	if err := dlg.Validate(); err != nil {
+		return nil, err
+	}
+
+	return dlg, nil
 }
 
-func (d *Token) Tag() string {
-	return Tag
+type validateFunc func() error
+
+func (d *Delegation) Validate() error {
+	return errors.Join(
+		d.validateDID("iss", &d.envel.TokenPayload().Issuer, false),
+		d.validateDID("aud", d.envel.TokenPayload().Audience, false),
+		d.validateDID("sub", d.envel.TokenPayload().Subject, true),
+	)
 }
 
-func (d *Token) Prototype() schema.TypedPrototype {
-	return bindnode.Prototype((*Token)(nil), mustLoadSchema().TypeByName("Delegation"), token.BindnodeOptions()...)
+func (d *Delegation) validateDID(fieldName string, identity *string, nullableOrOptional bool) error {
+	if identity == nil && !nullableOrOptional {
+		return fmt.Errorf("a required DID is missing: %s", fieldName)
+	}
+
+	id, err := did.Parse(*identity)
+	if err != nil {
+
+	}
+
+	if !id.Defined() && !id.Key() {
+		return fmt.Errorf("a required DID is missing: %s", fieldName)
+	}
+
+	return nil
 }
