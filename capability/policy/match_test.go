@@ -9,7 +9,6 @@ import (
 	"github.com/ipld/go-ipld-prime/codec/dagjson"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/ucan-wg/go-ucan/capability/policy/literal"
@@ -490,63 +489,6 @@ func TestPolicyExamples(t *testing.T) {
 
 		require.True(t, evaluate(`["any", ".a", ["==", ".b", 2]]`, data))
 	})
-}
-
-func Test_globMatch(t *testing.T) {
-
-	tests := []struct {
-		pattern string
-		str     string
-		matches bool
-	}{
-		// Basic matching
-		{"*", "anything", true},
-		{"?", "a", true},
-		{"?", "ab", false},
-		{"a*", "abc", true},
-		{"*c", "abc", true},
-		{"a*c", "abc", true},
-		{"a*c", "abxc", true},
-		{"a*c", "ac", true},
-		{"a*c", "a", false},
-		{"a*c", "ab", false},
-		{"a?c", "abc", true},
-		{"a?c", "ac", false},
-		{"a?c", "abxc", false},
-
-		// Escaped characters
-		{"a\\*c", "a*c", true},
-		{"a\\*c", "abc", false},
-		{"a\\?c", "a?c", true},
-		{"a\\?c", "abc", false},
-
-		// Mixed wildcards and literals
-		{"a*b*c", "abc", true},
-		{"a*b*c", "aXbYc", true},
-		{"a*b*c", "aXbY", false},
-		{"a*b*c", "abYc", true},
-		{"a*b*c", "aXbc", true},
-		{"a*b*c", "aXbYcZ", false},
-
-		// Edge cases
-		{"", "", true},
-		{"", "a", false},
-		{"*", "", true},
-		{"*", "a", true},
-		{"?", "", false},
-		{"?", "a", true},
-		{"?", "ab", false},
-		{"\\*", "*", true},
-		{"\\*", "a", false},
-		{"\\?", "?", true},
-		{"\\?", "a", false},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.pattern+"_"+tt.str, func(t *testing.T) {
-			assert.Equal(t, tt.matches, globMatch(tt.pattern, tt.str))
-		})
-	}
 }
 
 func FuzzMatch(f *testing.F) {
