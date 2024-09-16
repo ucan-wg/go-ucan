@@ -9,6 +9,7 @@ import (
 	"github.com/ipld/go-ipld-prime/codec/dagjson"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/ucan-wg/go-ucan/capability/policy/literal"
@@ -488,5 +489,111 @@ func TestPolicyExamples(t *testing.T) {
 		data := makeNode(`{"a": [{"b": 1}, {"b": 2}, {"z": [7, 8, 9]}]}`)
 
 		require.True(t, evaluate(`["any", ".a", ["==", ".b", 2]]`, data))
+	})
+}
+
+func Test_globMatch(t *testing.T) {
+
+	tests := []struct {
+		pattern string
+		str     string
+		matches bool
+	}{
+		// Basic matching
+		{"*", "anything", true},
+		{"?", "a", true},
+		{"?", "ab", false},
+		{"a*", "abc", true},
+		{"*c", "abc", true},
+		{"a*c", "abc", true},
+		{"a*c", "abxc", true},
+		{"a*c", "ac", true},
+		{"a*c", "a", false},
+		{"a*c", "ab", false},
+		{"a?c", "abc", true},
+		{"a?c", "ac", false},
+		{"a?c", "abxc", false},
+
+		// Escaped characters
+		{"a\\*c", "a*c", true},
+		{"a\\*c", "abc", false},
+		{"a\\?c", "a?c", true},
+		{"a\\?c", "abc", false},
+
+		// Mixed wildcards and literals
+		{"a*b*c", "abc", true},
+		{"a*b*c", "aXbYc", true},
+		{"a*b*c", "aXbY", false},
+		{"a*b*c", "abYc", true},
+		{"a*b*c", "aXbc", true},
+		{"a*b*c", "aXbYcZ", false},
+
+		// Edge cases
+		{"", "", true},
+		{"", "a", false},
+		{"*", "", true},
+		{"*", "a", true},
+		{"?", "", false},
+		{"?", "a", true},
+		{"?", "ab", false},
+		{"\\*", "*", true},
+		{"\\*", "a", false},
+		{"\\?", "?", true},
+		{"\\?", "a", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.pattern+"_"+tt.str, func(t *testing.T) {
+			assert.Equal(t, tt.matches, globMatch(tt.pattern, tt.str))
+		})
+	}
+}
+
+func FuzzMatch(f *testing.F) {
+	// Policy + Data examples
+	f.Add([]byte(`[["==", ".status", "draft"]]`), []byte(`{"status": "draft"}`))
+	f.Add([]byte(`[["all", ".reviewer", ["like", ".email", "*@example.com"]]]`), []byte(`{"reviewer": [{"email": "alice@example.com"}, {"email": "bob@example.com"}]}`))
+	f.Add([]byte(`[["any", ".tags", ["or", [["==", ".", "news"], ["==", ".", "press"]]]]]`), []byte(`{"tags": ["news", "press"]}`))
+	f.Add([]byte(`[["==", ".name", "Alice"]]`), []byte(`{"name": "Alice"}`))
+	f.Add([]byte(`[[">", ".age", 30]]`), []byte(`{"age": 31}`))
+	f.Add([]byte(`[["<=", ".height", 180]]`), []byte(`{"height": 170}`))
+	f.Add([]byte(`[["not", ["==", ".status", "inactive"]]]`), []byte(`{"status": "active"}`))
+	f.Add([]byte(`[["and", [["==", ".role", "admin"], [">=", ".experience", 5]]]]`), []byte(`{"role": "admin", "experience": 6}`))
+	f.Add([]byte(`[["or", [["==", ".department", "HR"], ["==", ".department", "Finance"]]]]`), []byte(`{"department": "HR"}`))
+	f.Add([]byte(`[["like", ".email", "*@company.com"]]`), []byte(`{"email": "user@company.com"}`))
+	f.Add([]byte(`[["all", ".projects", [">", ".budget", 10000]]]`), []byte(`{"projects": [{"budget": 15000}, {"budget": 8000}]}`))
+	f.Add([]byte(`[["any", ".skills", ["==", ".", "Go"]]]`), []byte(`{"skills": ["Go", "Python", "JavaScript"]}`))
+	f.Add(
+		[]byte(`[["and", [
+			["==", ".name", "Bob"],
+			["or", [[">", ".age", 25],["==", ".status", "active"]]],
+			["all", ".tasks", ["==", ".completed", true]]
+		]]]`),
+		[]byte(`{
+			"name": "Bob",
+			"age": 26,
+			"status": "active",
+			"tasks": [{"completed": true}, {"completed": true}, {"completed": false}]
+		}`),
+	)
+
+	f.Fuzz(func(t *testing.T, policyBytes []byte, dataBytes []byte) {
+		policyNode, err := ipld.Decode(policyBytes, dagjson.Decode)
+		if err != nil {
+			t.Skip()
+		}
+
+		dataNode, err := ipld.Decode(dataBytes, dagjson.Decode)
+		if err != nil {
+			t.Skip()
+		}
+
+		// policy node -> policy object
+		policy, err := FromIPLD(policyNode)
+		if err != nil {
+			t.Skip()
+		}
+
+		Match(policy, dataNode)
 	})
 }
