@@ -28,27 +28,31 @@ func globMatch(pattern, str string) bool {
 		return false
 	}
 
-	var i, j int // i is the index for the pattern, j is the index for the string
+	// i is the index for the pattern
+	// j is the index for the string
+	var i, j int
 	for i < len(pattern) && j < len(str) {
 		switch pattern[i] {
 		case '*':
-			// Skip consecutive '*' characters
+			// skip consecutive '*' characters
 			for i < len(pattern) && pattern[i] == '*' {
 				i++
 			}
 			if i == len(pattern) {
 				return true
 			}
-			// Match the rest of the pattern
+
+			// match the rest of the pattern
 			for j < len(str) {
 				if globMatch(pattern[i:], str[j:]) {
 					return true
 				}
 				j++
 			}
+
 			return false
 		case '\\':
-			// Handle escaped '*'
+			// handle escaped '*'
 			i++
 			if i < len(pattern) && pattern[i] == '*' {
 				if str[j] != '*' {
@@ -71,9 +75,11 @@ func globMatch(pattern, str string) bool {
 			j++
 		}
 	}
-	// Check for remaining characters in pattern
+
+	// check for remaining characters in pattern
 	for i < len(pattern) && pattern[i] == '*' {
 		i++
 	}
+
 	return i == len(pattern) && j == len(str)
 }
