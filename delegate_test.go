@@ -12,6 +12,7 @@ import (
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	"github.com/ucan-wg/go-ucan"
 	"github.com/ucan-wg/go-ucan/capability/command"
 	"github.com/ucan-wg/go-ucan/capability/policy"
@@ -30,16 +31,16 @@ const (
 	subJectCmd        = "/foo/bar"
 	subjectPol        = `
 [
-		["==", ".status", "draft"],
-		["all", ".reviewer", [
-		["like", ".email", "*@example.com"]]
-	],
-		["any", ".tags", [ 
+	["==", ".status", "draft"],
+	["all", ".reviewer", [
+		["like", ".email", "*@example.com"]
+	]],
+	["any", ".tags", [
 		["or", [
 			["==", ".", "news"], 
-			["==", ".", "press"]]
-			]]
-	]
+			["==", ".", "press"]
+		]]
+	]]
 ]
 `
 )
