@@ -26,11 +26,22 @@ func matchStatement(statement Statement, node ipld.Node) bool {
 	switch statement.Kind() {
 	case KindEqual:
 		if s, ok := statement.(equality); ok {
-			one, _, err := selector.Select(s.selector, node)
-			if err != nil || one == nil {
+			one, many, err := selector.Select(s.selector, node)
+			if err != nil {
 				return false
 			}
-			return datamodel.DeepEqual(s.value, one)
+			if one != nil {
+				return datamodel.DeepEqual(s.value, one)
+			}
+			if many != nil {
+				for _, n := range many {
+					if eq := datamodel.DeepEqual(s.value, n); eq {
+						return true
+					}
+				}
+			}
+
+			return false
 		}
 	case KindGreaterThan:
 		if s, ok := statement.(equality); ok {
@@ -119,17 +130,25 @@ func matchStatement(statement Statement, node ipld.Node) bool {
 		}
 	case KindAny:
 		if s, ok := statement.(quantifier); ok {
-			// FIXME: line below return a single node, not many
-			_, many, err := selector.Select(s.selector, node)
-			if err != nil || many == nil {
+			one, many, err := selector.Select(s.selector, node)
+			if err != nil {
 				return false
 			}
-			for _, n := range many {
-				ok := matchStatement(s.statement, n)
+			if one != nil {
+				ok := matchStatement(s.statement, one)
 				if ok {
 					return true
 				}
 			}
+			if many != nil {
+				for _, n := range many {
+					ok := matchStatement(s.statement, n)
+					if ok {
+						return true
+					}
+				}
+			}
+
 			return false
 		}
 	}
