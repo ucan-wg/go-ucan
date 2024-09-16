@@ -263,21 +263,24 @@ func resolve(sel Selector, subject ipld.Node, at []string) (ipld.Node, []ipld.No
 				}
 			} else {
 				slice := seg.Slice()
-				var start, end int64
+				var start, end, length int64
 				switch cur.Kind() {
 				case datamodel.Kind_List:
-					start, end = resolveSliceIndices(slice, cur.Length())
+					length = cur.Length()
+					start, end = resolveSliceIndices(slice, length)
 				case datamodel.Kind_Bytes:
 					b, _ := cur.AsBytes()
-					start, end = resolveSliceIndices(slice, int64(len(b)))
+					length = int64(len(b))
+					start, end = resolveSliceIndices(slice, length)
 				case datamodel.Kind_String:
 					str, _ := cur.AsString()
-					start, end = resolveSliceIndices(slice, int64(len(str)))
+					length = int64(len(str))
+					start, end = resolveSliceIndices(slice, length)
 				default:
 					return nil, nil, newResolutionError(fmt.Sprintf("can not slice on kind: %s", kindString(cur)), at)
 				}
 
-				if start < 0 || end < start {
+				if start < 0 || end < start || end > length {
 					if seg.Optional() {
 						cur = nil
 					} else {
