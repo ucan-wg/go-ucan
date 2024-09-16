@@ -50,6 +50,10 @@ func (d DID) DID() DID {
 	return d
 }
 
+func (d DID) Key() bool {
+	return d.key
+}
+
 func (d DID) PubKey() (crypto.PubKey, error) {
 	if !d.key {
 		return nil, fmt.Errorf("unsupported did type: %s", d.String())
@@ -110,5 +114,5 @@ func Parse(str string) (DID, error) {
 	varint.PutUvarint(buf, DIDCore)
 	suffix, _ := strings.CutPrefix(str, Prefix)
 	buf = append(buf, suffix...)
-	return DID{str: string(buf)}, nil
+	return DID{str: string(buf), code: DIDCore}, nil
 }
