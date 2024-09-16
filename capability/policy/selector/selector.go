@@ -199,26 +199,58 @@ func resolve(sel Selector, subject ipld.Node, at []string) (ipld.Node, []ipld.No
 
 		case seg.Field() != "":
 			at = append(at, seg.Field())
-			if cur == nil || cur.Kind() != datamodel.Kind_Map {
+			if cur == nil {
 				if seg.Optional() {
 					cur = nil
 				} else {
 					return nil, nil, newResolutionError(fmt.Sprintf("can not access field: %s on kind: %s", seg.Field(), kindString(cur)), at)
 				}
 			} else {
-				n, err := cur.LookupByString(seg.Field())
-				if err != nil {
-					if isMissing(err) {
-						if seg.Optional() {
-							cur = nil
+				switch cur.Kind() {
+				case datamodel.Kind_Map:
+					n, err := cur.LookupByString(seg.Field())
+					if err != nil {
+						if isMissing(err) {
+							if seg.Optional() {
+								cur = nil
+							} else {
+								return nil, nil, newResolutionError(fmt.Sprintf("object has no field named: %s", seg.Field()), at)
+							}
 						} else {
-							return nil, nil, newResolutionError(fmt.Sprintf("object has no field named: %s", seg.Field()), at)
+							return nil, nil, err
 						}
 					} else {
-						return nil, nil, err
+						cur = n
 					}
-				} else {
-					cur = n
+				case datamodel.Kind_List:
+					var many []ipld.Node
+					it := cur.ListIterator()
+					for !it.Done() {
+						_, v, err := it.Next()
+						if err != nil {
+							return nil, nil, err
+						}
+						if v.Kind() == datamodel.Kind_Map {
+							n, err := v.LookupByString(seg.Field())
+							if err == nil {
+								many = append(many, n)
+							}
+						}
+					}
+					if len(many) > 0 {
+						cur = nil
+						return nil, many, nil
+					} else if seg.Optional() {
+						cur = nil
+					} else {
+						return nil, nil, newResolutionError(fmt.Sprintf("no elements in list have field named: %s", seg.Field()), at)
+					}
+				default:
+					if seg.Optional() {
+						cur = nil
+					} else {
+						return nil, nil, newResolutionError(fmt.Sprintf("can not access field: %s on kind: %s", seg.Field(), kindString(cur)), at)
+					}
 				}
 			}
 
