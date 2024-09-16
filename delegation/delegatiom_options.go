@@ -4,7 +4,6 @@ package delegation
 
 import (
 	"github.com/ipld/go-ipld-prime/datamodel"
-	"github.com/ucan-wg/go-ucan/did"
 	"time"
 )
 
@@ -25,13 +24,6 @@ func applyConfigOptions(c *config, options ...Option) error {
 	return nil
 }
 
-func WithExpiration(o *time.Time) Option {
-	return func(c *config) error {
-		c.Expiration = o
-		return nil
-	}
-}
-
 func WithMeta(o map[string]datamodel.Node) Option {
 	return func(c *config) error {
 		c.Meta = o
@@ -39,31 +31,9 @@ func WithMeta(o map[string]datamodel.Node) Option {
 	}
 }
 
-func WithNoExpiration(o bool) Option {
-	return func(c *config) error {
-		c.NoExpiration = o
-		return nil
-	}
-}
-
 func WithNotBefore(o *time.Time) Option {
 	return func(c *config) error {
 		c.NotBefore = o
-		return nil
-	}
-}
-
-// WithSubject is a did.DID representing the Subject.
-func WithSubject(o *did.DID) Option {
-	return func(c *config) error {
-		c.Subject = o
-		return nil
-	}
-}
-
-func WithPowerline(o bool) Option {
-	return func(c *config) error {
-		c.Powerline = o
 		return nil
 	}
 }
