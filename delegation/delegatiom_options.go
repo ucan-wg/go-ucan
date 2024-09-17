@@ -24,6 +24,13 @@ func applyConfigOptions(c *config, options ...Option) error {
 	return nil
 }
 
+func WithExpiration(o *time.Time) Option {
+	return func(c *config) error {
+		c.Expiration = o
+		return nil
+	}
+}
+
 func WithMeta(o map[string]datamodel.Node) Option {
 	return func(c *config) error {
 		c.Meta = o

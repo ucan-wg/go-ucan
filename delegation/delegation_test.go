@@ -91,7 +91,7 @@ func TestConstructors(t *testing.T) {
 	}
 
 	t.Run("New", func(t *testing.T) {
-		dlg, err := delegation.New(privKey, aud, &sub, cmd, pol, []byte(nonce), &exp, delegation.WithMeta(meta))
+		dlg, err := delegation.New(privKey, aud, &sub, cmd, pol, []byte(nonce), delegation.WithExpiration(&exp), delegation.WithMeta(meta))
 		require.NoError(t, err)
 
 		data, err := dlg.ToDagJson()
@@ -105,7 +105,7 @@ func TestConstructors(t *testing.T) {
 	t.Run("Root", func(t *testing.T) {
 		t.Parallel()
 
-		dlg, err := delegation.Root(privKey, aud, cmd, pol, []byte(nonce), &exp, delegation.WithMeta(meta))
+		dlg, err := delegation.Root(privKey, aud, cmd, pol, []byte(nonce), delegation.WithExpiration(&exp), delegation.WithMeta(meta))
 		require.NoError(t, err)
 
 		data, err := dlg.ToDagJson()

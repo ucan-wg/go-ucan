@@ -27,11 +27,12 @@ type Delegation struct {
 //go:generate options -type=config -prefix=With -output=delegatiom_options.go -cmp=false -stringer=false -imports=time,github.com/ipld/go-ipld-prime/datamodel
 
 type config struct {
-	Meta      map[string]datamodel.Node
-	NotBefore *time.Time
+	Expiration *time.Time
+	Meta       map[string]datamodel.Node
+	NotBefore  *time.Time
 }
 
-func New(privKey crypto.PrivKey, aud did.DID, sub *did.DID, cmd *command.Command, pol policy.Policy, nonce []byte, exp *time.Time, opts ...Option) (*Delegation, error) {
+func New(privKey crypto.PrivKey, aud did.DID, sub *did.DID, cmd *command.Command, pol policy.Policy, nonce []byte, opts ...Option) (*Delegation, error) {
 	cfg, err := newConfig(opts...)
 	if err != nil {
 		return nil, err
@@ -71,8 +72,8 @@ func New(privKey crypto.PrivKey, aud did.DID, sub *did.DID, cmd *command.Command
 	}
 
 	var expiration *int
-	if exp != nil {
-		e := int(exp.Unix())
+	if cfg.Expiration != nil {
+		e := int(cfg.Expiration.Unix())
 		expiration = &e
 	}
 
@@ -102,13 +103,13 @@ func New(privKey crypto.PrivKey, aud did.DID, sub *did.DID, cmd *command.Command
 	return dlg, nil
 }
 
-func Root(privKey crypto.PrivKey, aud did.DID, cmd *command.Command, pol policy.Policy, nonce []byte, exp *time.Time, opts ...Option) (*Delegation, error) {
+func Root(privKey crypto.PrivKey, aud did.DID, cmd *command.Command, pol policy.Policy, nonce []byte, opts ...Option) (*Delegation, error) {
 	sub, err := did.FromPrivKey(privKey)
 	if err != nil {
 		return nil, err
 	}
 
-	return New(privKey, aud, &sub, cmd, pol, nonce, exp, opts...)
+	return New(privKey, aud, &sub, cmd, pol, nonce, opts...)
 }
 
 func (d *Delegation) Audience() did.DID {
