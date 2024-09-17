@@ -2,16 +2,18 @@ package delegation
 
 import (
 	"fmt"
+	"io"
 
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/codec"
 	"github.com/ipld/go-ipld-prime/codec/dagcbor"
 	"github.com/ipld/go-ipld-prime/codec/dagjson"
 	"github.com/ipld/go-ipld-prime/datamodel"
+
 	"github.com/ucan-wg/go-ucan/internal/envelope"
 )
 
-// Encode marshals a Delegation to the the format specified by the provided
+// Encode marshals a Delegation to the format specified by the provided
 // codec.Encoder.
 func (d *Delegation) Encode(encFn codec.Encoder) ([]byte, error) {
 	node, err := d.ToIPLD()
@@ -47,7 +49,15 @@ func Decode(b []byte, decFn codec.Decoder) (*Delegation, error) {
 	if err != nil {
 		return nil, err
 	}
+	return FromIPLD(node)
+}
 
+// DecodeReader is the same as Decode, but accept an io.Reader.
+func DecodeReader(r io.Reader, decFn codec.Decoder) (*Delegation, error) {
+	node, err := ipld.DecodeStreaming(r, decFn)
+	if err != nil {
+		return nil, err
+	}
 	return FromIPLD(node)
 }
 
@@ -59,12 +69,22 @@ func FromDagCbor(data []byte) (*Delegation, error) {
 	return Decode(data, dagcbor.Decode)
 }
 
-// FromDagsjon unmarshals the input data into a Delegation.
+// FromDagCborReader is the same as FromDagCbor, but accept an io.Reader.
+func FromDagCborReader(r io.Reader) (*Delegation, error) {
+	return DecodeReader(r, dagcbor.Decode)
+}
+
+// FromDagJson unmarshals the input data into a Delegation.
 //
 // An error is returned if the conversion fails, or if the resulting
 // Delegation is invalid.
 func FromDagJson(data []byte) (*Delegation, error) {
 	return Decode(data, dagjson.Decode)
+}
+
+// FromDagJsonReader is the same as FromDagJson, but accept an io.Reader.
+func FromDagJsonReader(r io.Reader) (*Delegation, error) {
+	return DecodeReader(r, dagjson.Decode)
 }
 
 // FromIPLD unwraps a Delegation from the provided IPLD datamodel.Node
