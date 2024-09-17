@@ -491,8 +491,6 @@ func TestPolicyExamples(t *testing.T) {
 	})
 }
 
-const maxFuzzInputLength = 128
-
 func FuzzMatch(f *testing.F) {
 	// Policy + Data examples
 	f.Add([]byte(`[["==", ".status", "draft"]]`), []byte(`{"status": "draft"}`))
@@ -522,10 +520,6 @@ func FuzzMatch(f *testing.F) {
 	)
 
 	f.Fuzz(func(t *testing.T, policyBytes []byte, dataBytes []byte) {
-		if len(policyBytes) > maxFuzzInputLength || len(dataBytes) > maxFuzzInputLength {
-			t.Skip()
-		}
-
 		policyNode, err := ipld.Decode(policyBytes, dagjson.Decode)
 		if err != nil {
 			t.Skip()
