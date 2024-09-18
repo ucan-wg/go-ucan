@@ -18,7 +18,7 @@ func TestDecode(t *testing.T) {
 
 		data := golden.Get(t, "example.dagcbor")
 
-		tkn, err := envelope.FromDagCbor[*Example](data)
+		tkn, _, err := envelope.FromDagCbor[*Example](data)
 		require.NoError(t, err)
 		assert.Equal(t, exampleGreeting, tkn.Hello)
 		assert.Equal(t, exampleDID, tkn.Issuer)
@@ -29,7 +29,7 @@ func TestDecode(t *testing.T) {
 
 		data := golden.Get(t, "example.dagjson")
 
-		tkn, err := envelope.FromDagJson[*Example](data)
+		tkn, _, err := envelope.FromDagJson[*Example](data)
 		require.NoError(t, err)
 		assert.Equal(t, exampleGreeting, tkn.Hello)
 		assert.Equal(t, exampleDID, tkn.Issuer)
@@ -64,7 +64,7 @@ func TestRoundtrip(t *testing.T) {
 
 		data := golden.Get(t, exampleDAGCBORFilename)
 
-		tkn, err := envelope.FromDagCborReader[*Example](bytes.NewReader(data))
+		tkn, _, err := envelope.FromDagCborReader[*Example](bytes.NewReader(data))
 		require.NoError(t, err)
 		assert.Equal(t, exampleGreeting, tkn.Hello)
 		assert.Equal(t, exampleDID, tkn.Issuer)
@@ -79,7 +79,7 @@ func TestRoundtrip(t *testing.T) {
 
 		dataIn := golden.Get(t, exampleDAGCBORFilename)
 
-		tkn, err := envelope.FromDagCbor[*Example](dataIn)
+		tkn, _, err := envelope.FromDagCbor[*Example](dataIn)
 		require.NoError(t, err)
 		assert.Equal(t, exampleGreeting, tkn.Hello)
 		assert.Equal(t, exampleDID, tkn.Issuer)
@@ -94,7 +94,7 @@ func TestFromIPLD_with_invalid_signature(t *testing.T) {
 	t.Parallel()
 
 	node := invalidNodeFromGolden(t)
-	tkn, err := envelope.FromIPLD[*Example](node)
+	tkn, _, err := envelope.FromIPLD[*Example](node)
 	assert.Nil(t, tkn)
 	require.EqualError(t, err, "failed to verify the token's signature")
 }
