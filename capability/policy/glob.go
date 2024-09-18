@@ -1,7 +1,11 @@
 package policy
 
-// validateGlobPattern ensures the pattern conforms to the spec: only '*' and escaped '\*' are allowed.
-func validateGlobPattern(pattern string) bool {
+import "fmt"
+
+type glob string
+
+// parseGlob ensures that the pattern conforms to the spec: only '*' and escaped '\*' are allowed.
+func parseGlob(pattern string) (glob, error) {
 	for i := 0; i < len(pattern); i++ {
 		if pattern[i] == '*' {
 			continue
@@ -15,15 +19,23 @@ func validateGlobPattern(pattern string) bool {
 			continue
 		}
 		if pattern[i] == '\\' {
-			return false // invalid escape sequence
+			return "", fmt.Errorf("invalid escape sequence")
 		}
 	}
 
-	return true
+	return glob(pattern), nil
 }
 
-// globMatch matches a string against a pattern with * wildcards, handling escaped '\*' literals.
-func globMatch(pattern, str string) bool {
+func mustParseGlob(pattern string) glob {
+	g, err := parseGlob(pattern)
+	if err != nil {
+		panic(err)
+	}
+	return g
+}
+
+// Match matches a string against the glob pattern with * wildcards, handling escaped '\*' literals.
+func (pattern glob) Match(str string) bool {
 	// i is the index for the pattern
 	// j is the index for the string
 	var i, j int

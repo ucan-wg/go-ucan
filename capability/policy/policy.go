@@ -3,8 +3,6 @@ package policy
 // https://github.com/ucan-wg/delegation/blob/4094d5878b58f5d35055a3b93fccda0b8329ebae/README.md#policy
 
 import (
-	"errors"
-
 	"github.com/ipld/go-ipld-prime"
 
 	"github.com/ucan-wg/go-ucan/capability/policy/selector"
@@ -89,23 +87,9 @@ func Or(stmts ...Statement) Statement {
 	return connective{kind: KindOr, statements: stmts}
 }
 
-type wildcardPattern string
-
-func parseWildcardPattern(pattern string) (wildcardPattern, error) {
-	if !validateGlobPattern(pattern) {
-		return "", errors.New("invalid wildcard pattern")
-	}
-
-	return wildcardPattern(pattern), nil
-}
-
-func (wp wildcardPattern) match(str string) bool {
-	return globMatch(string(wp), str)
-}
-
 type wildcard struct {
 	selector selector.Selector
-	pattern  wildcardPattern
+	pattern  glob
 }
 
 func (n wildcard) Kind() string {
@@ -113,12 +97,12 @@ func (n wildcard) Kind() string {
 }
 
 func Like(selector selector.Selector, pattern string) (Statement, error) {
-	parsedPattern, err := parseWildcardPattern(pattern)
+	g, err := parseGlob(pattern)
 	if err != nil {
 		return nil, err
 	}
 
-	return wildcard{selector: selector, pattern: parsedPattern}, nil
+	return wildcard{selector: selector, pattern: g}, nil
 }
 
 type quantifier struct {
