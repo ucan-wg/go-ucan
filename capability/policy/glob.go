@@ -24,10 +24,6 @@ func validateGlobPattern(pattern string) bool {
 
 // globMatch matches a string against a pattern with * wildcards, handling escaped '\*' literals.
 func globMatch(pattern, str string) bool {
-	if !validateGlobPattern(pattern) {
-		return false
-	}
-
 	// i is the index for the pattern
 	// j is the index for the string
 	var i, j int
