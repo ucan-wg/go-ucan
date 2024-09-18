@@ -28,9 +28,7 @@ package envelope
 
 import (
 	"errors"
-	"fmt"
 	"io"
-	"strings"
 
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime"
@@ -46,6 +44,8 @@ import (
 	"github.com/ucan-wg/go-ucan/did"
 	"github.com/ucan-wg/go-ucan/internal/varsig"
 )
+
+const varsigHeaderKey = "h"
 
 // Tokener must be implemented by types that wish to be enclosed in a
 // UCAN Envelope (presumbably one of the UCAN token types).
@@ -133,57 +133,14 @@ func FromIPLD[T Tokener](node datamodel.Node) (T, cid.Cid, error) {
 		return undef, cid.Undef, err
 	}
 
-	// Normally we could look up the VarsigHeader and TokenPayload using
-	// node.LookupByString() - this works for the "h" key used for the
-	// VarsigHeader but not for the TokenPayload's key (tag) as all we
-	// know is that it starts with "ucan/" and as explained below, must
-	// decode to a schema.TypedNode for the representation provided by the
-	// token.Prototype().
-	// vvv
-	mi := sigPayloadNode.MapIterator()
-	if mi == nil {
-		return undef, cid.Undef, fmt.Errorf("the SigPayload node is not a map: %s", sigPayloadNode.Kind().String())
+	varsigHeaderNode, err := sigPayloadNode.LookupByString(varsigHeaderKey)
+	if err != nil {
+		return undef, cid.Undef, err
 	}
 
-	var (
-		varsigHeaderNode datamodel.Node
-		tokenPayloadNode datamodel.Node
-		tag              string
-	)
-
-	keyCount := 0
-
-	for !mi.Done() {
-		k, v, err := mi.Next()
-		if err != nil {
-			return undef, cid.Undef, err
-		}
-
-		kStr, err := k.AsString()
-		if err != nil {
-			return undef, cid.Undef, fmt.Errorf("the SigPayload keys are not strings: %w", err)
-		}
-
-		keyCount++
-
-		if kStr == "h" {
-			varsigHeaderNode = v
-
-			continue
-		}
-
-		if strings.HasPrefix(kStr, "ucan/") {
-			tokenPayloadNode = v
-			tag = kStr
-		}
-	}
-
-	if keyCount != 2 {
-		return undef, cid.Undef, fmt.Errorf("the SigPayload map should have exactly two keys: %d", keyCount)
-	}
-
-	if undef.Tag() != tag {
-		return undef, cid.Undef, fmt.Errorf("the TokenPayload tag doesn't match the Tokener tag: expected %s, got %s", undef.Tag(), tag)
+	tokenPayloadNode, err := sigPayloadNode.LookupByString(undef.Tag())
+	if err != nil {
+		return undef, cid.Undef, err
 	}
 
 	// This needs to be done before converting this node to it's schema
@@ -193,7 +150,6 @@ func FromIPLD[T Tokener](node datamodel.Node) (T, cid.Cid, error) {
 	if err != nil {
 		return undef, cid.Undef, err
 	}
-
 	// ^^^
 
 	// Replaces the datamodel.Node in tokenPayloadNode with a
@@ -320,7 +276,7 @@ func ToIPLD(privKey crypto.PrivKey, token Tokener) (datamodel.Node, error) {
 	}
 
 	sigPayloadNode, err := qp.BuildMap(basicnode.Prototype.Any, 2, func(ma datamodel.MapAssembler) {
-		qp.MapEntry(ma, "h", qp.Bytes(varsigHeader))
+		qp.MapEntry(ma, varsigHeaderKey, qp.Bytes(varsigHeader))
 		qp.MapEntry(ma, token.Tag(), qp.Node(tokenPayloadNode))
 	})
 
