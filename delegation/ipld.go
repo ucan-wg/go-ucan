@@ -16,8 +16,8 @@ import (
 
 // Encode marshals a View to the format specified by the provided
 // codec.Encoder.
-func (d *View) Encode(privKey crypto.PrivKey, encFn codec.Encoder) ([]byte, error) {
-	node, err := d.ToIPLD(privKey)
+func (t *Token) Encode(privKey crypto.PrivKey, encFn codec.Encoder) ([]byte, error) {
+	node, err := t.ToIPLD(privKey)
 	if err != nil {
 		return nil, err
 	}
@@ -26,8 +26,8 @@ func (d *View) Encode(privKey crypto.PrivKey, encFn codec.Encoder) ([]byte, erro
 }
 
 // EncodeWriter is the same as Encode but accepts an io.Writer.
-func (d *View) EncodeWriter(w io.Writer, privKey crypto.PrivKey, encFn codec.Encoder) error {
-	node, err := d.ToIPLD(privKey)
+func (t *Token) EncodeWriter(w io.Writer, privKey crypto.PrivKey, encFn codec.Encoder) error {
+	node, err := t.ToIPLD(privKey)
 	if err != nil {
 		return err
 	}
@@ -36,68 +36,68 @@ func (d *View) EncodeWriter(w io.Writer, privKey crypto.PrivKey, encFn codec.Enc
 }
 
 // ToDagCbor marshals the View to the DAG-CBOR format.
-func (d *View) ToDagCbor(privKey crypto.PrivKey) ([]byte, error) {
-	return d.Encode(privKey, dagcbor.Encode)
+func (t *Token) ToDagCbor(privKey crypto.PrivKey) ([]byte, error) {
+	return t.Encode(privKey, dagcbor.Encode)
 }
 
 // ToDagCborWriter is the same as ToDagCbor but it accepts an io.Writer.
-func (d *View) ToDagCborWriter(w io.Writer, privKey crypto.PrivKey) error {
-	return d.EncodeWriter(w, privKey, dagcbor.Encode)
+func (t *Token) ToDagCborWriter(w io.Writer, privKey crypto.PrivKey) error {
+	return t.EncodeWriter(w, privKey, dagcbor.Encode)
 }
 
 // ToDagJson marshals the View to the DAG-JSON format.
-func (d *View) ToDagJson(privKey crypto.PrivKey) ([]byte, error) {
-	return d.Encode(privKey, dagjson.Encode)
+func (t *Token) ToDagJson(privKey crypto.PrivKey) ([]byte, error) {
+	return t.Encode(privKey, dagjson.Encode)
 }
 
 // ToDagJsonWriter is the same as ToDagJson but it accepts an io.Writer.
-func (d *View) ToDagJsonWriter(w io.Writer, privKey crypto.PrivKey) error {
-	return d.EncodeWriter(w, privKey, dagjson.Encode)
+func (t *Token) ToDagJsonWriter(w io.Writer, privKey crypto.PrivKey) error {
+	return t.EncodeWriter(w, privKey, dagjson.Encode)
 }
 
 // ToIPLD wraps the View in an IPLD datamodel.Node.
-func (d *View) ToIPLD(privKey crypto.PrivKey) (datamodel.Node, error) {
+func (t *Token) ToIPLD(privKey crypto.PrivKey) (datamodel.Node, error) {
 	var sub *string
-	if d.Subject != did.Undef {
-		s := d.Subject.String()
+	if t.subject != did.Undef {
+		s := t.subject.String()
 		sub = &s
 	}
 
-	pol, err := d.Policy.ToIPLD()
+	pol, err := t.policy.ToIPLD()
 	if err != nil {
 		return nil, err
 	}
 
-	metaKeys := make([]string, len(d.Meta))
+	metaKeys := make([]string, len(t.meta))
 	i := 0
 
-	for k := range d.Meta {
+	for k := range t.meta {
 		metaKeys[i] = k
 		i++
 	}
 
 	var nbf *int64
-	if d.NotBefore != nil {
-		u := d.NotBefore.Unix()
+	if t.notBefore != nil {
+		u := t.notBefore.Unix()
 		nbf = &u
 	}
 
 	var exp *int64
-	if d.Expiration != nil {
-		u := d.Expiration.Unix()
+	if t.expiration != nil {
+		u := t.expiration.Unix()
 		exp = &u
 	}
 
 	model := &tokenPayloadModel{
-		Iss:   d.Issuer.String(),
-		Aud:   d.Audience.String(),
+		Iss:   t.issuer.String(),
+		Aud:   t.audience.String(),
 		Sub:   sub,
-		Cmd:   d.Command.String(),
+		Cmd:   t.command.String(),
 		Pol:   pol,
-		Nonce: d.Nonce,
+		Nonce: t.nonce,
 		Meta: metaModel{
 			Keys:   metaKeys,
-			Values: d.Meta,
+			Values: t.meta,
 		},
 		Nbf: nbf,
 		Exp: exp,
@@ -111,7 +111,7 @@ func (d *View) ToIPLD(privKey crypto.PrivKey) (datamodel.Node, error) {
 //
 // An error is returned if the conversion fails, or if the resulting
 // View is invalid.
-func Decode(b []byte, decFn codec.Decoder) (*View, error) {
+func Decode(b []byte, decFn codec.Decoder) (*Token, error) {
 	node, err := ipld.Decode(b, decFn)
 	if err != nil {
 		return nil, err
@@ -120,7 +120,7 @@ func Decode(b []byte, decFn codec.Decoder) (*View, error) {
 }
 
 // DecodeReader is the same as Decode, but accept an io.Reader.
-func DecodeReader(r io.Reader, decFn codec.Decoder) (*View, error) {
+func DecodeReader(r io.Reader, decFn codec.Decoder) (*Token, error) {
 	node, err := ipld.DecodeStreaming(r, decFn)
 	if err != nil {
 		return nil, err
@@ -132,12 +132,12 @@ func DecodeReader(r io.Reader, decFn codec.Decoder) (*View, error) {
 //
 // An error is returned if the conversion fails, or if the resulting
 // View is invalid.
-func FromDagCbor(data []byte) (*View, error) {
+func FromDagCbor(data []byte) (*Token, error) {
 	return Decode(data, dagcbor.Decode)
 }
 
 // FromDagCborReader is the same as FromDagCbor, but accept an io.Reader.
-func FromDagCborReader(r io.Reader) (*View, error) {
+func FromDagCborReader(r io.Reader) (*Token, error) {
 	return DecodeReader(r, dagcbor.Decode)
 }
 
@@ -145,12 +145,12 @@ func FromDagCborReader(r io.Reader) (*View, error) {
 //
 // An error is returned if the conversion fails, or if the resulting
 // View is invalid.
-func FromDagJson(data []byte) (*View, error) {
+func FromDagJson(data []byte) (*Token, error) {
 	return Decode(data, dagjson.Decode)
 }
 
 // FromDagJsonReader is the same as FromDagJson, but accept an io.Reader.
-func FromDagJsonReader(r io.Reader) (*View, error) {
+func FromDagJsonReader(r io.Reader) (*Token, error) {
 	return DecodeReader(r, dagjson.Decode)
 }
 
@@ -158,7 +158,7 @@ func FromDagJsonReader(r io.Reader) (*View, error) {
 //
 // An error is returned if the conversion fails, or if the resulting
 // View is invalid.
-func FromIPLD(node datamodel.Node) (*View, error) {
+func FromIPLD(node datamodel.Node) (*Token, error) {
 	tkn, _, err := envelope.FromIPLD[*tokenPayloadModel](node) // TODO add CID to view
 	if err != nil {
 		return nil, err
