@@ -164,5 +164,5 @@ func FromIPLD(node datamodel.Node) (*Token, error) {
 		return nil, err
 	}
 
-	return viewFromModel(*tkn)
+	return tokenFromModel(*tkn)
 }

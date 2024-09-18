@@ -3,10 +3,17 @@ package delegation_test
 import (
 	"crypto/rand"
 	"testing"
+	"time"
 
+	"github.com/ipld/go-ipld-prime/datamodel"
+	"github.com/ipld/go-ipld-prime/node/basicnode"
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/stretchr/testify/require"
+	"github.com/ucan-wg/go-ucan/capability/command"
+	"github.com/ucan-wg/go-ucan/capability/policy"
+	"github.com/ucan-wg/go-ucan/delegation"
 	"github.com/ucan-wg/go-ucan/did"
+	"gotest.tools/v3/golden"
 )
 
 const (
@@ -60,55 +67,56 @@ const (
 `
 )
 
-// func TestConstructors(t *testing.T) {
-// 	t.Parallel()
+func TestConstructors(t *testing.T) {
+	t.Parallel()
 
-// 	privKey := privKey(t, issuerPrivKeyCfg)
+	privKey := privKey(t, issuerPrivKeyCfg)
 
-// 	aud, err := did.Parse(AudienceDID)
+	aud, err := did.Parse(AudienceDID)
 
-// 	sub, err := did.Parse(subjectDID)
-// 	require.NoError(t, err)
+	sub, err := did.Parse(subjectDID)
+	require.NoError(t, err)
 
-// 	cmd, err := command.Parse(subJectCmd)
-// 	require.NoError(t, err)
+	cmd, err := command.Parse(subJectCmd)
+	require.NoError(t, err)
 
-// 	pol, err := policy.FromDagJson(subjectPol)
-// 	require.NoError(t, err)
+	pol, err := policy.FromDagJson(subjectPol)
+	require.NoError(t, err)
 
-// 	exp := time.Time{}
+	exp, err := time.Parse(time.RFC3339, "2200-01-01T00:00:00Z")
+	require.NoError(t, err)
 
-// 	meta := map[string]datamodel.Node{
-// 		"foo": basicnode.NewString("fooo"),
-// 		"bar": basicnode.NewString("barr"),
-// 	}
+	meta := map[string]datamodel.Node{
+		"foo": basicnode.NewString("fooo"),
+		"bar": basicnode.NewString("barr"),
+	}
 
-// 	t.Run("New", func(t *testing.T) {
-// 		dlg, err := delegation.New(privKey, aud, &sub, cmd, pol, []byte(nonce), delegation.WithExpiration(&exp), delegation.WithMeta(meta))
-// 		require.NoError(t, err)
+	t.Run("New", func(t *testing.T) {
+		dlg, err := delegation.New(privKey, aud, cmd, pol, []byte(nonce), delegation.WithSubject(sub), delegation.WithExpiration(exp), delegation.WithMetadata(meta))
+		require.NoError(t, err)
 
-// 		data, err := dlg.ToDagJson()
-// 		require.NoError(t, err)
+		data, err := dlg.ToDagJson(privKey)
+		require.NoError(t, err)
 
-// 		t.Log(string(data))
+		t.Log(string(data))
 
-// 		golden.Assert(t, string(data), "new.dagjson")
-// 	})
+		golden.Assert(t, string(data), "new.dagjson")
+	})
 
-// 	t.Run("Root", func(t *testing.T) {
-// 		t.Parallel()
+	t.Run("Root", func(t *testing.T) {
+		t.Parallel()
 
-// 		dlg, err := delegation.Root(privKey, aud, cmd, pol, []byte(nonce), delegation.WithExpiration(&exp), delegation.WithMeta(meta))
-// 		require.NoError(t, err)
+		dlg, err := delegation.Root(privKey, aud, cmd, pol, []byte(nonce), delegation.WithExpiration(exp), delegation.WithMetadata(meta))
+		require.NoError(t, err)
 
-// 		data, err := dlg.ToDagJson()
-// 		require.NoError(t, err)
+		data, err := dlg.ToDagJson(privKey)
+		require.NoError(t, err)
 
-// 		t.Log(string(data))
+		t.Log(string(data))
 
-// 		golden.Assert(t, string(data), "root.dagjson")
-// 	})
-// }
+		golden.Assert(t, string(data), "root.dagjson")
+	})
+}
 
 func privKey(t *testing.T, privKeyCfg string) crypto.PrivKey {
 	t.Helper()
