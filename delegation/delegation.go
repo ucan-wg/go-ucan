@@ -1,10 +1,12 @@
 package delegation
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/ipld/go-ipld-prime/datamodel"
+	"github.com/libp2p/go-libp2p/core/crypto"
 
 	"github.com/ucan-wg/go-ucan/capability/command"
 	"github.com/ucan-wg/go-ucan/capability/policy"
@@ -30,6 +32,46 @@ type Token struct {
 	notBefore *time.Time
 	// The timestamp at which the Invocation becomes invalid
 	expiration *time.Time
+}
+
+// New creates a validated Token from the provided parameters and options.
+func New(privKey crypto.PrivKey, aud did.DID, cmd *command.Command, pol policy.Policy, nonce []byte, opts ...Option) (*Token, error) {
+	iss, err := did.FromPrivKey(privKey)
+	if err != nil {
+		return nil, err
+	}
+
+	tkn := &Token{
+		issuer:   iss,
+		audience: aud,
+		subject:  did.Undef,
+		command:  cmd,
+		policy:   pol,
+		nonce:    nonce,
+	}
+
+	for _, opt := range opts {
+		if err := opt(tkn); err != nil {
+			return nil, err
+		}
+	}
+
+	if err := tkn.validate(); err != nil {
+		return nil, err
+	}
+
+	return tkn, nil
+}
+
+func Root(privKey crypto.PrivKey, aud did.DID, cmd *command.Command, pol policy.Policy, nonce []byte, opts ...Option) (*Token, error) {
+	sub, err := did.FromPrivKey(privKey)
+	if err != nil {
+		return nil, err
+	}
+
+	opts = append(opts, WithSubject(sub))
+
+	return New(privKey, aud, cmd, pol, nonce, opts...)
 }
 
 // Issuer returns the did.DID representing the Token's issuer.
@@ -79,6 +121,87 @@ func (t *Token) NotBefore() *time.Time {
 // Expiration returns the time at which the Token expires.
 func (t *Token) Expiration() *time.Time {
 	return t.expiration
+}
+
+func (t *Token) validate() error {
+	var errs error
+
+	requiredDID := func(id did.DID, fieldname string) {
+		if !id.Key() {
+			errs = errors.Join(errs, fmt.Errorf("a \"did:key\" is required for %s: %s", fieldname, id.String()))
+		}
+	}
+
+	requiredDID(t.issuer, "Issuer")
+	requiredDID(t.audience, "Audience")
+	if t.subject != did.Undef {
+		requiredDID(t.subject, "Subject")
+	}
+
+	if _, err := command.Parse(t.command.String()); err != nil {
+		errs = errors.Join(errs, err)
+	}
+
+	if _, err := t.policy.ToIPLD(); err != nil {
+		errs = errors.Join(errs, err)
+	}
+
+	return errs
+}
+
+type Option func(*Token) error
+
+// WithExpiration set's the Token's optional "expiration" field to the
+// value of the provided time.Time.
+func WithExpiration(exp time.Time) Option {
+	return func(t *Token) error {
+		if exp.Before(time.Now()) {
+			return fmt.Errorf("a Token's expiration should be set to a time in the future: %s", exp.String())
+		}
+
+		t.expiration = &exp
+
+		return nil
+	}
+}
+
+// WithMetadata sets the Token's optional "meta" field to the provided
+// value.
+func WithMetadata(meta map[string]datamodel.Node) Option {
+	return func(t *Token) error {
+		t.meta = meta
+
+		return nil
+	}
+}
+
+// WithNotBefore set's the Token's optional "notBefore" field to the value
+// of the provided time.Time.
+func WithNotBefore(nbf time.Time) Option {
+	return func(t *Token) error {
+		if nbf.Before(time.Now()) {
+			return fmt.Errorf("a Token's \"not before\" field should be set to a time in the future: %s", nbf.String())
+		}
+
+		t.notBefore = &nbf
+
+		return nil
+	}
+}
+
+// WithSubject sets the Tokens's optional "subject" field to the value of
+// provided did.DID.
+//
+// This Option should only be used with the New constructor - since
+// Subject is a required parameter when creating a Token via the  Root
+// constructor, any value provided via this Option will be silently
+// overwritten.
+func WithSubject(sub did.DID) Option {
+	return func(t *Token) error {
+		t.subject = sub
+
+		return nil
+	}
 }
 
 // viewFromModel build a decoded view of the raw IPLD data.
