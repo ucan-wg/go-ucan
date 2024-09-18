@@ -88,14 +88,14 @@ func (d *View) ToIPLD(privKey crypto.PrivKey) (datamodel.Node, error) {
 		exp = &u
 	}
 
-	model := &PayloadModel{
+	model := &tokenPayloadModel{
 		Iss:   d.Issuer.String(),
 		Aud:   d.Audience.String(),
 		Sub:   sub,
 		Cmd:   d.Command.String(),
 		Pol:   pol,
 		Nonce: d.Nonce,
-		Meta: MetaModel{
+		Meta: metaModel{
 			Keys:   metaKeys,
 			Values: d.Meta,
 		},
@@ -159,10 +159,10 @@ func FromDagJsonReader(r io.Reader) (*View, error) {
 // An error is returned if the conversion fails, or if the resulting
 // View is invalid.
 func FromIPLD(node datamodel.Node) (*View, error) {
-	tkn, _, err := envelope.FromIPLD[*PayloadModel](node) // TODO add CID to view
+	tkn, _, err := envelope.FromIPLD[*tokenPayloadModel](node) // TODO add CID to view
 	if err != nil {
 		return nil, err
 	}
 
-	return ViewFromModel(*tkn)
+	return viewFromModel(*tkn)
 }

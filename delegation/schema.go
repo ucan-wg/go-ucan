@@ -33,13 +33,13 @@ func mustLoadSchema() *schema.TypeSystem {
 	return ts
 }
 
-func PayloadType() schema.Type {
+func payloadType() schema.Type {
 	return mustLoadSchema().TypeByName("Payload")
 }
 
-var _ envelope.Tokener = (*PayloadModel)(nil)
+var _ envelope.Tokener = (*tokenPayloadModel)(nil)
 
-type PayloadModel struct {
+type tokenPayloadModel struct {
 	// Issuer DID (sender)
 	Iss string
 	// Audience DID (receiver)
@@ -59,7 +59,7 @@ type PayloadModel struct {
 
 	// Arbitrary Metadata
 	// optional: can be nil
-	Meta MetaModel
+	Meta metaModel
 
 	// "Not before" UTC Unix Timestamp in seconds (valid from), 53-bits integer
 	// optional: can be nil
@@ -69,15 +69,15 @@ type PayloadModel struct {
 	Exp *int64
 }
 
-func (e *PayloadModel) Prototype() schema.TypedPrototype {
-	return bindnode.Prototype((*PayloadModel)(nil), PayloadType())
+func (e *tokenPayloadModel) Prototype() schema.TypedPrototype {
+	return bindnode.Prototype((*tokenPayloadModel)(nil), payloadType())
 }
 
-func (*PayloadModel) Tag() string {
+func (*tokenPayloadModel) Tag() string {
 	return Tag
 }
 
-type MetaModel struct {
+type metaModel struct {
 	Keys   []string
 	Values map[string]datamodel.Node
 }

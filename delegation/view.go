@@ -32,9 +32,9 @@ type View struct {
 	Expiration *time.Time
 }
 
-// ViewFromModel build a decoded view of the raw IPLD data.
+// viewFromModel build a decoded view of the raw IPLD data.
 // This function also serves as validation.
-func ViewFromModel(m PayloadModel) (*View, error) {
+func viewFromModel(m tokenPayloadModel) (*View, error) {
 	var view View
 	var err error
 
