@@ -7,8 +7,12 @@ import (
 
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/datamodel"
+	"github.com/ipld/go-ipld-prime/node/bindnode"
 	"github.com/ipld/go-ipld-prime/schema"
+	"github.com/ucan-wg/go-ucan/internal/envelope"
 )
+
+const Tag = "ucan/dlg@1.0.0-rc.1"
 
 //go:embed delegation.ipldsch
 var schemaBytes []byte
@@ -32,6 +36,8 @@ func mustLoadSchema() *schema.TypeSystem {
 func PayloadType() schema.Type {
 	return mustLoadSchema().TypeByName("Payload")
 }
+
+var _ envelope.Tokener = (*PayloadModel)(nil)
 
 type PayloadModel struct {
 	// Issuer DID (sender)
@@ -61,6 +67,14 @@ type PayloadModel struct {
 	// The timestamp at which the Invocation becomes invalid
 	// optional: can be nil
 	Exp *int64
+}
+
+func (e *PayloadModel) Prototype() schema.TypedPrototype {
+	return bindnode.Prototype((*PayloadModel)(nil), PayloadType())
+}
+
+func (*PayloadModel) Tag() string {
+	return Tag
 }
 
 type MetaModel struct {

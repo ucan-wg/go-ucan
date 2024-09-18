@@ -27,9 +27,9 @@ type View struct {
 	// Arbitrary Metadata
 	Meta map[string]datamodel.Node
 	// "Not before" UTC Unix Timestamp in seconds (valid from), 53-bits integer
-	NotBefore time.Time
+	NotBefore *time.Time
 	// The timestamp at which the Invocation becomes invalid
-	Expiration time.Time
+	Expiration *time.Time
 }
 
 // ViewFromModel build a decoded view of the raw IPLD data.
@@ -76,11 +76,13 @@ func ViewFromModel(m PayloadModel) (*View, error) {
 	view.Meta = m.Meta.Values
 
 	if m.Nbf != nil {
-		view.NotBefore = time.Unix(*m.Nbf, 0)
+		t := time.Unix(*m.Nbf, 0)
+		view.NotBefore = &t
 	}
 
 	if m.Exp != nil {
-		view.Expiration = time.Unix(*m.Exp, 0)
+		t := time.Unix(*m.Exp, 0)
+		view.Expiration = &t
 	}
 
 	return &view, nil
