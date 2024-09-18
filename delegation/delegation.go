@@ -204,37 +204,39 @@ func WithSubject(sub did.DID) Option {
 	}
 }
 
-// viewFromModel build a decoded view of the raw IPLD data.
+// tokenFromModel build a decoded view of the raw IPLD data.
 // This function also serves as validation.
-func viewFromModel(m tokenPayloadModel) (*Token, error) {
-	var view Token
-	var err error
+func tokenFromModel(m tokenPayloadModel) (*Token, error) {
+	var (
+		tkn Token
+		err error
+	)
 
-	view.issuer, err = did.Parse(m.Iss)
+	tkn.issuer, err = did.Parse(m.Iss)
 	if err != nil {
 		return nil, fmt.Errorf("parse iss: %w", err)
 	}
 
-	view.audience, err = did.Parse(m.Aud)
+	tkn.audience, err = did.Parse(m.Aud)
 	if err != nil {
 		return nil, fmt.Errorf("parse audience: %w", err)
 	}
 
 	if m.Sub != nil {
-		view.subject, err = did.Parse(*m.Sub)
+		tkn.subject, err = did.Parse(*m.Sub)
 		if err != nil {
 			return nil, fmt.Errorf("parse subject: %w", err)
 		}
 	} else {
-		view.subject = did.Undef
+		tkn.subject = did.Undef
 	}
 
-	view.command, err = command.Parse(m.Cmd)
+	tkn.command, err = command.Parse(m.Cmd)
 	if err != nil {
 		return nil, fmt.Errorf("parse command: %w", err)
 	}
 
-	view.policy, err = policy.FromIPLD(m.Pol)
+	tkn.policy, err = policy.FromIPLD(m.Pol)
 	if err != nil {
 		return nil, fmt.Errorf("parse policy: %w", err)
 	}
@@ -242,20 +244,24 @@ func viewFromModel(m tokenPayloadModel) (*Token, error) {
 	if len(m.Nonce) == 0 {
 		return nil, fmt.Errorf("nonce is required")
 	}
-	view.nonce = m.Nonce
+	tkn.nonce = m.Nonce
 
 	// TODO: copy?
-	view.meta = m.Meta.Values
+	tkn.meta = m.Meta.Values
 
 	if m.Nbf != nil {
 		t := time.Unix(*m.Nbf, 0)
-		view.notBefore = &t
+		tkn.notBefore = &t
 	}
 
 	if m.Exp != nil {
 		t := time.Unix(*m.Exp, 0)
-		view.expiration = &t
+		tkn.expiration = &t
 	}
 
-	return &view, nil
+	if err := tkn.validate(); err != nil {
+		return nil, err
+	}
+
+	return &tkn, nil
 }
