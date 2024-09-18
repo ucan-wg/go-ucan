@@ -21,7 +21,14 @@ func TestDecode(t *testing.T) {
 }
 
 func ExampleDecode() {
-	keyType, _ := varsig.Decode([]byte("NIUkEoACcQ"))
+	hdr, err := base64.RawStdEncoding.DecodeString("NIUkEoACcQ")
+	if err != nil {
+		fmt.Println(err.Error())
+
+		return
+	}
+
+	keyType, _ := varsig.Decode(hdr)
 	fmt.Println(keyType.String())
 	// Output:
 	// RSA
@@ -37,7 +44,7 @@ func TestEncode(t *testing.T) {
 
 func ExampleEncode() {
 	header, _ := varsig.Encode(pb.KeyType_RSA)
-	fmt.Println(string(header))
+	fmt.Println(base64.RawStdEncoding.EncodeToString(header))
 
 	// Output:
 	// NIUkEoACcQ
