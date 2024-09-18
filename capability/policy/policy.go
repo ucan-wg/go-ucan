@@ -3,7 +3,6 @@ package policy
 // https://github.com/ucan-wg/delegation/blob/4094d5878b58f5d35055a3b93fccda0b8329ebae/README.md#policy
 
 import (
-	"github.com/gobwas/glob"
 	"github.com/ipld/go-ipld-prime"
 
 	"github.com/ucan-wg/go-ucan/capability/policy/selector"
@@ -90,8 +89,7 @@ func Or(stmts ...Statement) Statement {
 
 type wildcard struct {
 	selector selector.Selector
-	pattern  string
-	glob     glob.Glob // not serialized
+	pattern  glob
 }
 
 func (n wildcard) Kind() string {
@@ -99,11 +97,12 @@ func (n wildcard) Kind() string {
 }
 
 func Like(selector selector.Selector, pattern string) (Statement, error) {
-	g, err := glob.Compile(pattern)
+	g, err := parseGlob(pattern)
 	if err != nil {
 		return nil, err
 	}
-	return wildcard{selector: selector, pattern: pattern, glob: g}, nil
+
+	return wildcard{selector: selector, pattern: g}, nil
 }
 
 type quantifier struct {

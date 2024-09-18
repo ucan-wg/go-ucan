@@ -232,7 +232,7 @@ func statementToIPLD(statement Statement) (datamodel.Node, error) {
 		if err != nil {
 			return nil, err
 		}
-		err = listBuilder.AssembleValue().AssignString(statement.pattern)
+		err = listBuilder.AssembleValue().AssignString(string(statement.pattern))
 		if err != nil {
 			return nil, err
 		}

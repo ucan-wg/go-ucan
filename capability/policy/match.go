@@ -112,7 +112,7 @@ func matchStatement(statement Statement, node ipld.Node) bool {
 			if err != nil {
 				return false
 			}
-			return s.glob.Match(v)
+			return s.pattern.Match(v)
 		}
 	case KindAll:
 		if s, ok := statement.(quantifier); ok {

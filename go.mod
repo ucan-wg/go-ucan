@@ -5,7 +5,6 @@ go 1.22
 toolchain go1.22.4
 
 require (
-	github.com/gobwas/glob v0.2.3
 	github.com/ipfs/go-cid v0.4.1
 	github.com/ipld/go-ipld-prime v0.21.0
 	github.com/libp2p/go-libp2p v0.36.3
