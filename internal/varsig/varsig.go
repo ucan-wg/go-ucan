@@ -24,7 +24,6 @@
 package varsig
 
 import (
-	"encoding/base64"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -130,5 +129,5 @@ func header(vals ...multicodec.Code) string {
 		buf = binary.AppendUvarint(buf, uint64(val))
 	}
 
-	return base64.RawStdEncoding.EncodeToString(buf)
+	return string(buf)
 }
