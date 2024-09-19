@@ -10,43 +10,14 @@ import (
 	"gotest.tools/v3/golden"
 
 	"github.com/ucan-wg/go-ucan/delegation"
+	"github.com/ucan-wg/go-ucan/internal/envelope"
 )
 
 //go:embed delegation.ipldsch
 var schemaBytes []byte
 
 func TestSchemaRoundTrip(t *testing.T) {
-	// 	const delegationJson = `
-	// {
-	//   "aud":"did:key:def456",
-	//   "cmd":"/foo/bar",
-	//   "exp":123456,
-	//   "iss":"did:key:abc123",
-	//   "meta":{
-	//     "bar":"baaar",
-	//     "foo":"fooo"
-	//   },
-	//   "nbf":123456,
-	//   "nonce":{
-	//     "/":{
-	//       "bytes":"c3VwZXItcmFuZG9t"
-	//     }
-	//   },
-	//   "pol":[
-	//     ["==", ".status", "draft"],
-	//     ["all", ".reviewer", [
-	// 		["like", ".email", "*@example.com"]]
-	// 	],
-	//     ["any", ".tags", [
-	// 		["or", [
-	// 			["==", ".", "news"],
-	// 			["==", ".", "press"]]
-	//       ]]
-	// 	]
-	//   ],
-	//   "sub":""
-	// }
-	// `
+	t.Parallel()
 
 	delegationJson := golden.Get(t, "new.dagjson")
 	privKey := privKey(t, issuerPrivKeyCfg)
@@ -54,20 +25,22 @@ func TestSchemaRoundTrip(t *testing.T) {
 	// format:    dagJson   -->   PayloadModel   -->   dagCbor   -->   PayloadModel   -->   dagJson
 	// function:      DecodeDagJson()      EncodeDagCbor()   DecodeDagCbor()     EncodeDagJson()
 
-	p1, err := delegation.FromDagJson([]byte(delegationJson))
+	p1, id1, err := delegation.FromDagJson([]byte(delegationJson))
 	require.NoError(t, err)
+	require.Equal(t, newCID, envelope.CIDToBase58BTC(id1))
 
 	cborBytes, err := p1.ToDagCbor(privKey)
 	require.NoError(t, err)
 	fmt.Println("cborBytes length", len(cborBytes))
 	fmt.Println("cbor", string(cborBytes))
 
-	p2, err := delegation.FromDagCbor(cborBytes)
+	p2, id2, err := delegation.FromDagCbor(cborBytes)
 	require.NoError(t, err)
 	fmt.Println("read Cbor", p2)
 
 	readJson, err := p2.ToDagJson(privKey)
 	require.NoError(t, err)
+	require.Equal(t, newCID, envelope.CIDToBase58BTC(id2))
 	fmt.Println("readJson length", len(readJson))
 	fmt.Println("json: ", string(readJson))
 

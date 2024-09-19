@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/libp2p/go-libp2p/core/crypto"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gotest.tools/v3/golden"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/ucan-wg/go-ucan/capability/policy"
 	"github.com/ucan-wg/go-ucan/delegation"
 	"github.com/ucan-wg/go-ucan/did"
+	"github.com/ucan-wg/go-ucan/internal/envelope"
 )
 
 const (
@@ -64,6 +66,9 @@ const (
 	]
 ]
 `
+
+	newCID  = "zdpuAn9JgGPvnt2WCmTaKktZdbuvcVGTg9bUT5kQaufwUtZ6e"
+	rootCID = "zdpuAkgGmUp5JrXvehGuuw9JA8DLQKDaxtK3R8brDQQVC2i5X"
 )
 
 func TestConstructors(t *testing.T) {
@@ -101,6 +106,7 @@ func TestConstructors(t *testing.T) {
 		t.Log(string(data))
 
 		golden.Assert(t, string(data), "new.dagjson")
+		assert.Equal(t, newCID, envelope.CIDToBase58BTC(dlg.CID()))
 	})
 
 	t.Run("Root", func(t *testing.T) {
@@ -120,6 +126,7 @@ func TestConstructors(t *testing.T) {
 		t.Log(string(data))
 
 		golden.Assert(t, string(data), "root.dagjson")
+		assert.Equal(t, rootCID, envelope.CIDToBase58BTC(dlg.CID()))
 	})
 }
 

@@ -21,6 +21,7 @@ import (
 )
 
 const (
+	exampleCID             = "zdpuAyw6R5HvKSPzztuzXNYFx3ZGoMHMuAsXL6u3xLGQriRXQ"
 	exampleDID             = "did:key:z6MkpuK2Amsu1RqcLGgmHHQHhvmeXCCBVsM4XFSg2cCyg4Nh"
 	exampleGreeting        = "world"
 	examplePrivKeyCfg      = "CAESQP9v2uqECTuIi45dyg3znQvsryvf2IXmOF/6aws6aCehm0FVrj0zHR5RZSDxWNjcpcJqsGym3sjCungX9Zt5oA4="

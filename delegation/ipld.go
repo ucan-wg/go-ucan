@@ -3,6 +3,7 @@ package delegation
 import (
 	"io"
 
+	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/codec"
 	"github.com/ipld/go-ipld-prime/codec/dagcbor"
@@ -100,19 +101,19 @@ func (t *Token) ToIPLD(privKey crypto.PrivKey) (datamodel.Node, error) {
 //
 // An error is returned if the conversion fails, or if the resulting
 // View is invalid.
-func Decode(b []byte, decFn codec.Decoder) (*Token, error) {
+func Decode(b []byte, decFn codec.Decoder) (*Token, cid.Cid, error) {
 	node, err := ipld.Decode(b, decFn)
 	if err != nil {
-		return nil, err
+		return nil, cid.Undef, err
 	}
 	return FromIPLD(node)
 }
 
 // DecodeReader is the same as Decode, but accept an io.Reader.
-func DecodeReader(r io.Reader, decFn codec.Decoder) (*Token, error) {
+func DecodeReader(r io.Reader, decFn codec.Decoder) (*Token, cid.Cid, error) {
 	node, err := ipld.DecodeStreaming(r, decFn)
 	if err != nil {
-		return nil, err
+		return nil, cid.Undef, err
 	}
 	return FromIPLD(node)
 }
@@ -121,12 +122,22 @@ func DecodeReader(r io.Reader, decFn codec.Decoder) (*Token, error) {
 //
 // An error is returned if the conversion fails, or if the resulting
 // View is invalid.
-func FromDagCbor(data []byte) (*Token, error) {
-	return Decode(data, dagcbor.Decode)
+func FromDagCbor(data []byte) (*Token, cid.Cid, error) {
+	pay, id, err := envelope.FromDagCbor[*tokenPayloadModel](data)
+	if err != nil {
+		return nil, cid.Undef, err
+	}
+
+	tkn, err := tokenFromModel(*pay)
+	if err != nil {
+		return nil, cid.Undef, err
+	}
+
+	return tkn, id, err
 }
 
 // FromDagCborReader is the same as FromDagCbor, but accept an io.Reader.
-func FromDagCborReader(r io.Reader) (*Token, error) {
+func FromDagCborReader(r io.Reader) (*Token, cid.Cid, error) {
 	return DecodeReader(r, dagcbor.Decode)
 }
 
@@ -134,12 +145,12 @@ func FromDagCborReader(r io.Reader) (*Token, error) {
 //
 // An error is returned if the conversion fails, or if the resulting
 // View is invalid.
-func FromDagJson(data []byte) (*Token, error) {
+func FromDagJson(data []byte) (*Token, cid.Cid, error) {
 	return Decode(data, dagjson.Decode)
 }
 
 // FromDagJsonReader is the same as FromDagJson, but accept an io.Reader.
-func FromDagJsonReader(r io.Reader) (*Token, error) {
+func FromDagJsonReader(r io.Reader) (*Token, cid.Cid, error) {
 	return DecodeReader(r, dagjson.Decode)
 }
 
@@ -147,11 +158,16 @@ func FromDagJsonReader(r io.Reader) (*Token, error) {
 //
 // An error is returned if the conversion fails, or if the resulting
 // View is invalid.
-func FromIPLD(node datamodel.Node) (*Token, error) {
-	tkn, _, err := envelope.FromIPLD[*tokenPayloadModel](node) // TODO add CID to view
+func FromIPLD(node datamodel.Node) (*Token, cid.Cid, error) {
+	pay, id, err := envelope.FromIPLD[*tokenPayloadModel](node) // TODO add CID to view
 	if err != nil {
-		return nil, err
+		return nil, cid.Undef, err
 	}
 
-	return tokenFromModel(*tkn)
+	tkn, err := tokenFromModel(*pay)
+	if err != nil {
+		return nil, cid.Undef, err
+	}
+
+	return tkn, id, err
 }

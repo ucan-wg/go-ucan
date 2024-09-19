@@ -6,11 +6,13 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p/core/crypto"
 
 	"github.com/ucan-wg/go-ucan/capability/command"
 	"github.com/ucan-wg/go-ucan/capability/policy"
 	"github.com/ucan-wg/go-ucan/did"
+	"github.com/ucan-wg/go-ucan/internal/envelope"
 	"github.com/ucan-wg/go-ucan/pkg/meta"
 )
 
@@ -33,6 +35,8 @@ type Token struct {
 	notBefore *time.Time
 	// The timestamp at which the Invocation becomes invalid
 	expiration *time.Time
+	// The CID of the Token when enclosed in an Envelope and encoded to DAG-CBOR
+	cid cid.Cid
 }
 
 // New creates a validated Token from the provided parameters and options.
@@ -68,6 +72,18 @@ func New(privKey crypto.PrivKey, aud did.DID, cmd command.Command, pol policy.Po
 	if err := tkn.validate(); err != nil {
 		return nil, err
 	}
+
+	cbor, err := tkn.ToDagCbor(privKey)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := envelope.CIDFromBytes(cbor)
+	if err != nil {
+		return nil, err
+	}
+
+	tkn.cid = id
 
 	return tkn, nil
 }
@@ -130,6 +146,12 @@ func (t *Token) NotBefore() *time.Time {
 // Expiration returns the time at which the Token expires.
 func (t *Token) Expiration() *time.Time {
 	return t.expiration
+}
+
+// CID returns the content identifier of the Token model when enclosed
+// in an Envelope and encoded to DAG-CBOR.
+func (t *Token) CID() cid.Cid {
+	return t.cid
 }
 
 func (t *Token) validate() error {
