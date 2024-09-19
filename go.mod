@@ -2,6 +2,9 @@ module github.com/ucan-wg/go-ucan
 
 go 1.23
 
+// https://github.com/ipfs/go-ipld-cbor/pull/102
+replace github.com/ipfs/go-ipld-cbor => github.com/MichaelMure/go-ipld-cbor v0.0.0-20240918161052-74fa05e9e786
+
 require (
 	github.com/ipfs/go-cid v0.4.1
 	github.com/ipfs/go-ipld-cbor v0.1.0

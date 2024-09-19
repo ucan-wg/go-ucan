@@ -29,7 +29,9 @@ type carBlock struct {
 	data []byte
 }
 
-// writeCar writes a CARv1 file with no roots, containing the blocks from the iterator.
+// writeCar writes a CARv1 file containing the blocks from the iterator.
+// If no roots are provided, a single EmptyCid is used as root to make the file
+// spec compliant.
 func writeCar(w io.Writer, roots []cid.Cid, blocks iter.Seq[carBlock]) error {
 	if len(roots) == 0 {
 		roots = []cid.Cid{EmptyCid}

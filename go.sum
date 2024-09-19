@@ -1,4 +1,6 @@
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
+github.com/MichaelMure/go-ipld-cbor v0.0.0-20240918161052-74fa05e9e786 h1:zKLMs9f7nmgEhu/JgIvcQ4zDRKczbTj3KXrVfOIQFd0=
+github.com/MichaelMure/go-ipld-cbor v0.0.0-20240918161052-74fa05e9e786/go.mod h1:Cp8T7w1NKcu4AQJLqK0tWpd1nkgTxEVB5C6kVpLW6/0=
 github.com/cpuguy83/go-md2man/v2 v2.0.0-20190314233015-f79a8a8ca69d/go.mod h1:maD7wRr/U5Z6m/iR4s+kqSMx2CaBsrgA7czyZG/E6dU=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
@@ -21,7 +23,6 @@ github.com/ipfs/go-cid v0.4.1 h1:A/T3qGvxi4kpKWWcPC/PgbvDA2bjVLO7n4UeVwnbs/s=
 github.com/ipfs/go-cid v0.4.1/go.mod h1:uQHwDeX4c6CtyrFwdqyhpNcxVewur1M7l7fNU7LKwZk=
 github.com/ipfs/go-ipfs-util v0.0.2 h1:59Sswnk1MFaiq+VcaknX7aYEyGyGDAA73ilhEK2POp8=
 github.com/ipfs/go-ipfs-util v0.0.2/go.mod h1:CbPtkWJzjLdEcezDns2XYaehFVNXG9zrdrtMecczcsQ=
-github.com/ipfs/go-ipld-cbor v0.1.0 h1:dx0nS0kILVivGhfWuB6dUpMa/LAwElHPw1yOGYopoYs=
 github.com/ipfs/go-ipld-cbor v0.1.0/go.mod h1:U2aYlmVrJr2wsUBU67K4KgepApSZddGRDWBYR0H4sCk=
 github.com/ipfs/go-ipld-format v0.5.0 h1:WyEle9K96MSrvr47zZHKKcDxJ/vlpET6PSiQsAFO+Ds=
 github.com/ipfs/go-ipld-format v0.5.0/go.mod h1:ImdZqJQaEouMjCvqCe0ORUS+uoBmf7Hf+EO/jh+nk3M=
