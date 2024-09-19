@@ -1,6 +1,7 @@
 package delegation
 
 import (
+	"crypto/rand"
 	"errors"
 	"fmt"
 	"time"
@@ -21,7 +22,7 @@ type Token struct {
 	// Principal that the chain is about (the Subject)
 	subject did.DID
 	// The Command to eventually invoke
-	command *command.Command
+	command command.Command
 	// The delegation policy
 	policy policy.Policy
 	// A unique, random nonce
@@ -35,7 +36,7 @@ type Token struct {
 }
 
 // New creates a validated Token from the provided parameters and options.
-func New(privKey crypto.PrivKey, aud did.DID, cmd *command.Command, pol policy.Policy, nonce []byte, opts ...Option) (*Token, error) {
+func New(privKey crypto.PrivKey, aud did.DID, cmd command.Command, pol policy.Policy, opts ...Option) (*Token, error) {
 	iss, err := did.FromPrivKey(privKey)
 	if err != nil {
 		return nil, err
@@ -48,11 +49,18 @@ func New(privKey crypto.PrivKey, aud did.DID, cmd *command.Command, pol policy.P
 		command:  cmd,
 		policy:   pol,
 		meta:     meta.NewMeta(),
-		nonce:    nonce,
+		nonce:    nil,
 	}
 
 	for _, opt := range opts {
 		if err := opt(tkn); err != nil {
+			return nil, err
+		}
+	}
+
+	if len(tkn.nonce) == 0 {
+		tkn.nonce, err = generateNonce()
+		if err != nil {
 			return nil, err
 		}
 	}
@@ -64,7 +72,7 @@ func New(privKey crypto.PrivKey, aud did.DID, cmd *command.Command, pol policy.P
 	return tkn, nil
 }
 
-func Root(privKey crypto.PrivKey, aud did.DID, cmd *command.Command, pol policy.Policy, nonce []byte, opts ...Option) (*Token, error) {
+func Root(privKey crypto.PrivKey, aud did.DID, cmd command.Command, pol policy.Policy, opts ...Option) (*Token, error) {
 	sub, err := did.FromPrivKey(privKey)
 	if err != nil {
 		return nil, err
@@ -72,7 +80,7 @@ func Root(privKey crypto.PrivKey, aud did.DID, cmd *command.Command, pol policy.
 
 	opts = append(opts, WithSubject(sub))
 
-	return New(privKey, aud, cmd, pol, nonce, opts...)
+	return New(privKey, aud, cmd, pol, opts...)
 }
 
 // Issuer returns the did.DID representing the Token's issuer.
@@ -95,7 +103,7 @@ func (t *Token) Subject() did.DID {
 }
 
 // Command returns the capability's command.Command.
-func (t *Token) Command() *command.Command {
+func (t *Token) Command() command.Command {
 	return t.command
 }
 
@@ -128,23 +136,16 @@ func (t *Token) validate() error {
 	var errs error
 
 	requiredDID := func(id did.DID, fieldname string) {
-		if !id.Key() {
-			errs = errors.Join(errs, fmt.Errorf("a \"did:key\" is required for %s: %s", fieldname, id.String()))
+		if !id.Defined() {
+			errs = errors.Join(errs, fmt.Errorf(`a valid did is required for %s: %s`, fieldname, id.String()))
 		}
 	}
 
 	requiredDID(t.issuer, "Issuer")
 	requiredDID(t.audience, "Audience")
-	if t.subject != did.Undef {
-		requiredDID(t.subject, "Subject")
-	}
 
-	if _, err := command.Parse(t.command.String()); err != nil {
-		errs = errors.Join(errs, err)
-	}
-
-	if _, err := t.policy.ToIPLD(); err != nil {
-		errs = errors.Join(errs, err)
+	if len(t.nonce) < 12 {
+		errs = errors.Join(errs, fmt.Errorf("token nonce too small"))
 	}
 
 	return errs
@@ -201,6 +202,15 @@ func WithSubject(sub did.DID) Option {
 	return func(t *Token) error {
 		t.subject = sub
 
+		return nil
+	}
+}
+
+// WithNonce sets the Token's nonce with the given value.
+// If this option is not used, a random 12-byte nonce is generated for this required field.
+func WithNonce(nonce []byte) Option {
+	return func(t *Token) error {
+		t.nonce = nonce
 		return nil
 	}
 }
@@ -264,4 +274,14 @@ func tokenFromModel(m tokenPayloadModel) (*Token, error) {
 	}
 
 	return &tkn, nil
+}
+
+// generateNonce creates a 12-byte random nonce.
+func generateNonce() ([]byte, error) {
+	res := make([]byte, 12)
+	_, err := rand.Read(res)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
 }

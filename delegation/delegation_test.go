@@ -86,7 +86,8 @@ func TestConstructors(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("New", func(t *testing.T) {
-		dlg, err := delegation.New(privKey, aud, cmd, pol, []byte(nonce),
+		dlg, err := delegation.New(privKey, aud, cmd, pol,
+			delegation.WithNonce([]byte(nonce)),
 			delegation.WithSubject(sub),
 			delegation.WithExpiration(exp),
 			delegation.WithMeta("foo", "fooo"),
@@ -105,7 +106,8 @@ func TestConstructors(t *testing.T) {
 	t.Run("Root", func(t *testing.T) {
 		t.Parallel()
 
-		dlg, err := delegation.Root(privKey, aud, cmd, pol, []byte(nonce),
+		dlg, err := delegation.Root(privKey, aud, cmd, pol,
+			delegation.WithNonce([]byte(nonce)),
 			delegation.WithExpiration(exp),
 			delegation.WithMeta("foo", "fooo"),
 			delegation.WithMeta("bar", "barr"),
@@ -134,7 +136,8 @@ func privKey(t *testing.T, privKeyCfg string) crypto.PrivKey {
 }
 
 func TestKey(t *testing.T) {
-	t.Skip()
+	// TODO: why is this broken?
+	t.Skip("TODO: why is this broken?")
 
 	priv, _, err := crypto.GenerateEd25519Key(rand.Reader)
 	require.NoError(t, err)
