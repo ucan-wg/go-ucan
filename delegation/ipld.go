@@ -68,14 +68,6 @@ func (t *Token) ToIPLD(privKey crypto.PrivKey) (datamodel.Node, error) {
 		return nil, err
 	}
 
-	metaKeys := make([]string, len(t.meta))
-	i := 0
-
-	for k := range t.meta {
-		metaKeys[i] = k
-		i++
-	}
-
 	var nbf *int64
 	if t.notBefore != nil {
 		u := t.notBefore.Unix()
@@ -95,12 +87,9 @@ func (t *Token) ToIPLD(privKey crypto.PrivKey) (datamodel.Node, error) {
 		Cmd:   t.command.String(),
 		Pol:   pol,
 		Nonce: t.nonce,
-		Meta: metaModel{
-			Keys:   metaKeys,
-			Values: t.meta,
-		},
-		Nbf: nbf,
-		Exp: exp,
+		Meta:  *t.meta,
+		Nbf:   nbf,
+		Exp:   exp,
 	}
 
 	return envelope.ToIPLD(privKey, model)

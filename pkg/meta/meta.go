@@ -26,7 +26,7 @@ func NewMeta() *Meta {
 // GetBool retrieves a value as a bool.
 // Returns ErrNotFound if the given key is missing.
 // Returns datamodel.ErrWrongKind if the value has the wrong type.
-func (m Meta) GetBool(key string) (bool, error) {
+func (m *Meta) GetBool(key string) (bool, error) {
 	v, ok := m.Values[key]
 	if !ok {
 		return false, ErrNotFound
@@ -37,7 +37,7 @@ func (m Meta) GetBool(key string) (bool, error) {
 // GetString retrieves a value as a string.
 // Returns ErrNotFound if the given key is missing.
 // Returns datamodel.ErrWrongKind if the value has the wrong type.
-func (m Meta) GetString(key string) (string, error) {
+func (m *Meta) GetString(key string) (string, error) {
 	v, ok := m.Values[key]
 	if !ok {
 		return "", ErrNotFound
@@ -48,7 +48,7 @@ func (m Meta) GetString(key string) (string, error) {
 // GetInt64 retrieves a value as an int64.
 // Returns ErrNotFound if the given key is missing.
 // Returns datamodel.ErrWrongKind if the value has the wrong type.
-func (m Meta) GetInt64(key string) (int64, error) {
+func (m *Meta) GetInt64(key string) (int64, error) {
 	v, ok := m.Values[key]
 	if !ok {
 		return 0, ErrNotFound
@@ -59,7 +59,7 @@ func (m Meta) GetInt64(key string) (int64, error) {
 // GetFloat64 retrieves a value as a float64.
 // Returns ErrNotFound if the given key is missing.
 // Returns datamodel.ErrWrongKind if the value has the wrong type.
-func (m Meta) GetFloat64(key string) (float64, error) {
+func (m *Meta) GetFloat64(key string) (float64, error) {
 	v, ok := m.Values[key]
 	if !ok {
 		return 0, ErrNotFound
@@ -70,7 +70,7 @@ func (m Meta) GetFloat64(key string) (float64, error) {
 // GetBytes retrieves a value as a []byte.
 // Returns ErrNotFound if the given key is missing.
 // Returns datamodel.ErrWrongKind if the value has the wrong type.
-func (m Meta) GetBytes(key string) ([]byte, error) {
+func (m *Meta) GetBytes(key string) ([]byte, error) {
 	v, ok := m.Values[key]
 	if !ok {
 		return nil, ErrNotFound
@@ -81,7 +81,7 @@ func (m Meta) GetBytes(key string) ([]byte, error) {
 // GetNode retrieves a value as a raw IPLD node.
 // Returns ErrNotFound if the given key is missing.
 // Returns datamodel.ErrWrongKind if the value has the wrong type.
-func (m Meta) GetNode(key string) (ipld.Node, error) {
+func (m *Meta) GetNode(key string) (ipld.Node, error) {
 	v, ok := m.Values[key]
 	if !ok {
 		return nil, ErrNotFound
@@ -92,7 +92,7 @@ func (m Meta) GetNode(key string) (ipld.Node, error) {
 // Add adds a key/value pair in the meta set.
 // Accepted types for the value are: bool, string, int, int32, int64, []byte,
 // and ipld.Node.
-func (m Meta) Add(key string, val any) error {
+func (m *Meta) Add(key string, val any) error {
 	switch val := val.(type) {
 	case bool:
 		m.Values[key] = basicnode.NewBool(val)

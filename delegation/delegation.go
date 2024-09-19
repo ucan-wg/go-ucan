@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ipld/go-ipld-prime/datamodel"
 	"github.com/libp2p/go-libp2p/core/crypto"
 
 	"github.com/ucan-wg/go-ucan/capability/command"
 	"github.com/ucan-wg/go-ucan/capability/policy"
 	"github.com/ucan-wg/go-ucan/did"
+	"github.com/ucan-wg/go-ucan/pkg/meta"
 )
 
 type Token struct {
@@ -27,7 +27,7 @@ type Token struct {
 	// A unique, random nonce
 	nonce []byte
 	// Arbitrary Metadata
-	meta map[string]datamodel.Node
+	meta *meta.Meta
 	// "Not before" UTC Unix Timestamp in seconds (valid from), 53-bits integer
 	notBefore *time.Time
 	// The timestamp at which the Invocation becomes invalid
@@ -47,6 +47,7 @@ func New(privKey crypto.PrivKey, aud did.DID, cmd *command.Command, pol policy.P
 		subject:  did.Undef,
 		command:  cmd,
 		policy:   pol,
+		meta:     meta.NewMeta(),
 		nonce:    nonce,
 	}
 
@@ -109,7 +110,7 @@ func (t *Token) Nonce() []byte {
 }
 
 // Meta returns the Token's metadata.
-func (t *Token) Meta() map[string]datamodel.Node {
+func (t *Token) Meta() *meta.Meta {
 	return t.meta
 }
 
@@ -165,13 +166,13 @@ func WithExpiration(exp time.Time) Option {
 	}
 }
 
-// WithMetadata sets the Token's optional "meta" field to the provided
-// value.
-func WithMetadata(meta map[string]datamodel.Node) Option {
+// WithMeta adds a key/value pair in the "meta" field.
+// WithMeta can be used multiple times in the same call.
+// Accepted types for the value are: bool, string, int, int32, int64, []byte,
+// and ipld.Node.
+func WithMeta(key string, val any) Option {
 	return func(t *Token) error {
-		t.meta = meta
-
-		return nil
+		return t.meta.Add(key, val)
 	}
 }
 
@@ -246,8 +247,7 @@ func tokenFromModel(m tokenPayloadModel) (*Token, error) {
 	}
 	tkn.nonce = m.Nonce
 
-	// TODO: copy?
-	tkn.meta = m.Meta.Values
+	tkn.meta = &m.Meta
 
 	if m.Nbf != nil {
 		t := time.Unix(*m.Nbf, 0)

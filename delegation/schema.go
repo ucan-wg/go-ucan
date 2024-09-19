@@ -9,7 +9,9 @@ import (
 	"github.com/ipld/go-ipld-prime/datamodel"
 	"github.com/ipld/go-ipld-prime/node/bindnode"
 	"github.com/ipld/go-ipld-prime/schema"
+
 	"github.com/ucan-wg/go-ucan/internal/envelope"
+	"github.com/ucan-wg/go-ucan/pkg/meta"
 )
 
 const Tag = "ucan/dlg@1.0.0-rc.1"
@@ -58,8 +60,7 @@ type tokenPayloadModel struct {
 	Nonce []byte
 
 	// Arbitrary Metadata
-	// optional: can be nil
-	Meta metaModel
+	Meta meta.Meta
 
 	// "Not before" UTC Unix Timestamp in seconds (valid from), 53-bits integer
 	// optional: can be nil
@@ -75,9 +76,4 @@ func (e *tokenPayloadModel) Prototype() schema.TypedPrototype {
 
 func (*tokenPayloadModel) Tag() string {
 	return Tag
-}
-
-type metaModel struct {
-	Keys   []string
-	Values map[string]datamodel.Node
 }

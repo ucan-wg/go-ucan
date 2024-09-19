@@ -5,15 +5,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ipld/go-ipld-prime/datamodel"
-	"github.com/ipld/go-ipld-prime/node/basicnode"
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/stretchr/testify/require"
+	"gotest.tools/v3/golden"
+
 	"github.com/ucan-wg/go-ucan/capability/command"
 	"github.com/ucan-wg/go-ucan/capability/policy"
 	"github.com/ucan-wg/go-ucan/delegation"
 	"github.com/ucan-wg/go-ucan/did"
-	"gotest.tools/v3/golden"
 )
 
 const (
@@ -86,13 +85,13 @@ func TestConstructors(t *testing.T) {
 	exp, err := time.Parse(time.RFC3339, "2200-01-01T00:00:00Z")
 	require.NoError(t, err)
 
-	meta := map[string]datamodel.Node{
-		"foo": basicnode.NewString("fooo"),
-		"bar": basicnode.NewString("barr"),
-	}
-
 	t.Run("New", func(t *testing.T) {
-		dlg, err := delegation.New(privKey, aud, cmd, pol, []byte(nonce), delegation.WithSubject(sub), delegation.WithExpiration(exp), delegation.WithMetadata(meta))
+		dlg, err := delegation.New(privKey, aud, cmd, pol, []byte(nonce),
+			delegation.WithSubject(sub),
+			delegation.WithExpiration(exp),
+			delegation.WithMeta("foo", "fooo"),
+			delegation.WithMeta("bar", "barr"),
+		)
 		require.NoError(t, err)
 
 		data, err := dlg.ToDagJson(privKey)
@@ -106,7 +105,11 @@ func TestConstructors(t *testing.T) {
 	t.Run("Root", func(t *testing.T) {
 		t.Parallel()
 
-		dlg, err := delegation.Root(privKey, aud, cmd, pol, []byte(nonce), delegation.WithExpiration(exp), delegation.WithMetadata(meta))
+		dlg, err := delegation.Root(privKey, aud, cmd, pol, []byte(nonce),
+			delegation.WithExpiration(exp),
+			delegation.WithMeta("foo", "fooo"),
+			delegation.WithMeta("bar", "barr"),
+		)
 		require.NoError(t, err)
 
 		data, err := dlg.ToDagJson(privKey)

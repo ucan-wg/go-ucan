@@ -7,8 +7,9 @@ import (
 
 	"github.com/ipld/go-ipld-prime"
 	"github.com/stretchr/testify/require"
-	"github.com/ucan-wg/go-ucan/delegation"
 	"gotest.tools/v3/golden"
+
+	"github.com/ucan-wg/go-ucan/delegation"
 )
 
 //go:embed delegation.ipldsch
