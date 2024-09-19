@@ -74,7 +74,7 @@ func TestParseCommand(t *testing.T) {
 
 				cmd, err := command.Parse(testcase.inp)
 				require.ErrorIs(t, err, testcase.err)
-				require.Nil(t, cmd)
+				require.Equal(t, command.Command{}, cmd)
 			})
 		}
 	})

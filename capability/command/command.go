@@ -20,11 +20,10 @@ type Command struct {
 	segments []string
 }
 
-// New creates a validated command from the provided list of segment
-// strings.  An error is returned if an invalid Command would be
-// formed
-func New(segments ...string) *Command {
-	return &Command{segments: segments}
+// New creates a validated command from the provided list of segment strings.
+// An error is returned if an invalid Command would be formed
+func New(segments ...string) Command {
+	return Command{segments: segments}
 }
 
 // Parse verifies that the provided string contains the required
@@ -32,26 +31,26 @@ func New(segments ...string) *Command {
 // Command.
 //
 // [segment structure]: https://github.com/ucan-wg/spec#segment-structure
-func Parse(s string) (*Command, error) {
+func Parse(s string) (Command, error) {
 	if !strings.HasPrefix(s, "/") {
-		return nil, ErrRequiresLeadingSlash
+		return Command{}, ErrRequiresLeadingSlash
 	}
 
 	if len(s) > 1 && strings.HasSuffix(s, "/") {
-		return nil, ErrDisallowsTrailingSlash
+		return Command{}, ErrDisallowsTrailingSlash
 	}
 
 	if s != strings.ToLower(s) {
-		return nil, ErrRequiresLowercase
+		return Command{}, ErrRequiresLowercase
 	}
 
 	// The leading slash will result in the first element from strings.Split
 	// being an empty string which is removed as strings.Join will ignore it.
-	return &Command{strings.Split(s, "/")[1:]}, nil
+	return Command{strings.Split(s, "/")[1:]}, nil
 }
 
 // MustParse is the same as Parse, but panic() if the parsing fail.
-func MustParse(s string) *Command {
+func MustParse(s string) Command {
 	c, err := Parse(s)
 	if err != nil {
 		panic(err)
@@ -62,11 +61,10 @@ func MustParse(s string) *Command {
 // [Top] is the most powerful capability.
 //
 // This function returns a Command that is a wildcard and therefore represents the
-// most powerful abilily.  As such it should be handle with care and used
-// sparingly.
+// most powerful ability. As such, it should be handled with care and used sparingly.
 //
 // [Top]: https://github.com/ucan-wg/spec#-aka-top
-func Top() *Command {
+func Top() Command {
 	return New()
 }
 
@@ -78,18 +76,18 @@ func IsValid(s string) bool {
 
 // Join appends segments to the end of this command using the required
 // segment separator.
-func (c *Command) Join(segments ...string) *Command {
-	return &Command{append(c.segments, segments...)}
+func (c Command) Join(segments ...string) Command {
+	return Command{append(c.segments, segments...)}
 }
 
 // Segments returns the ordered segments that comprise the Command as a
 // slice of strings.
-func (c *Command) Segments() []string {
+func (c Command) Segments() []string {
 	return c.segments
 }
 
 // String returns the composed representation the command.  This is also
 // the required wire representation (before IPLD encoding occurs.)
-func (c *Command) String() string {
+func (c Command) String() string {
 	return "/" + strings.Join(c.segments, "/")
 }
