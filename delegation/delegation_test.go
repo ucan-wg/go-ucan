@@ -1,7 +1,6 @@
 package delegation_test
 
 import (
-	"crypto/rand"
 	"testing"
 	"time"
 
@@ -64,6 +63,9 @@ const (
 	]
 ]
 `
+
+	newCID  = "zdpuAn9JgGPvnt2WCmTaKktZdbuvcVGTg9bUT5kQaufwUtZ6e"
+	rootCID = "zdpuAkgGmUp5JrXvehGuuw9JA8DLQKDaxtK3R8brDQQVC2i5X"
 )
 
 func TestConstructors(t *testing.T) {
@@ -86,7 +88,7 @@ func TestConstructors(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("New", func(t *testing.T) {
-		dlg, err := delegation.New(privKey, aud, cmd, pol,
+		tkn, err := delegation.New(privKey, aud, cmd, pol,
 			delegation.WithNonce([]byte(nonce)),
 			delegation.WithSubject(sub),
 			delegation.WithExpiration(exp),
@@ -95,7 +97,7 @@ func TestConstructors(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		data, err := dlg.ToDagJson(privKey)
+		data, err := tkn.ToDagJson(privKey)
 		require.NoError(t, err)
 
 		t.Log(string(data))
@@ -106,7 +108,7 @@ func TestConstructors(t *testing.T) {
 	t.Run("Root", func(t *testing.T) {
 		t.Parallel()
 
-		dlg, err := delegation.Root(privKey, aud, cmd, pol,
+		tkn, err := delegation.Root(privKey, aud, cmd, pol,
 			delegation.WithNonce([]byte(nonce)),
 			delegation.WithExpiration(exp),
 			delegation.WithMeta("foo", "fooo"),
@@ -114,7 +116,7 @@ func TestConstructors(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		data, err := dlg.ToDagJson(privKey)
+		data, err := tkn.ToDagJson(privKey)
 		require.NoError(t, err)
 
 		t.Log(string(data))
@@ -123,9 +125,7 @@ func TestConstructors(t *testing.T) {
 	})
 }
 
-func privKey(t *testing.T, privKeyCfg string) crypto.PrivKey {
-	t.Helper()
-
+func privKey(t require.TestingT, privKeyCfg string) crypto.PrivKey {
 	privKeyMar, err := crypto.ConfigDecodeKey(privKeyCfg)
 	require.NoError(t, err)
 
@@ -133,24 +133,4 @@ func privKey(t *testing.T, privKeyCfg string) crypto.PrivKey {
 	require.NoError(t, err)
 
 	return privKey
-}
-
-func TestKey(t *testing.T) {
-	// TODO: why is this broken?
-	t.Skip("TODO: why is this broken?")
-
-	priv, _, err := crypto.GenerateEd25519Key(rand.Reader)
-	require.NoError(t, err)
-
-	privMar, err := crypto.MarshalPrivateKey(priv)
-	require.NoError(t, err)
-
-	privCfg := crypto.ConfigEncodeKey(privMar)
-	t.Log(privCfg)
-
-	id, err := did.FromPubKey(priv.GetPublic())
-	require.NoError(t, err)
-	t.Log(id)
-
-	t.Fail()
 }

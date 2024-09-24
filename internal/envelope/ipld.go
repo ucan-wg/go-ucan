@@ -8,8 +8,7 @@
 //
 // Decoding functions in this package likewise perform the signature
 // verification using a public key extracted from the TokenPayload as
-// described by requirement two below.  Additionally, the decode functions
-// also return the CID for the verified Envelope.
+// described by requirement two below.
 //
 // Types that wish to be marshaled and unmarshaled from the using
 // is package have two requirements.
@@ -30,7 +29,6 @@ import (
 	"errors"
 	"io"
 
-	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/codec"
 	"github.com/ipld/go-ipld-prime/codec/dagcbor"
@@ -41,6 +39,7 @@ import (
 	"github.com/ipld/go-ipld-prime/node/bindnode"
 	"github.com/ipld/go-ipld-prime/schema"
 	"github.com/libp2p/go-libp2p/core/crypto"
+
 	"github.com/ucan-wg/go-ucan/did"
 	"github.com/ucan-wg/go-ucan/internal/varsig"
 )
@@ -66,20 +65,20 @@ type Tokener interface {
 //
 // An error is returned if the conversion fails, or if the resulting
 // Tokener is invalid.
-func Decode[T Tokener](b []byte, decFn codec.Decoder) (T, cid.Cid, error) {
+func Decode[T Tokener](b []byte, decFn codec.Decoder) (T, error) {
 	node, err := ipld.Decode(b, decFn)
 	if err != nil {
-		return *new(T), cid.Undef, err
+		return *new(T), err
 	}
 
 	return FromIPLD[T](node)
 }
 
 // DecodeReader is the same as Decode, but accept an io.Reader.
-func DecodeReader[T Tokener](r io.Reader, decFn codec.Decoder) (T, cid.Cid, error) {
+func DecodeReader[T Tokener](r io.Reader, decFn codec.Decoder) (T, error) {
 	node, err := ipld.DecodeStreaming(r, decFn)
 	if err != nil {
-		return *new(T), cid.Undef, err
+		return *new(T), err
 	}
 
 	return FromIPLD[T](node)
@@ -89,12 +88,24 @@ func DecodeReader[T Tokener](r io.Reader, decFn codec.Decoder) (T, cid.Cid, erro
 //
 // An error is returned if the conversion fails, or if the resulting
 // Tokener is invalid.
-func FromDagCbor[T Tokener](b []byte) (T, cid.Cid, error) {
-	return Decode[T](b, dagcbor.Decode)
+func FromDagCbor[T Tokener](b []byte) (T, error) {
+	undef := *new(T)
+
+	node, err := ipld.Decode(b, dagcbor.Decode)
+	if err != nil {
+		return undef, err
+	}
+
+	tkn, err := fromIPLD[T](node)
+	if err != nil {
+		return undef, err
+	}
+
+	return tkn, nil
 }
 
 // FromDagCborReader is the same as FromDagCbor, but accept an io.Reader.
-func FromDagCborReader[T Tokener](r io.Reader) (T, cid.Cid, error) {
+func FromDagCborReader[T Tokener](r io.Reader) (T, error) {
 	return DecodeReader[T](r, dagcbor.Decode)
 }
 
@@ -102,12 +113,12 @@ func FromDagCborReader[T Tokener](r io.Reader) (T, cid.Cid, error) {
 //
 // An error is returned if the conversion fails, or if the resulting
 // Tokener is invalid.
-func FromDagJson[T Tokener](b []byte) (T, cid.Cid, error) {
+func FromDagJson[T Tokener](b []byte) (T, error) {
 	return Decode[T](b, dagjson.Decode)
 }
 
 // FromDagJsonReader is the same as FromDagJson, but accept an io.Reader.
-func FromDagJsonReader[T Tokener](r io.Reader) (T, cid.Cid, error) {
+func FromDagJsonReader[T Tokener](r io.Reader) (T, error) {
 	return DecodeReader[T](r, dagjson.Decode)
 }
 
@@ -115,111 +126,117 @@ func FromDagJsonReader[T Tokener](r io.Reader) (T, cid.Cid, error) {
 //
 // An error is returned if the conversion fails, or if the resulting
 // Tokener is invalid.
-func FromIPLD[T Tokener](node datamodel.Node) (T, cid.Cid, error) {
+func FromIPLD[T Tokener](node datamodel.Node) (T, error) {
+	undef := *new(T)
+
+	tkn, err := fromIPLD[T](node)
+	if err != nil {
+		return undef, err
+	}
+
+	return tkn, nil
+}
+
+func fromIPLD[T Tokener](node datamodel.Node) (T, error) {
 	undef := *new(T)
 
 	signatureNode, err := node.LookupByIndex(0)
 	if err != nil {
-		return undef, cid.Undef, err
+		return undef, err
 	}
 
 	signature, err := signatureNode.AsBytes()
 	if err != nil {
-		return undef, cid.Undef, err
+		return undef, err
 	}
 
 	sigPayloadNode, err := node.LookupByIndex(1)
 	if err != nil {
-		return undef, cid.Undef, err
+		return undef, err
 	}
 
 	varsigHeaderNode, err := sigPayloadNode.LookupByString(varsigHeaderKey)
 	if err != nil {
-		return undef, cid.Undef, err
+		return undef, err
 	}
 
 	tokenPayloadNode, err := sigPayloadNode.LookupByString(undef.Tag())
 	if err != nil {
-		return undef, cid.Undef, err
+		return undef, err
 	}
 
-	// This needs to be done before converting this node to it's schema
+	// This needs to be done before converting this node to its schema
 	// representation (afterwards, the field might be renamed os it's safer
 	// to use the wire name).
 	issuerNode, err := tokenPayloadNode.LookupByString("iss")
 	if err != nil {
-		return undef, cid.Undef, err
+		return undef, err
 	}
-	// ^^^
 
 	// Replaces the datamodel.Node in tokenPayloadNode with a
 	// schema.TypedNode so that we can cast it to a *token.Token after
 	// unwrapping it.
-	// vvv
 	nb := undef.Prototype().Representation().NewBuilder()
 
 	err = nb.AssignNode(tokenPayloadNode)
 	if err != nil {
-		return undef, cid.Undef, err
+		return undef, err
 	}
 
 	tokenPayloadNode = nb.Build()
-	// ^^^
 
 	tokenPayload := bindnode.Unwrap(tokenPayloadNode)
 	if tokenPayload == nil {
-		return undef, cid.Undef, errors.New("failed to Unwrap the TokenPayload")
+		return undef, errors.New("failed to Unwrap the TokenPayload")
 	}
 
 	tkn, ok := tokenPayload.(T)
 	if !ok {
-		return undef, cid.Undef, errors.New("failed to assert the TokenPayload type as *token.Token")
+		return undef, errors.New("failed to assert the TokenPayload type as *token.Token")
 	}
 
 	// Check that the issuer's DID contains a public key with a type that
 	// matches the VarsigHeader and then verify the SigPayload.
-	// vvv
 	issuer, err := issuerNode.AsString()
 	if err != nil {
-		return undef, cid.Undef, err
+		return undef, err
 	}
 
 	issuerDID, err := did.Parse(issuer)
 	if err != nil {
-		return undef, cid.Undef, err
+		return undef, err
 	}
 
 	issuerPubKey, err := issuerDID.PubKey()
 	if err != nil {
-		return undef, cid.Undef, err
+		return undef, err
 	}
 
 	issuerVarsigHeader, err := varsig.Encode(issuerPubKey.Type())
 	if err != nil {
-		return undef, cid.Undef, err
+		return undef, err
 	}
 
 	varsigHeader, err := varsigHeaderNode.AsBytes()
 	if err != nil {
-		return undef, cid.Undef, err
+		return undef, err
 	}
 
 	if string(varsigHeader) != string(issuerVarsigHeader) {
-		return undef, cid.Undef, errors.New("the VarsigHeader key type doesn't match the issuer's key type")
+		return undef, errors.New("the VarsigHeader key type doesn't match the issuer's key type")
 	}
 
 	data, err := ipld.Encode(sigPayloadNode, dagcbor.Encode)
 	if err != nil {
-		return undef, cid.Undef, err
+		return undef, err
 	}
 
 	ok, err = issuerPubKey.Verify(data, signature)
 	if err != nil || !ok {
-		return undef, cid.Undef, errors.New("failed to verify the token's signature")
+		return undef, errors.New("failed to verify the token's signature")
 	}
-	// ^^^
 
-	return tkn, cid.Undef, nil
+	return tkn, nil
 }
 
 // Encode marshals a Tokener to the format specified by the provided

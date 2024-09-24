@@ -2,6 +2,7 @@ package envelope_test
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -18,7 +19,7 @@ func TestDecode(t *testing.T) {
 
 		data := golden.Get(t, "example.dagcbor")
 
-		tkn, _, err := envelope.FromDagCbor[*Example](data)
+		tkn, err := envelope.FromDagCbor[*Example](data)
 		require.NoError(t, err)
 		assert.Equal(t, exampleGreeting, tkn.Hello)
 		assert.Equal(t, exampleDID, tkn.Issuer)
@@ -29,7 +30,7 @@ func TestDecode(t *testing.T) {
 
 		data := golden.Get(t, "example.dagjson")
 
-		tkn, _, err := envelope.FromDagJson[*Example](data)
+		tkn, err := envelope.FromDagJson[*Example](data)
 		require.NoError(t, err)
 		assert.Equal(t, exampleGreeting, tkn.Hello)
 		assert.Equal(t, exampleDID, tkn.Issuer)
@@ -59,12 +60,27 @@ func TestEncode(t *testing.T) {
 func TestRoundtrip(t *testing.T) {
 	t.Parallel()
 
+	t.Run("via FromDagCbor/ToDagCbor", func(t *testing.T) {
+		t.Parallel()
+
+		dataIn := golden.Get(t, exampleDAGCBORFilename)
+
+		tkn, err := envelope.FromDagCbor[*Example](dataIn)
+		require.NoError(t, err)
+		assert.Equal(t, exampleGreeting, tkn.Hello)
+		assert.Equal(t, exampleDID, tkn.Issuer)
+
+		dataOut, err := envelope.ToDagCbor(examplePrivKey(t), newExample(t))
+		require.NoError(t, err)
+		assert.Equal(t, dataIn, dataOut)
+	})
+
 	t.Run("via FromDagCborReader/ToDagCborWriter", func(t *testing.T) {
 		t.Parallel()
 
 		data := golden.Get(t, exampleDAGCBORFilename)
 
-		tkn, _, err := envelope.FromDagCborReader[*Example](bytes.NewReader(data))
+		tkn, err := envelope.FromDagCborReader[*Example](bytes.NewReader(data))
 		require.NoError(t, err)
 		assert.Equal(t, exampleGreeting, tkn.Hello)
 		assert.Equal(t, exampleDID, tkn.Issuer)
@@ -74,19 +90,34 @@ func TestRoundtrip(t *testing.T) {
 		assert.Equal(t, data, w.Bytes())
 	})
 
-	t.Run("via FromDagCbor/ToDagCbor", func(t *testing.T) {
+	t.Run("via FromDagJson/ToDagJson", func(t *testing.T) {
 		t.Parallel()
 
-		dataIn := golden.Get(t, exampleDAGCBORFilename)
+		dataIn := golden.Get(t, exampleDAGJSONFilename)
 
-		tkn, _, err := envelope.FromDagCbor[*Example](dataIn)
+		tkn, err := envelope.FromDagJson[*Example](dataIn)
 		require.NoError(t, err)
 		assert.Equal(t, exampleGreeting, tkn.Hello)
 		assert.Equal(t, exampleDID, tkn.Issuer)
 
-		dataOut, err := envelope.ToDagCbor(examplePrivKey(t), newExample(t))
+		dataOut, err := envelope.ToDagJson(examplePrivKey(t), newExample(t))
 		require.NoError(t, err)
 		assert.Equal(t, dataIn, dataOut)
+	})
+
+	t.Run("via FromDagJsonReader/ToDagJsonrWriter", func(t *testing.T) {
+		t.Parallel()
+
+		data := golden.Get(t, exampleDAGJSONFilename)
+
+		tkn, err := envelope.FromDagJsonReader[*Example](bytes.NewReader(data))
+		require.NoError(t, err)
+		assert.Equal(t, exampleGreeting, tkn.Hello)
+		assert.Equal(t, exampleDID, tkn.Issuer)
+
+		w := &bytes.Buffer{}
+		require.NoError(t, envelope.ToDagJsonWriter(w, examplePrivKey(t), newExample(t)))
+		assert.Equal(t, data, w.Bytes())
 	})
 }
 
@@ -94,7 +125,27 @@ func TestFromIPLD_with_invalid_signature(t *testing.T) {
 	t.Parallel()
 
 	node := invalidNodeFromGolden(t)
-	tkn, _, err := envelope.FromIPLD[*Example](node)
+	tkn, err := envelope.FromIPLD[*Example](node)
 	assert.Nil(t, tkn)
 	require.EqualError(t, err, "failed to verify the token's signature")
+}
+
+func TestHash(t *testing.T) {
+	t.Parallel()
+
+	msg := []byte("this is a test")
+
+	hash1 := sha256.Sum256(msg)
+
+	hasher := sha256.New()
+
+	for _, b := range msg {
+		hasher.Write([]byte{b})
+	}
+
+	hash2 := hasher.Sum(nil)
+	hash3 := hasher.Sum(nil)
+
+	require.Equal(t, hash1[:], hash2)
+	require.Equal(t, hash1[:], hash3)
 }
