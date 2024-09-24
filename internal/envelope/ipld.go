@@ -39,6 +39,7 @@ import (
 	"github.com/ipld/go-ipld-prime/node/bindnode"
 	"github.com/ipld/go-ipld-prime/schema"
 	"github.com/libp2p/go-libp2p/core/crypto"
+
 	"github.com/ucan-wg/go-ucan/did"
 	"github.com/ucan-wg/go-ucan/internal/varsig"
 )
@@ -164,19 +165,17 @@ func fromIPLD[T Tokener](node datamodel.Node) (T, error) {
 		return undef, err
 	}
 
-	// This needs to be done before converting this node to it's schema
+	// This needs to be done before converting this node to its schema
 	// representation (afterwards, the field might be renamed os it's safer
 	// to use the wire name).
 	issuerNode, err := tokenPayloadNode.LookupByString("iss")
 	if err != nil {
 		return undef, err
 	}
-	// ^^^
 
 	// Replaces the datamodel.Node in tokenPayloadNode with a
 	// schema.TypedNode so that we can cast it to a *token.Token after
 	// unwrapping it.
-	// vvv
 	nb := undef.Prototype().Representation().NewBuilder()
 
 	err = nb.AssignNode(tokenPayloadNode)
@@ -185,7 +184,6 @@ func fromIPLD[T Tokener](node datamodel.Node) (T, error) {
 	}
 
 	tokenPayloadNode = nb.Build()
-	// ^^^
 
 	tokenPayload := bindnode.Unwrap(tokenPayloadNode)
 	if tokenPayload == nil {
@@ -199,7 +197,6 @@ func fromIPLD[T Tokener](node datamodel.Node) (T, error) {
 
 	// Check that the issuer's DID contains a public key with a type that
 	// matches the VarsigHeader and then verify the SigPayload.
-	// vvv
 	issuer, err := issuerNode.AsString()
 	if err != nil {
 		return undef, err
@@ -238,7 +235,6 @@ func fromIPLD[T Tokener](node datamodel.Node) (T, error) {
 	if err != nil || !ok {
 		return undef, errors.New("failed to verify the token's signature")
 	}
-	// ^^^
 
 	return tkn, nil
 }
