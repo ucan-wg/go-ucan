@@ -30,7 +30,7 @@ func TestSchemaRoundTrip(t *testing.T) {
 		// format:    dagJson   -->   PayloadModel   -->   dagCbor   -->   PayloadModel   -->   dagJson
 		// function:      DecodeDagJson()           Seal()        Unseal()          EncodeDagJson()
 
-		p1, err := delegation.FromDagJson([]byte(delegationJson))
+		p1, err := delegation.FromDagJson(delegationJson)
 		require.NoError(t, err)
 
 		cborBytes, id, err := p1.Seal(privKey)
@@ -87,4 +87,91 @@ func BenchmarkSchemaLoad(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		_, _ = ipld.LoadSchemaBytes(schemaBytes)
 	}
+}
+
+func BenchmarkRoundTrip(b *testing.B) {
+	delegationJson := golden.Get(b, "new.dagjson")
+	privKey := privKey(b, issuerPrivKeyCfg)
+
+	b.Run("via buffers", func(b *testing.B) {
+		p1, _ := delegation.FromDagJson(delegationJson)
+		cborBytes, _, _ := p1.Seal(privKey)
+		p2, _ := delegation.Unseal(cborBytes)
+
+		b.ResetTimer()
+
+		b.Run("FromDagJson", func(b *testing.B) {
+			b.ReportAllocs()
+			for i := 0; i < b.N; i++ {
+				_, _ = delegation.FromDagJson(delegationJson)
+			}
+		})
+
+		b.Run("Seal", func(b *testing.B) {
+			b.ReportAllocs()
+			for i := 0; i < b.N; i++ {
+				_, _, _ = p1.Seal(privKey)
+			}
+		})
+
+		b.Run("Unseal", func(b *testing.B) {
+			b.ReportAllocs()
+			for i := 0; i < b.N; i++ {
+				_, _ = delegation.Unseal(cborBytes)
+			}
+		})
+
+		b.Run("ToDagJson", func(b *testing.B) {
+			b.ReportAllocs()
+			for i := 0; i < b.N; i++ {
+				_, _ = p2.ToDagJson(privKey)
+			}
+		})
+	})
+
+	b.Run("via streaming", func(b *testing.B) {
+		p1, _ := delegation.FromDagJsonReader(bytes.NewReader(delegationJson))
+		cborBuf := &bytes.Buffer{}
+		_, _ = p1.SealWriter(cborBuf, privKey)
+		cborBytes := cborBuf.Bytes()
+		p2, _ := delegation.UnsealReader(bytes.NewReader(cborBytes))
+
+		b.ResetTimer()
+
+		b.Run("FromDagJsonReader", func(b *testing.B) {
+			b.ReportAllocs()
+			reader := bytes.NewReader(delegationJson)
+			for i := 0; i < b.N; i++ {
+				_, _ = reader.Seek(0, 0)
+				_, _ = delegation.FromDagJsonReader(reader)
+			}
+		})
+
+		b.Run("SealWriter", func(b *testing.B) {
+			b.ReportAllocs()
+			buf := &bytes.Buffer{}
+			for i := 0; i < b.N; i++ {
+				buf.Reset()
+				_, _ = p1.SealWriter(buf, privKey)
+			}
+		})
+
+		b.Run("UnsealReader", func(b *testing.B) {
+			b.ReportAllocs()
+			reader := bytes.NewReader(cborBytes)
+			for i := 0; i < b.N; i++ {
+				_, _ = reader.Seek(0, 0)
+				_, _ = delegation.UnsealReader(reader)
+			}
+		})
+
+		b.Run("ToDagJsonReader", func(b *testing.B) {
+			b.ReportAllocs()
+			buf := &bytes.Buffer{}
+			for i := 0; i < b.N; i++ {
+				buf.Reset()
+				_ = p2.ToDagJsonWriter(buf, privKey)
+			}
+		})
+	})
 }
