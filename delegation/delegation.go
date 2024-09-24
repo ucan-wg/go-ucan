@@ -1,4 +1,13 @@
+// Package delegation implements the UCAN [delegation] specification with
+// an immutable Token type as well as methods to convert the Token to and
+// from the [envelope]-enclosed, signed and DAG-CBOR-encoded form that
+// should most commonly be used for transport and storage.
+//
+// [delegation]: https://github.com/ucan-wg/delegation/tree/v1_ipld
+// [envelope]: https://github.com/ucan-wg/spec#envelope
 package delegation
+
+// TODO: change the "delegation" link above when the specification is merged
 
 import (
 	"crypto/rand"
@@ -15,6 +24,7 @@ import (
 	"github.com/ucan-wg/go-ucan/pkg/meta"
 )
 
+// Token is an immutable type that holds the fields of a UCAN delegation.
 type Token struct {
 	// Issuer DID (sender)
 	issuer did.DID
@@ -162,6 +172,8 @@ func (t *Token) validate() error {
 	return errs
 }
 
+// Option is a type that allows optional fields to be set during the
+// creation of a Token.
 type Option func(*Token) error
 
 // WithExpiration set's the Token's optional "expiration" field to the
@@ -179,6 +191,7 @@ func WithExpiration(exp time.Time) Option {
 }
 
 // WithMeta adds a key/value pair in the "meta" field.
+//
 // WithMeta can be used multiple times in the same call.
 // Accepted types for the value are: bool, string, int, int32, int64, []byte,
 // and ipld.Node.

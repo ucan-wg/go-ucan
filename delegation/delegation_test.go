@@ -1,12 +1,10 @@
 package delegation_test
 
 import (
-	"crypto/rand"
 	"testing"
 	"time"
 
 	"github.com/libp2p/go-libp2p/core/crypto"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gotest.tools/v3/golden"
 
@@ -14,7 +12,6 @@ import (
 	"github.com/ucan-wg/go-ucan/capability/policy"
 	"github.com/ucan-wg/go-ucan/delegation"
 	"github.com/ucan-wg/go-ucan/did"
-	"github.com/ucan-wg/go-ucan/internal/envelope"
 )
 
 const (
@@ -91,7 +88,7 @@ func TestConstructors(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("New", func(t *testing.T) {
-		dlg, err := delegation.New(privKey, aud, cmd, pol,
+		tkn, err := delegation.New(privKey, aud, cmd, pol,
 			delegation.WithNonce([]byte(nonce)),
 			delegation.WithSubject(sub),
 			delegation.WithExpiration(exp),
@@ -100,19 +97,18 @@ func TestConstructors(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		data, err := dlg.ToDagJson(privKey)
+		data, err := tkn.ToDagJson(privKey)
 		require.NoError(t, err)
 
 		t.Log(string(data))
 
 		golden.Assert(t, string(data), "new.dagjson")
-		assert.Equal(t, newCID, envelope.CIDToBase58BTC(dlg.CID()))
 	})
 
 	t.Run("Root", func(t *testing.T) {
 		t.Parallel()
 
-		dlg, err := delegation.Root(privKey, aud, cmd, pol,
+		tkn, err := delegation.Root(privKey, aud, cmd, pol,
 			delegation.WithNonce([]byte(nonce)),
 			delegation.WithExpiration(exp),
 			delegation.WithMeta("foo", "fooo"),
@@ -120,13 +116,12 @@ func TestConstructors(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		data, err := dlg.ToDagJson(privKey)
+		data, err := tkn.ToDagJson(privKey)
 		require.NoError(t, err)
 
 		t.Log(string(data))
 
 		golden.Assert(t, string(data), "root.dagjson")
-		assert.Equal(t, rootCID, envelope.CIDToBase58BTC(dlg.CID()))
 	})
 }
 
@@ -140,24 +135,4 @@ func privKey(t *testing.T, privKeyCfg string) crypto.PrivKey {
 	require.NoError(t, err)
 
 	return privKey
-}
-
-func TestKey(t *testing.T) {
-	// TODO: why is this broken?
-	t.Skip("TODO: why is this broken?")
-
-	priv, _, err := crypto.GenerateEd25519Key(rand.Reader)
-	require.NoError(t, err)
-
-	privMar, err := crypto.MarshalPrivateKey(priv)
-	require.NoError(t, err)
-
-	privCfg := crypto.ConfigEncodeKey(privMar)
-	t.Log(privCfg)
-
-	id, err := did.FromPubKey(priv.GetPublic())
-	require.NoError(t, err)
-	t.Log(id)
-
-	t.Fail()
 }

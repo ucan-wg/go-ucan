@@ -43,8 +43,8 @@ func CIDFromBytes(b []byte) (cid.Cid, error) {
 
 var _ io.Reader = (*CIDReader)(nil)
 
-// CIDReader wraps an io.Reader and includes a hash.Hash that is updated
-// as data is read from the child io.Reader.
+// CIDReader wraps an io.Reader and includes a hash.Hash that is
+// incrementally updated as data is read from the child io.Reader.
 type CIDReader struct {
 	hash hash.Hash
 	r    io.Reader
@@ -52,7 +52,7 @@ type CIDReader struct {
 }
 
 // NewCIDReader initializes a hash.Hash to calculate the CID's hash and
-// and returns a wrapped io.Reader.
+// returns the wrapped io.Reader.
 func NewCIDReader(r io.Reader) *CIDReader {
 	h := sha256.New()
 	h.Reset()
@@ -64,7 +64,7 @@ func NewCIDReader(r io.Reader) *CIDReader {
 }
 
 // CID returns the UCAN-formatted cid.Cid created from the hash calculated
-// as bytes are read from the inner io.Reader.
+// as bytes were read from the inner io.Reader.
 func (r *CIDReader) CID() (cid.Cid, error) {
 	if r.err != nil {
 		return cid.Undef, r.err // TODO: Wrap to say it's an error during streaming?
@@ -89,12 +89,16 @@ func (r *CIDReader) Read(p []byte) (n int, err error) {
 
 var _ io.Writer = (*CIDWriter)(nil)
 
+// CIDWriter wraps an io.Writer and includes a hash.Hash that is
+// incrementally updated as data is written to the child io.Writer.
 type CIDWriter struct {
 	hash hash.Hash
 	w    io.Writer
 	err  error
 }
 
+// NewCIDWriter initializes a hash.Hash to calculate the CID's hash and
+// returns the wrapped io.Writer.
 func NewCIDWriter(w io.Writer) *CIDWriter {
 	h := sha256.New()
 	h.Reset()
@@ -105,10 +109,13 @@ func NewCIDWriter(w io.Writer) *CIDWriter {
 	}
 }
 
+// CID returns the UCAN-formatted cid.Cid created from the hash calculated
+// as bytes were written from the inner io.Reader.
 func (w *CIDWriter) CID() (cid.Cid, error) {
 	return cidFromHash(w.hash)
 }
 
+// Write implements io.Writer.
 func (w *CIDWriter) Write(p []byte) (n int, err error) {
 	if _, err = w.hash.Write(p); err != nil {
 		w.err = err
