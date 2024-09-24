@@ -10,8 +10,8 @@ import (
 	"github.com/ipld/go-ipld-prime/node/bindnode"
 	"github.com/ipld/go-ipld-prime/schema"
 
-	"github.com/ucan-wg/go-ucan/internal/envelope"
 	"github.com/ucan-wg/go-ucan/pkg/meta"
+	"github.com/ucan-wg/go-ucan/tokens/internal/envelope"
 )
 
 // [Tag] is the string used as a key within the SigPayload that identifies

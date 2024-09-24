@@ -16,7 +16,7 @@ import (
 	"github.com/ipld/go-ipld-prime/schema"
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/stretchr/testify/require"
-	"github.com/ucan-wg/go-ucan/internal/envelope"
+	"github.com/ucan-wg/go-ucan/tokens/internal/envelope"
 	"gotest.tools/v3/golden"
 )
 

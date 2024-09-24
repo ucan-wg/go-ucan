@@ -11,8 +11,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"gotest.tools/v3/golden"
 
-	"github.com/ucan-wg/go-ucan/delegation"
-	"github.com/ucan-wg/go-ucan/internal/envelope"
+	"github.com/ucan-wg/go-ucan/tokens/delegation"
+	"github.com/ucan-wg/go-ucan/tokens/internal/envelope"
 )
 
 //go:embed delegation.ipldsch

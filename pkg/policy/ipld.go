@@ -9,7 +9,7 @@ import (
 	"github.com/ipld/go-ipld-prime/must"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
 
-	"github.com/ucan-wg/go-ucan/capability/policy/selector"
+	"github.com/ucan-wg/go-ucan/pkg/policy/selector"
 )
 
 func FromIPLD(node datamodel.Node) (Policy, error) {

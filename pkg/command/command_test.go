@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/ucan-wg/go-ucan/capability/command"
+	"github.com/ucan-wg/go-ucan/pkg/command"
 )
 
 func TestTop(t *testing.T) {
