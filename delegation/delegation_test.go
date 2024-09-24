@@ -130,9 +130,7 @@ func TestConstructors(t *testing.T) {
 	})
 }
 
-func privKey(t *testing.T, privKeyCfg string) crypto.PrivKey {
-	t.Helper()
-
+func privKey(t require.TestingT, privKeyCfg string) crypto.PrivKey {
 	privKeyMar, err := crypto.ConfigDecodeKey(privKeyCfg)
 	require.NoError(t, err)
 
