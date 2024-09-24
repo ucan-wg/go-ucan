@@ -49,6 +49,10 @@ type Token struct {
 }
 
 // New creates a validated Token from the provided parameters and options.
+//
+// When creating a delegated token, the Issuer's (iss) DID is assembed
+// using the public key associated with the private key sent as the first
+// parameter.
 func New(privKey crypto.PrivKey, aud did.DID, cmd command.Command, pol policy.Policy, opts ...Option) (*Token, error) {
 	iss, err := did.FromPrivKey(privKey)
 	if err != nil {
@@ -86,6 +90,12 @@ func New(privKey crypto.PrivKey, aud did.DID, cmd command.Command, pol policy.Po
 	return tkn, nil
 }
 
+// Root creates a validated UCAN delegation Token from the provided
+// parameters and options.
+//
+// When creating a root token, both the Issuer's (iss) and Subject's
+// (sub) DIDs are assembled from the public key associated with the
+// private key passed as the first argument.
 func Root(privKey crypto.PrivKey, aud did.DID, cmd command.Command, pol policy.Policy, opts ...Option) (*Token, error) {
 	sub, err := did.FromPrivKey(privKey)
 	if err != nil {
