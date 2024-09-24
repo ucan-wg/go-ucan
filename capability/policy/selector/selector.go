@@ -23,6 +23,21 @@ func (s Selector) String() string {
 	return res.String()
 }
 
+// Matches checks if the selector matches another selector.
+func (s Selector) Matches(other Selector) bool {
+	if len(s) != len(other) {
+		return false
+	}
+
+	for i, seg := range s {
+		if seg.str != other[i].str {
+			return false
+		}
+	}
+
+	return true
+}
+
 var Identity = segment{".", true, false, false, nil, "", 0}
 
 var (
@@ -39,6 +54,38 @@ type segment struct {
 	slice    []int
 	field    string
 	index    int
+}
+
+// NewFieldSegment creates a new segment for a field.
+func NewFieldSegment(field string) segment {
+	return segment{
+		str:   fmt.Sprintf(".%s", field),
+		field: field,
+	}
+}
+
+// NewIndexSegment creates a new segment for an index.
+func NewIndexSegment(index int) segment {
+	return segment{
+		str:   fmt.Sprintf("[%d]", index),
+		index: index,
+	}
+}
+
+// NewSliceSegment creates a new segment for a slice.
+func NewSliceSegment(slice []int) segment {
+	return segment{
+		str:   fmt.Sprintf("[%d:%d]", slice[0], slice[1]),
+		slice: slice,
+	}
+}
+
+// NewIteratorSegment creates a new segment for an iterator.
+func NewIteratorSegment() segment {
+	return segment{
+		str:      "*",
+		iterator: true,
+	}
 }
 
 // String returns the segment's string representation.

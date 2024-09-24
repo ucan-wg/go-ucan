@@ -22,6 +22,29 @@ func Match(policy Policy, node ipld.Node) bool {
 	return true
 }
 
+// Filter extracts a subset of the policy related to the specified selector.
+func (p Policy) Filter(sel selector.Selector) Policy {
+	var filtered Policy
+	for _, stmt := range p {
+		if stmt.Selector().Matches(sel) {
+			filtered = append(filtered, stmt)
+		}
+	}
+
+	return filtered
+}
+
+// Match determines if the IPLD node matches the policy document.
+func (p Policy) Match(node datamodel.Node) bool {
+	for _, stmt := range p {
+		ok := matchStatement(stmt, node)
+		if !ok {
+			return false
+		}
+	}
+	return true
+}
+
 func matchStatement(statement Statement, node ipld.Node) bool {
 	switch statement.Kind() {
 	case KindEqual:

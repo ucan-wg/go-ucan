@@ -26,6 +26,7 @@ type Policy []Statement
 
 type Statement interface {
 	Kind() string
+	Selector() selector.Selector
 }
 
 type equality struct {
@@ -36,6 +37,10 @@ type equality struct {
 
 func (e equality) Kind() string {
 	return e.kind
+}
+
+func (e equality) Selector() selector.Selector {
+	return e.selector
 }
 
 func Equal(selector selector.Selector, value ipld.Node) Statement {
@@ -66,6 +71,10 @@ func (n negation) Kind() string {
 	return KindNot
 }
 
+func (n negation) Selector() selector.Selector {
+	return n.statement.Selector()
+}
+
 func Not(stmt Statement) Statement {
 	return negation{statement: stmt}
 }
@@ -77,6 +86,15 @@ type connective struct {
 
 func (c connective) Kind() string {
 	return c.kind
+}
+
+func (c connective) Selector() selector.Selector {
+	// assuming the first statement's selector is representative
+	if len(c.statements) > 0 {
+		return c.statements[0].Selector()
+	}
+
+	return selector.Selector{}
 }
 
 func And(stmts ...Statement) Statement {
@@ -96,6 +114,10 @@ func (n wildcard) Kind() string {
 	return KindLike
 }
 
+func (n wildcard) Selector() selector.Selector {
+	return n.selector
+}
+
 func Like(selector selector.Selector, pattern string) (Statement, error) {
 	g, err := parseGlob(pattern)
 	if err != nil {
@@ -113,6 +135,10 @@ type quantifier struct {
 
 func (n quantifier) Kind() string {
 	return n.kind
+}
+
+func (n quantifier) Selector() selector.Selector {
+	return n.selector
 }
 
 func All(selector selector.Selector, statement Statement) Statement {

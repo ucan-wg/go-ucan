@@ -1,7 +1,9 @@
 package policy
 
 import (
+	"encoding/json"
 	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/ipfs/go-cid"
@@ -9,6 +11,7 @@ import (
 	"github.com/ipld/go-ipld-prime/codec/dagjson"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/ucan-wg/go-ucan/capability/policy/literal"
@@ -537,5 +540,88 @@ func FuzzMatch(f *testing.F) {
 		}
 
 		Match(policy, dataNode)
+	})
+}
+
+func TestPolicyFilter(t *testing.T) {
+	sel1 := selector.Selector{selector.NewFieldSegment("http")}
+	sel2 := selector.Selector{selector.NewFieldSegment("jsonrpc")}
+
+	stmt1 := Equal(sel1, basicnode.NewString("value1"))
+	stmt2 := Equal(sel2, basicnode.NewString("value2"))
+
+	p := Policy{stmt1, stmt2}
+
+	filtered := p.Filter(sel1)
+	assert.Len(t, filtered, 1)
+	assert.Equal(t, stmt1, filtered[0])
+
+	filtered = p.Filter(sel2)
+	assert.Len(t, filtered, 1)
+	assert.Equal(t, stmt2, filtered[0])
+
+	sel3 := selector.Selector{selector.NewFieldSegment("nonexistent")}
+	filtered = p.Filter(sel3)
+	assert.Len(t, filtered, 0)
+}
+
+func FuzzPolicyFilter(f *testing.F) {
+	f.Add([]byte(`{"selector": [{"field": "http"}], "value": "value1"}`))
+	f.Add([]byte(`{"selector": [{"field": "jsonrpc"}], "value": "value2"}`))
+
+	f.Fuzz(func(t *testing.T, data []byte) {
+		var input struct {
+			Selector []struct {
+				Field string `json:"field"` // because selector.segment is not public
+			} `json:"selector"`
+			Value string `json:"value"`
+		}
+		if err := json.Unmarshal(data, &input); err != nil {
+			t.Skip()
+		}
+
+		var sel selector.Selector
+		for _, seg := range input.Selector {
+			sel = append(sel, selector.NewFieldSegment(seg.Field))
+		}
+		stmt := Equal(sel, basicnode.NewString(input.Value))
+
+		// create a policy and filter it based on the fuzzy input selector
+		p := Policy{stmt}
+		filtered := p.Filter(sel)
+
+		// verify that the filtered policy contains the statement
+		if len(filtered) != 1 || !reflect.DeepEqual(filtered[0], stmt) {
+			t.Errorf("filtered policy does not contain the expected statement")
+		}
+	})
+}
+
+func BenchmarkPolicyFilter(b *testing.B) {
+	sel1 := selector.Selector{selector.NewFieldSegment("http")}
+	sel2 := selector.Selector{selector.NewFieldSegment("jsonrpc")}
+
+	stmt1 := Equal(sel1, basicnode.NewString("value1"))
+	stmt2 := Equal(sel2, basicnode.NewString("value2"))
+
+	p := Policy{stmt1, stmt2}
+
+	b.Run("Filter by sel1", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			p.Filter(sel1)
+		}
+	})
+
+	b.Run("Filter by sel2", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			p.Filter(sel2)
+		}
+	})
+
+	sel3 := selector.Selector{selector.NewFieldSegment("nonexistent")}
+	b.Run("Filter by sel3", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			p.Filter(sel3)
+		}
 	})
 }
