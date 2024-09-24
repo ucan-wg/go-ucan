@@ -21,6 +21,7 @@ func CIDToBase58BTC(id cid.Cid) string {
 }
 
 // CID returns the UCAN content identifier a Tokener.
+// TODO: remove?
 func CID(privKey crypto.PrivKey, token Tokener) (cid.Cid, error) {
 	data, err := ToDagCbor(privKey, token)
 	if err != nil {
@@ -53,11 +54,11 @@ type CIDReader struct {
 // NewCIDReader initializes a hash.Hash to calculate the CID's hash and
 // and returns a wrapped io.Reader.
 func NewCIDReader(r io.Reader) *CIDReader {
-	hash := sha256.New()
-	hash.Reset()
+	h := sha256.New()
+	h.Reset()
 
 	return &CIDReader{
-		hash: hash,
+		hash: h,
 		r:    r,
 	}
 }
@@ -95,11 +96,11 @@ type CIDWriter struct {
 }
 
 func NewCIDWriter(w io.Writer) *CIDWriter {
-	hash := sha256.New()
-	hash.Reset()
+	h := sha256.New()
+	h.Reset()
 
 	return &CIDWriter{
-		hash: hash,
+		hash: h,
 		w:    w,
 	}
 }

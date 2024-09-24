@@ -12,7 +12,6 @@ import (
 	"github.com/ucan-wg/go-ucan/capability/command"
 	"github.com/ucan-wg/go-ucan/capability/policy"
 	"github.com/ucan-wg/go-ucan/did"
-	"github.com/ucan-wg/go-ucan/internal/envelope"
 	"github.com/ucan-wg/go-ucan/pkg/meta"
 )
 
@@ -54,6 +53,7 @@ func New(privKey crypto.PrivKey, aud did.DID, cmd command.Command, pol policy.Po
 		policy:   pol,
 		meta:     meta.NewMeta(),
 		nonce:    nil,
+		cid:      cid.Undef,
 	}
 
 	for _, opt := range opts {
@@ -72,18 +72,6 @@ func New(privKey crypto.PrivKey, aud did.DID, cmd command.Command, pol policy.Po
 	if err := tkn.validate(); err != nil {
 		return nil, err
 	}
-
-	cbor, err := tkn.ToDagCbor(privKey)
-	if err != nil {
-		return nil, err
-	}
-
-	id, err := envelope.CIDFromBytes(cbor)
-	if err != nil {
-		return nil, err
-	}
-
-	tkn.cid = id
 
 	return tkn, nil
 }
@@ -150,6 +138,7 @@ func (t *Token) Expiration() *time.Time {
 
 // CID returns the content identifier of the Token model when enclosed
 // in an Envelope and encoded to DAG-CBOR.
+// Returns cid.Undef if the token has not been serialized or deserialized yet.
 func (t *Token) CID() cid.Cid {
 	return t.cid
 }
@@ -299,6 +288,7 @@ func tokenFromModel(m tokenPayloadModel) (*Token, error) {
 }
 
 // generateNonce creates a 12-byte random nonce.
+// TODO: some crypto scheme require more, is that our case?
 func generateNonce() ([]byte, error) {
 	res := make([]byte, 12)
 	_, err := rand.Read(res)

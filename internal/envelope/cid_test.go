@@ -9,8 +9,9 @@ import (
 	"github.com/multiformats/go-multihash"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/ucan-wg/go-ucan/internal/envelope"
 	"gotest.tools/v3/golden"
+
+	"github.com/ucan-wg/go-ucan/internal/envelope"
 )
 
 func TestCid(t *testing.T) {
