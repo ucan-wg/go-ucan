@@ -8,10 +8,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"gotest.tools/v3/golden"
 
-	"github.com/ucan-wg/go-ucan/capability/command"
-	"github.com/ucan-wg/go-ucan/capability/policy"
-	"github.com/ucan-wg/go-ucan/delegation"
 	"github.com/ucan-wg/go-ucan/did"
+	"github.com/ucan-wg/go-ucan/pkg/command"
+	"github.com/ucan-wg/go-ucan/pkg/policy"
+	"github.com/ucan-wg/go-ucan/tokens/delegation"
 )
 
 const (

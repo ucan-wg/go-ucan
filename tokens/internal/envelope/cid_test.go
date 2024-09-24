@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gotest.tools/v3/golden"
 
-	"github.com/ucan-wg/go-ucan/internal/envelope"
+	"github.com/ucan-wg/go-ucan/tokens/internal/envelope"
 )
 
 func TestCidFromBytes(t *testing.T) {

@@ -18,10 +18,10 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p/core/crypto"
 
-	"github.com/ucan-wg/go-ucan/capability/command"
-	"github.com/ucan-wg/go-ucan/capability/policy"
 	"github.com/ucan-wg/go-ucan/did"
+	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/meta"
+	"github.com/ucan-wg/go-ucan/pkg/policy"
 )
 
 // Token is an immutable type that holds the fields of a UCAN delegation.

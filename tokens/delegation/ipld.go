@@ -12,7 +12,7 @@ import (
 	"github.com/libp2p/go-libp2p/core/crypto"
 
 	"github.com/ucan-wg/go-ucan/did"
-	"github.com/ucan-wg/go-ucan/internal/envelope"
+	"github.com/ucan-wg/go-ucan/tokens/internal/envelope"
 )
 
 // ToSealed wraps the delegation token in an envelope, generates the

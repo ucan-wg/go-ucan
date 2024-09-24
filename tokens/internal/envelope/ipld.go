@@ -41,7 +41,7 @@ import (
 	"github.com/libp2p/go-libp2p/core/crypto"
 
 	"github.com/ucan-wg/go-ucan/did"
-	"github.com/ucan-wg/go-ucan/internal/varsig"
+	"github.com/ucan-wg/go-ucan/tokens/internal/varsig"
 )
 
 const varsigHeaderKey = "h"
