@@ -16,11 +16,12 @@ import (
 	"github.com/ipld/go-ipld-prime/schema"
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/stretchr/testify/require"
-	"github.com/ucan-wg/go-ucan/internal/envelope"
+	"github.com/ucan-wg/go-ucan/tokens/internal/envelope"
 	"gotest.tools/v3/golden"
 )
 
 const (
+	exampleCID             = "zdpuAyw6R5HvKSPzztuzXNYFx3ZGoMHMuAsXL6u3xLGQriRXQ"
 	exampleDID             = "did:key:z6MkpuK2Amsu1RqcLGgmHHQHhvmeXCCBVsM4XFSg2cCyg4Nh"
 	exampleGreeting        = "world"
 	examplePrivKeyCfg      = "CAESQP9v2uqECTuIi45dyg3znQvsryvf2IXmOF/6aws6aCehm0FVrj0zHR5RZSDxWNjcpcJqsGym3sjCungX9Zt5oA4="

@@ -5,7 +5,7 @@ package policy
 import (
 	"github.com/ipld/go-ipld-prime"
 
-	"github.com/ucan-wg/go-ucan/capability/policy/selector"
+	"github.com/ucan-wg/go-ucan/pkg/policy/selector"
 )
 
 const (

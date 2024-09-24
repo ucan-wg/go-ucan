@@ -1,4 +1,13 @@
+// Package delegation implements the UCAN [delegation] specification with
+// an immutable Token type as well as methods to convert the Token to and
+// from the [envelope]-enclosed, signed and DAG-CBOR-encoded form that
+// should most commonly be used for transport and storage.
+//
+// [delegation]: https://github.com/ucan-wg/delegation/tree/v1_ipld
+// [envelope]: https://github.com/ucan-wg/spec#envelope
 package delegation
+
+// TODO: change the "delegation" link above when the specification is merged
 
 import (
 	"crypto/rand"
@@ -6,14 +15,16 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p/core/crypto"
 
-	"github.com/ucan-wg/go-ucan/capability/command"
-	"github.com/ucan-wg/go-ucan/capability/policy"
 	"github.com/ucan-wg/go-ucan/did"
+	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/meta"
+	"github.com/ucan-wg/go-ucan/pkg/policy"
 )
 
+// Token is an immutable type that holds the fields of a UCAN delegation.
 type Token struct {
 	// Issuer DID (sender)
 	issuer did.DID
@@ -33,6 +44,8 @@ type Token struct {
 	notBefore *time.Time
 	// The timestamp at which the Invocation becomes invalid
 	expiration *time.Time
+	// The CID of the Token when enclosed in an Envelope and encoded to DAG-CBOR
+	cid cid.Cid
 }
 
 // New creates a validated Token from the provided parameters and options.
@@ -50,6 +63,7 @@ func New(privKey crypto.PrivKey, aud did.DID, cmd command.Command, pol policy.Po
 		policy:   pol,
 		meta:     meta.NewMeta(),
 		nonce:    nil,
+		cid:      cid.Undef,
 	}
 
 	for _, opt := range opts {
@@ -132,6 +146,13 @@ func (t *Token) Expiration() *time.Time {
 	return t.expiration
 }
 
+// CID returns the content identifier of the Token model when enclosed
+// in an Envelope and encoded to DAG-CBOR.
+// Returns cid.Undef if the token has not been serialized or deserialized yet.
+func (t *Token) CID() cid.Cid {
+	return t.cid
+}
+
 func (t *Token) validate() error {
 	var errs error
 
@@ -149,70 +170,6 @@ func (t *Token) validate() error {
 	}
 
 	return errs
-}
-
-type Option func(*Token) error
-
-// WithExpiration set's the Token's optional "expiration" field to the
-// value of the provided time.Time.
-func WithExpiration(exp time.Time) Option {
-	return func(t *Token) error {
-		if exp.Before(time.Now()) {
-			return fmt.Errorf("a Token's expiration should be set to a time in the future: %s", exp.String())
-		}
-
-		t.expiration = &exp
-
-		return nil
-	}
-}
-
-// WithMeta adds a key/value pair in the "meta" field.
-// WithMeta can be used multiple times in the same call.
-// Accepted types for the value are: bool, string, int, int32, int64, []byte,
-// and ipld.Node.
-func WithMeta(key string, val any) Option {
-	return func(t *Token) error {
-		return t.meta.Add(key, val)
-	}
-}
-
-// WithNotBefore set's the Token's optional "notBefore" field to the value
-// of the provided time.Time.
-func WithNotBefore(nbf time.Time) Option {
-	return func(t *Token) error {
-		if nbf.Before(time.Now()) {
-			return fmt.Errorf("a Token's \"not before\" field should be set to a time in the future: %s", nbf.String())
-		}
-
-		t.notBefore = &nbf
-
-		return nil
-	}
-}
-
-// WithSubject sets the Tokens's optional "subject" field to the value of
-// provided did.DID.
-//
-// This Option should only be used with the New constructor - since
-// Subject is a required parameter when creating a Token via the  Root
-// constructor, any value provided via this Option will be silently
-// overwritten.
-func WithSubject(sub did.DID) Option {
-	return func(t *Token) error {
-		t.subject = sub
-
-		return nil
-	}
-}
-
-// WithNonce sets the Token's nonce with the given value.
-// If this option is not used, a random 12-byte nonce is generated for this required field.
-func WithNonce(nonce []byte) Option {
-	return func(t *Token) error {
-		t.nonce = nonce
-		return nil
-	}
 }
 
 // tokenFromModel build a decoded view of the raw IPLD data.
@@ -277,6 +234,7 @@ func tokenFromModel(m tokenPayloadModel) (*Token, error) {
 }
 
 // generateNonce creates a 12-byte random nonce.
+// TODO: some crypto scheme require more, is that our case?
 func generateNonce() ([]byte, error) {
 	res := make([]byte, 12)
 	_, err := rand.Read(res)

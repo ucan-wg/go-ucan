@@ -10,11 +10,17 @@ import (
 	"github.com/ipld/go-ipld-prime/node/bindnode"
 	"github.com/ipld/go-ipld-prime/schema"
 
-	"github.com/ucan-wg/go-ucan/internal/envelope"
 	"github.com/ucan-wg/go-ucan/pkg/meta"
+	"github.com/ucan-wg/go-ucan/tokens/internal/envelope"
 )
 
+// [Tag] is the string used as a key within the SigPayload that identifies
+// that the TokenPayload is a delegation.
+//
+// [Tag]: https://github.com/ucan-wg/delegation/tree/v1_ipld#type-tag
 const Tag = "ucan/dlg@1.0.0-rc.1"
+
+// TODO: update the above Tag URL once the delegation specification is merged.
 
 //go:embed delegation.ipldsch
 var schemaBytes []byte

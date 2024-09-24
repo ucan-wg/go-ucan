@@ -2,11 +2,15 @@ package meta
 
 import (
 	"errors"
+	"fmt"
+	"reflect"
 
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/datamodel"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
 )
+
+var ErrUnsupported = errors.New("failure adding unsupported type to meta")
 
 var ErrNotFound = errors.New("key-value not found in meta")
 
@@ -113,8 +117,20 @@ func (m *Meta) Add(key string, val any) error {
 	case datamodel.Node:
 		m.Values[key] = val
 	default:
-		panic("invalid value type")
+		return fmt.Errorf("%w: %s", ErrUnsupported, fqtn(val))
 	}
 	m.Keys = append(m.Keys, key)
 	return nil
+}
+
+func fqtn(val any) string {
+	var name string
+
+	t := reflect.TypeOf(val)
+	for t.Kind() == reflect.Pointer {
+		name += "*"
+		t = t.Elem()
+	}
+
+	return name + t.PkgPath() + "." + t.Name()
 }
