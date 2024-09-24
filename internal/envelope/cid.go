@@ -6,7 +6,6 @@ import (
 	"io"
 
 	"github.com/ipfs/go-cid"
-	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/multiformats/go-multibase"
 	"github.com/multiformats/go-multicodec"
 	"github.com/multiformats/go-multihash"
@@ -18,17 +17,6 @@ var b58BTCEnc = multibase.MustNewEncoder(multibase.Base58BTC)
 // string representation used by UCAN.
 func CIDToBase58BTC(id cid.Cid) string {
 	return id.Encode(b58BTCEnc)
-}
-
-// CID returns the UCAN content identifier a Tokener.
-// TODO: remove?
-func CID(privKey crypto.PrivKey, token Tokener) (cid.Cid, error) {
-	data, err := ToDagCbor(privKey, token)
-	if err != nil {
-		return cid.Undef, err
-	}
-
-	return CIDFromBytes(data)
 }
 
 // CIDFromBytes returns the UCAN content identifier for an arbitrary slice
