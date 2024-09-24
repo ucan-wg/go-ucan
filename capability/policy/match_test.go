@@ -563,6 +563,21 @@ func TestPolicyFilter(t *testing.T) {
 	sel3 := selector.Selector{selector.NewFieldSegment("nonexistent")}
 	filtered = p.Filter(sel3)
 	assert.Len(t, filtered, 0)
+
+	stmt1 = Equal(
+		selector.Selector{selector.NewFieldSegment(".http.host")},
+		basicnode.NewString("mainnet.infura.io"),
+	)
+	stmt2, err := Like(
+		selector.Selector{selector.NewFieldSegment(".jsonrpc.method")},
+		"eth_*",
+	)
+	require.NoError(t, err)
+
+	p = Policy{stmt1, stmt2}
+	filtered = p.FilterWithMatcher(selector.Selector{selector.NewFieldSegment(".http")}, selector.SegmentStartsWith)
+	assert.Len(t, filtered, 1)
+	assert.Equal(t, stmt1, filtered[0])
 }
 
 func FuzzPolicyFilter(f *testing.F) {

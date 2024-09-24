@@ -24,13 +24,13 @@ func (s Selector) String() string {
 }
 
 // Matches checks if the selector matches another selector.
-func (s Selector) Matches(other Selector) bool {
+func (s Selector) Matches(other Selector, matcher SegmentMatcher) bool {
 	if len(s) != len(other) {
 		return false
 	}
 
 	for i, seg := range s {
-		if seg.str != other[i].str {
+		if !matcher(seg, other[i]) {
 			return false
 		}
 	}
@@ -86,6 +86,16 @@ func NewIteratorSegment() segment {
 		str:      "*",
 		iterator: true,
 	}
+}
+
+type SegmentMatcher func(s1, s2 segment) bool
+
+var SegmentEquals SegmentMatcher = func(s1, s2 segment) bool {
+	return s1.str == s2.str
+}
+
+var SegmentStartsWith SegmentMatcher = func(s1, s2 segment) bool {
+	return strings.HasPrefix(s1.str, s2.str)
 }
 
 // String returns the segment's string representation.

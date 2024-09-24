@@ -11,11 +11,16 @@ import (
 	"github.com/ucan-wg/go-ucan/capability/policy/selector"
 )
 
-// Filter extracts a subset of the policy related to the specified selector.
 func (p Policy) Filter(sel selector.Selector) Policy {
+	return p.FilterWithMatcher(sel, selector.SegmentEquals)
+}
+
+// FilterWithMatcher extracts a subset of the policy related to the specified selector,
+// by matching each segment using the given selector.SegmentMatcher.
+func (p Policy) FilterWithMatcher(sel selector.Selector, matcher selector.SegmentMatcher) Policy {
 	var filtered Policy
 	for _, stmt := range p {
-		if stmt.Selector().Matches(sel) {
+		if stmt.Selector().Matches(sel, matcher) {
 			filtered = append(filtered, stmt)
 		}
 	}
