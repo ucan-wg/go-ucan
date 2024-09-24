@@ -8,8 +8,7 @@
 //
 // Decoding functions in this package likewise perform the signature
 // verification using a public key extracted from the TokenPayload as
-// described by requirement two below.  Additionally, the decode functions
-// also return the CID for the verified Envelope.
+// described by requirement two below.
 //
 // Types that wish to be marshaled and unmarshaled from the using
 // is package have two requirements.
@@ -30,7 +29,6 @@ import (
 	"errors"
 	"io"
 
-	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/codec"
 	"github.com/ipld/go-ipld-prime/codec/dagcbor"
@@ -66,20 +64,20 @@ type Tokener interface {
 //
 // An error is returned if the conversion fails, or if the resulting
 // Tokener is invalid.
-func Decode[T Tokener](b []byte, decFn codec.Decoder) (T, cid.Cid, error) {
+func Decode[T Tokener](b []byte, decFn codec.Decoder) (T, error) {
 	node, err := ipld.Decode(b, decFn)
 	if err != nil {
-		return *new(T), cid.Undef, err
+		return *new(T), err
 	}
 
 	return FromIPLD[T](node)
 }
 
 // DecodeReader is the same as Decode, but accept an io.Reader.
-func DecodeReader[T Tokener](r io.Reader, decFn codec.Decoder) (T, cid.Cid, error) {
+func DecodeReader[T Tokener](r io.Reader, decFn codec.Decoder) (T, error) {
 	node, err := ipld.DecodeStreaming(r, decFn)
 	if err != nil {
-		return *new(T), cid.Undef, err
+		return *new(T), err
 	}
 
 	return FromIPLD[T](node)
@@ -89,29 +87,24 @@ func DecodeReader[T Tokener](r io.Reader, decFn codec.Decoder) (T, cid.Cid, erro
 //
 // An error is returned if the conversion fails, or if the resulting
 // Tokener is invalid.
-func FromDagCbor[T Tokener](b []byte) (T, cid.Cid, error) {
+func FromDagCbor[T Tokener](b []byte) (T, error) {
 	undef := *new(T)
 
 	node, err := ipld.Decode(b, dagcbor.Decode)
 	if err != nil {
-		return undef, cid.Undef, err
-	}
-
-	id, err := CIDFromBytes(b)
-	if err != nil {
-		return undef, cid.Undef, err
+		return undef, err
 	}
 
 	tkn, err := fromIPLD[T](node)
 	if err != nil {
-		return undef, cid.Undef, err
+		return undef, err
 	}
 
-	return tkn, id, nil
+	return tkn, nil
 }
 
 // FromDagCborReader is the same as FromDagCbor, but accept an io.Reader.
-func FromDagCborReader[T Tokener](r io.Reader) (T, cid.Cid, error) {
+func FromDagCborReader[T Tokener](r io.Reader) (T, error) {
 	return DecodeReader[T](r, dagcbor.Decode)
 }
 
@@ -119,12 +112,12 @@ func FromDagCborReader[T Tokener](r io.Reader) (T, cid.Cid, error) {
 //
 // An error is returned if the conversion fails, or if the resulting
 // Tokener is invalid.
-func FromDagJson[T Tokener](b []byte) (T, cid.Cid, error) {
+func FromDagJson[T Tokener](b []byte) (T, error) {
 	return Decode[T](b, dagjson.Decode)
 }
 
 // FromDagJsonReader is the same as FromDagJson, but accept an io.Reader.
-func FromDagJsonReader[T Tokener](r io.Reader) (T, cid.Cid, error) {
+func FromDagJsonReader[T Tokener](r io.Reader) (T, error) {
 	return DecodeReader[T](r, dagjson.Decode)
 }
 
@@ -132,20 +125,15 @@ func FromDagJsonReader[T Tokener](r io.Reader) (T, cid.Cid, error) {
 //
 // An error is returned if the conversion fails, or if the resulting
 // Tokener is invalid.
-func FromIPLD[T Tokener](node datamodel.Node) (T, cid.Cid, error) {
+func FromIPLD[T Tokener](node datamodel.Node) (T, error) {
 	undef := *new(T)
-
-	id, err := CIDFromIPLD(node)
-	if err != nil {
-		return undef, cid.Undef, err
-	}
 
 	tkn, err := fromIPLD[T](node)
 	if err != nil {
-		return undef, cid.Undef, err
+		return undef, err
 	}
 
-	return tkn, id, nil
+	return tkn, nil
 }
 
 func fromIPLD[T Tokener](node datamodel.Node) (T, error) {
