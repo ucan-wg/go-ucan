@@ -15,10 +15,10 @@ import (
 	"github.com/ucan-wg/go-ucan/internal/envelope"
 )
 
-// Seal wraps the delegation token in an envelope, generates the signature,
-// encodes the result to DAG-CBOR and calculates the CID of the resulting
-// binary data.
-func (t *Token) Seal(privKey crypto.PrivKey) ([]byte, cid.Cid, error) {
+// ToSealed wraps the delegation token in an envelope, generates the
+// signature, encodes the result to DAG-CBOR and calculates the CID of
+// the resulting binary data.
+func (t *Token) ToSealed(privKey crypto.PrivKey) ([]byte, cid.Cid, error) {
 	data, err := t.ToDagCbor(privKey)
 	if err != nil {
 		return nil, cid.Undef, err
@@ -32,8 +32,8 @@ func (t *Token) Seal(privKey crypto.PrivKey) ([]byte, cid.Cid, error) {
 	return data, id, nil
 }
 
-// SealWriter is the same as Seal but accepts an io.Writer.
-func (t *Token) SealWriter(w io.Writer, privKey crypto.PrivKey) (cid.Cid, error) {
+// ToSealedWriter is the same as Seal but accepts an io.Writer.
+func (t *Token) ToSealedWriter(w io.Writer, privKey crypto.PrivKey) (cid.Cid, error) {
 	cidWriter := envelope.NewCIDWriter(w)
 
 	if err := t.ToDagCborWriter(cidWriter, privKey); err != nil {
@@ -43,11 +43,11 @@ func (t *Token) SealWriter(w io.Writer, privKey crypto.PrivKey) (cid.Cid, error)
 	return cidWriter.CID()
 }
 
-// Unseal decodes the provided binary data from the DAG-CBOR format,
+// FromSealed decodes the provided binary data from the DAG-CBOR format,
 // verifies that the envelope's signature is correct based on the public
 // key taken from the issuer (iss) field and calculates the CID of the
 // incoming data.
-func Unseal(data []byte) (*Token, error) {
+func FromSealed(data []byte) (*Token, error) {
 	tkn, err := FromDagCbor(data)
 	if err != nil {
 		return nil, err
@@ -63,8 +63,8 @@ func Unseal(data []byte) (*Token, error) {
 	return tkn, nil
 }
 
-// UnsealReader is the same as Unseal but accepts an io.Reader.
-func UnsealReader(r io.Reader) (*Token, error) {
+// FromSealedReader is the same as Unseal but accepts an io.Reader.
+func FromSealedReader(r io.Reader) (*Token, error) {
 	cidReader := envelope.NewCIDReader(r)
 
 	tkn, err := FromDagCborReader(cidReader)

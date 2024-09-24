@@ -33,13 +33,13 @@ func TestSchemaRoundTrip(t *testing.T) {
 		p1, err := delegation.FromDagJson(delegationJson)
 		require.NoError(t, err)
 
-		cborBytes, id, err := p1.Seal(privKey)
+		cborBytes, id, err := p1.ToSealed(privKey)
 		require.NoError(t, err)
 		assert.Equal(t, newCID, envelope.CIDToBase58BTC(id))
 		fmt.Println("cborBytes length", len(cborBytes))
 		fmt.Println("cbor", string(cborBytes))
 
-		p2, err := delegation.Unseal(cborBytes)
+		p2, err := delegation.FromSealed(cborBytes)
 		require.NoError(t, err)
 		assert.Equal(t, id, p2.CID())
 		fmt.Println("read Cbor", p2)
@@ -64,13 +64,13 @@ func TestSchemaRoundTrip(t *testing.T) {
 		require.NoError(t, err)
 
 		cborBytes := &bytes.Buffer{}
-		id, err := p1.SealWriter(cborBytes, privKey)
+		id, err := p1.ToSealedWriter(cborBytes, privKey)
 		t.Log(len(id.Bytes()), id.Bytes())
 		require.NoError(t, err)
 		assert.Equal(t, newCID, envelope.CIDToBase58BTC(id))
 
 		// buf = bytes.NewBuffer(cborBytes.Bytes())
-		p2, err := delegation.UnsealReader(cborBytes)
+		p2, err := delegation.FromSealedReader(cborBytes)
 		require.NoError(t, err)
 		t.Log(len(p2.CID().Bytes()), p2.CID().Bytes())
 		assert.Equal(t, envelope.CIDToBase58BTC(id), envelope.CIDToBase58BTC(p2.CID()))
@@ -95,8 +95,8 @@ func BenchmarkRoundTrip(b *testing.B) {
 
 	b.Run("via buffers", func(b *testing.B) {
 		p1, _ := delegation.FromDagJson(delegationJson)
-		cborBytes, _, _ := p1.Seal(privKey)
-		p2, _ := delegation.Unseal(cborBytes)
+		cborBytes, _, _ := p1.ToSealed(privKey)
+		p2, _ := delegation.FromSealed(cborBytes)
 
 		b.ResetTimer()
 
@@ -110,14 +110,14 @@ func BenchmarkRoundTrip(b *testing.B) {
 		b.Run("Seal", func(b *testing.B) {
 			b.ReportAllocs()
 			for i := 0; i < b.N; i++ {
-				_, _, _ = p1.Seal(privKey)
+				_, _, _ = p1.ToSealed(privKey)
 			}
 		})
 
 		b.Run("Unseal", func(b *testing.B) {
 			b.ReportAllocs()
 			for i := 0; i < b.N; i++ {
-				_, _ = delegation.Unseal(cborBytes)
+				_, _ = delegation.FromSealed(cborBytes)
 			}
 		})
 
@@ -132,9 +132,9 @@ func BenchmarkRoundTrip(b *testing.B) {
 	b.Run("via streaming", func(b *testing.B) {
 		p1, _ := delegation.FromDagJsonReader(bytes.NewReader(delegationJson))
 		cborBuf := &bytes.Buffer{}
-		_, _ = p1.SealWriter(cborBuf, privKey)
+		_, _ = p1.ToSealedWriter(cborBuf, privKey)
 		cborBytes := cborBuf.Bytes()
-		p2, _ := delegation.UnsealReader(bytes.NewReader(cborBytes))
+		p2, _ := delegation.FromSealedReader(bytes.NewReader(cborBytes))
 
 		b.ResetTimer()
 
@@ -152,7 +152,7 @@ func BenchmarkRoundTrip(b *testing.B) {
 			buf := &bytes.Buffer{}
 			for i := 0; i < b.N; i++ {
 				buf.Reset()
-				_, _ = p1.SealWriter(buf, privKey)
+				_, _ = p1.ToSealedWriter(buf, privKey)
 			}
 		})
 
@@ -161,7 +161,7 @@ func BenchmarkRoundTrip(b *testing.B) {
 			reader := bytes.NewReader(cborBytes)
 			for i := 0; i < b.N; i++ {
 				_, _ = reader.Seek(0, 0)
-				_, _ = delegation.UnsealReader(reader)
+				_, _ = delegation.FromSealedReader(reader)
 			}
 		})
 
