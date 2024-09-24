@@ -11,17 +11,6 @@ import (
 	"github.com/ucan-wg/go-ucan/capability/policy/selector"
 )
 
-// Match determines if the IPLD node matches the policy document.
-func Match(policy Policy, node ipld.Node) bool {
-	for _, stmt := range policy {
-		ok := matchStatement(stmt, node)
-		if !ok {
-			return false
-		}
-	}
-	return true
-}
-
 // Filter extracts a subset of the policy related to the specified selector.
 func (p Policy) Filter(sel selector.Selector) Policy {
 	var filtered Policy
@@ -42,6 +31,7 @@ func (p Policy) Match(node datamodel.Node) bool {
 			return false
 		}
 	}
+
 	return true
 }
 

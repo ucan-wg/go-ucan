@@ -27,15 +27,15 @@ func TestMatch(t *testing.T) {
 			nd := nb.Build()
 
 			pol := Policy{Equal(selector.MustParse("."), literal.String("test"))}
-			ok := Match(pol, nd)
+			ok := pol.Match(nd)
 			require.True(t, ok)
 
 			pol = Policy{Equal(selector.MustParse("."), literal.String("test2"))}
-			ok = Match(pol, nd)
+			ok = pol.Match(nd)
 			require.False(t, ok)
 
 			pol = Policy{Equal(selector.MustParse("."), literal.Int(138))}
-			ok = Match(pol, nd)
+			ok = pol.Match(nd)
 			require.False(t, ok)
 		})
 
@@ -46,15 +46,15 @@ func TestMatch(t *testing.T) {
 			nd := nb.Build()
 
 			pol := Policy{Equal(selector.MustParse("."), literal.Int(138))}
-			ok := Match(pol, nd)
+			ok := pol.Match(nd)
 			require.True(t, ok)
 
 			pol = Policy{Equal(selector.MustParse("."), literal.Int(1138))}
-			ok = Match(pol, nd)
+			ok = pol.Match(nd)
 			require.False(t, ok)
 
 			pol = Policy{Equal(selector.MustParse("."), literal.String("138"))}
-			ok = Match(pol, nd)
+			ok = pol.Match(nd)
 			require.False(t, ok)
 		})
 
@@ -65,15 +65,15 @@ func TestMatch(t *testing.T) {
 			nd := nb.Build()
 
 			pol := Policy{Equal(selector.MustParse("."), literal.Float(1.138))}
-			ok := Match(pol, nd)
+			ok := pol.Match(nd)
 			require.True(t, ok)
 
 			pol = Policy{Equal(selector.MustParse("."), literal.Float(11.38))}
-			ok = Match(pol, nd)
+			ok = pol.Match(nd)
 			require.False(t, ok)
 
 			pol = Policy{Equal(selector.MustParse("."), literal.String("138"))}
-			ok = Match(pol, nd)
+			ok = pol.Match(nd)
 			require.False(t, ok)
 		})
 
@@ -87,15 +87,15 @@ func TestMatch(t *testing.T) {
 			nd := nb.Build()
 
 			pol := Policy{Equal(selector.MustParse("."), literal.Link(l0))}
-			ok := Match(pol, nd)
+			ok := pol.Match(nd)
 			require.True(t, ok)
 
 			pol = Policy{Equal(selector.MustParse("."), literal.Link(l1))}
-			ok = Match(pol, nd)
+			ok = pol.Match(nd)
 			require.False(t, ok)
 
 			pol = Policy{Equal(selector.MustParse("."), literal.String("bafybeif4owy5gno5lwnixqm52rwqfodklf76hsetxdhffuxnplvijskzqq"))}
-			ok = Match(pol, nd)
+			ok = pol.Match(nd)
 			require.False(t, ok)
 		})
 
@@ -109,19 +109,19 @@ func TestMatch(t *testing.T) {
 			nd := nb.Build()
 
 			pol := Policy{Equal(selector.MustParse(".foo"), literal.String("bar"))}
-			ok := Match(pol, nd)
+			ok := pol.Match(nd)
 			require.True(t, ok)
 
 			pol = Policy{Equal(selector.MustParse(".[\"foo\"]"), literal.String("bar"))}
-			ok = Match(pol, nd)
+			ok = pol.Match(nd)
 			require.True(t, ok)
 
 			pol = Policy{Equal(selector.MustParse(".foo"), literal.String("baz"))}
-			ok = Match(pol, nd)
+			ok = pol.Match(nd)
 			require.False(t, ok)
 
 			pol = Policy{Equal(selector.MustParse(".foobar"), literal.String("bar"))}
-			ok = Match(pol, nd)
+			ok = pol.Match(nd)
 			require.False(t, ok)
 		})
 
@@ -134,11 +134,11 @@ func TestMatch(t *testing.T) {
 			nd := nb.Build()
 
 			pol := Policy{Equal(selector.MustParse(".[0]"), literal.String("foo"))}
-			ok := Match(pol, nd)
+			ok := pol.Match(nd)
 			require.True(t, ok)
 
 			pol = Policy{Equal(selector.MustParse(".[1]"), literal.String("foo"))}
-			ok = Match(pol, nd)
+			ok = pol.Match(nd)
 			require.False(t, ok)
 		})
 	})
@@ -151,7 +151,7 @@ func TestMatch(t *testing.T) {
 			nd := nb.Build()
 
 			pol := Policy{GreaterThan(selector.MustParse("."), literal.Int(1))}
-			ok := Match(pol, nd)
+			ok := pol.Match(nd)
 			require.True(t, ok)
 		})
 
@@ -162,11 +162,11 @@ func TestMatch(t *testing.T) {
 			nd := nb.Build()
 
 			pol := Policy{GreaterThanOrEqual(selector.MustParse("."), literal.Int(1))}
-			ok := Match(pol, nd)
+			ok := pol.Match(nd)
 			require.True(t, ok)
 
 			pol = Policy{GreaterThanOrEqual(selector.MustParse("."), literal.Int(138))}
-			ok = Match(pol, nd)
+			ok = pol.Match(nd)
 			require.True(t, ok)
 		})
 
@@ -177,7 +177,7 @@ func TestMatch(t *testing.T) {
 			nd := nb.Build()
 
 			pol := Policy{GreaterThan(selector.MustParse("."), literal.Float(1))}
-			ok := Match(pol, nd)
+			ok := pol.Match(nd)
 			require.True(t, ok)
 		})
 
@@ -188,11 +188,11 @@ func TestMatch(t *testing.T) {
 			nd := nb.Build()
 
 			pol := Policy{GreaterThanOrEqual(selector.MustParse("."), literal.Float(1))}
-			ok := Match(pol, nd)
+			ok := pol.Match(nd)
 			require.True(t, ok)
 
 			pol = Policy{GreaterThanOrEqual(selector.MustParse("."), literal.Float(1.38))}
-			ok = Match(pol, nd)
+			ok = pol.Match(nd)
 			require.True(t, ok)
 		})
 
@@ -203,7 +203,7 @@ func TestMatch(t *testing.T) {
 			nd := nb.Build()
 
 			pol := Policy{LessThan(selector.MustParse("."), literal.Int(1138))}
-			ok := Match(pol, nd)
+			ok := pol.Match(nd)
 			require.True(t, ok)
 		})
 
@@ -214,11 +214,11 @@ func TestMatch(t *testing.T) {
 			nd := nb.Build()
 
 			pol := Policy{LessThanOrEqual(selector.MustParse("."), literal.Int(1138))}
-			ok := Match(pol, nd)
+			ok := pol.Match(nd)
 			require.True(t, ok)
 
 			pol = Policy{LessThanOrEqual(selector.MustParse("."), literal.Int(138))}
-			ok = Match(pol, nd)
+			ok = pol.Match(nd)
 			require.True(t, ok)
 		})
 	})
@@ -230,11 +230,11 @@ func TestMatch(t *testing.T) {
 		nd := nb.Build()
 
 		pol := Policy{Not(Equal(selector.MustParse("."), literal.Bool(true)))}
-		ok := Match(pol, nd)
+		ok := pol.Match(nd)
 		require.True(t, ok)
 
 		pol = Policy{Not(Equal(selector.MustParse("."), literal.Bool(false)))}
-		ok = Match(pol, nd)
+		ok = pol.Match(nd)
 		require.False(t, ok)
 	})
 
@@ -250,7 +250,7 @@ func TestMatch(t *testing.T) {
 				LessThan(selector.MustParse("."), literal.Int(1138)),
 			),
 		}
-		ok := Match(pol, nd)
+		ok := pol.Match(nd)
 		require.True(t, ok)
 
 		pol = Policy{
@@ -259,11 +259,11 @@ func TestMatch(t *testing.T) {
 				Equal(selector.MustParse("."), literal.Int(1138)),
 			),
 		}
-		ok = Match(pol, nd)
+		ok = pol.Match(nd)
 		require.False(t, ok)
 
 		pol = Policy{And()}
-		ok = Match(pol, nd)
+		ok = pol.Match(nd)
 		require.True(t, ok)
 	})
 
@@ -279,7 +279,7 @@ func TestMatch(t *testing.T) {
 				LessThan(selector.MustParse("."), literal.Int(1138)),
 			),
 		}
-		ok := Match(pol, nd)
+		ok := pol.Match(nd)
 		require.True(t, ok)
 
 		pol = Policy{
@@ -288,11 +288,11 @@ func TestMatch(t *testing.T) {
 				Equal(selector.MustParse("."), literal.Int(1138)),
 			),
 		}
-		ok = Match(pol, nd)
+		ok = pol.Match(nd)
 		require.False(t, ok)
 
 		pol = Policy{Or()}
-		ok = Match(pol, nd)
+		ok = pol.Match(nd)
 		require.True(t, ok)
 	})
 
@@ -316,7 +316,7 @@ func TestMatch(t *testing.T) {
 					require.NoError(t, err)
 
 					pol := Policy{statement}
-					ok := Match(pol, nd)
+					ok := pol.Match(nd)
 					require.True(t, ok)
 				})
 			}(s)
@@ -340,7 +340,7 @@ func TestMatch(t *testing.T) {
 					require.NoError(t, err)
 
 					pol := Policy{statement}
-					ok := Match(pol, nd)
+					ok := pol.Match(nd)
 					require.False(t, ok)
 				})
 			}(s)
@@ -376,7 +376,7 @@ func TestMatch(t *testing.T) {
 					GreaterThan(selector.MustParse(".value"), literal.Int(2)),
 				),
 			}
-			ok := Match(pol, nd)
+			ok := pol.Match(nd)
 			require.True(t, ok)
 
 			pol = Policy{
@@ -385,7 +385,7 @@ func TestMatch(t *testing.T) {
 					GreaterThan(selector.MustParse(".value"), literal.Int(20)),
 				),
 			}
-			ok = Match(pol, nd)
+			ok = pol.Match(nd)
 			require.False(t, ok)
 		})
 
@@ -407,7 +407,7 @@ func TestMatch(t *testing.T) {
 					GreaterThan(selector.MustParse(".value"), literal.Int(60)),
 				),
 			}
-			ok := Match(pol, nd)
+			ok := pol.Match(nd)
 			require.True(t, ok)
 
 			pol = Policy{
@@ -416,7 +416,7 @@ func TestMatch(t *testing.T) {
 					GreaterThan(selector.MustParse(".value"), literal.Int(100)),
 				),
 			}
-			ok = Match(pol, nd)
+			ok = pol.Match(nd)
 			require.False(t, ok)
 		})
 	})
@@ -435,7 +435,7 @@ func TestPolicyExamples(t *testing.T) {
 
 		pol, err := FromDagJson(policy)
 		require.NoError(t, err)
-		return Match(pol, data)
+		return pol.Match(data)
 	}
 
 	t.Run("And", func(t *testing.T) {
@@ -539,7 +539,7 @@ func FuzzMatch(f *testing.F) {
 			t.Skip()
 		}
 
-		Match(policy, dataNode)
+		policy.Match(dataNode)
 	})
 }
 
