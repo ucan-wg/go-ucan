@@ -2,6 +2,7 @@ package delegation_test
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -18,6 +19,8 @@ import (
 	"github.com/ucan-wg/go-ucan/tokens/internal/envelope"
 )
 
+// The following example shows how to create a delegation.Token with
+// distinct DIDs for issuer (iss), audience (aud) and subject (sub).
 func ExampleNew() {
 	issuerPrivKey := examplePrivKey(issuerPrivKeyCfg)
 	audienceDID := exampleDID(AudienceDID)
@@ -41,15 +44,15 @@ func ExampleNew() {
 		delegation.WithSubject(subjectDID),
 		delegation.WithNonce(nonce),
 	)
-	panicAndPrintIfErr(err)
+	printThenPanicOnErr(err)
 	data, id, err := tkn.ToSealed(issuerPrivKey)
-	panicAndPrintIfErr(err)
+	printThenPanicOnErr(err)
 
 	printCIDAndSealed(id, data)
 
 	//Output:
-	//CID: zdpuAw26pFuvZa2Z9YAtpZZnWN6VmnRFr7Z8LVY5c7RVWoxGY
-	//DAG-CBOR (hex) out: 8258409a702481f8c0c78480e69cc99ad687449b5318da45d72ea8a9be32846a0cd87d845066c1613e2b5438cc2818028e17461e38a99b4d0bf224794ac421dec20405a261684434ed0171737563616e2f646c6740312e302e302d72632e31a86361756478386469643a6b65793a7a364d6b7135596d624a6354725045784e44693236696d725443704b6865706a4246425348717242444e324172506b7663636d64682f666f6f2f62617263657870f66369737378386469643a6b65793a7a364d6b707a6e326e335a4754325661714d4753514333747a6d7a563454533953373169467344584531576e6f4e483263706f6c8383623d3d672e7374617475736564726166748363616c6c692e726576696577657283646c696b65662e656d61696c6d2a406578616d706c652e636f6d8363616e79652e7461677382626f728283623d3d612e646e65777383623d3d612e6570726573736373756278386469643a6b65793a7a364d6b74413175426443707134754a427145396a6a4d694c79785a4267396136786750504b4a6a4d717373365a6332646d657461a0656e6f6e63654c000102030405060708090a0b
+	//CID (base58BTC): zdpuAw26pFuvZa2Z9YAtpZZnWN6VmnRFr7Z8LVY5c7RVWoxGY
+	//DAG-CBOR (base64) out: glhAmnAkgfjAx4SA5pzJmtaHRJtTGNpF1y6oqb4yhGoM2H2EUGbBYT4rVDjMKBgCjhdGHjipm00L8iR5SsQh3sIEBaJhaEQ07QFxc3VjYW4vZGxnQDEuMC4wLXJjLjGoY2F1ZHg4ZGlkOmtleTp6Nk1rcTVZbWJKY1RyUEV4TkRpMjZpbXJUQ3BLaGVwakJGQlNIcXJCRE4yQXJQa3ZjY21kaC9mb28vYmFyY2V4cPZjaXNzeDhkaWQ6a2V5Ono2TWtwem4ybjNaR1QyVmFxTUdTUUMzdHptelY0VFM5UzcxaUZzRFhFMVdub05IMmNwb2yDg2I9PWcuc3RhdHVzZWRyYWZ0g2NhbGxpLnJldmlld2Vyg2RsaWtlZi5lbWFpbG0qQGV4YW1wbGUuY29tg2NhbnllLnRhZ3OCYm9ygoNiPT1hLmRuZXdzg2I9PWEuZXByZXNzY3N1Yng4ZGlkOmtleTp6Nk1rdEExdUJkQ3BxNHVKQnFFOWpqTWlMeXhaQmc5YTZ4Z1BQS0pqTXFzczZaYzJkbWV0YaBlbm9uY2VMAAECAwQFBgcICQoL
 	//Converted to DAG-JSON out:
 	//[
 	//	{
@@ -115,6 +118,9 @@ func ExampleNew() {
 	//]
 }
 
+// The following example shows how to create a UCAN root delegation.Token
+// - a delegation.Token with the subject (sub) set to the value of issuer
+// (iss).
 func ExampleRoot() {
 	issuerPrivKey := examplePrivKey(issuerPrivKeyCfg)
 	audienceDID := exampleDID(AudienceDID)
@@ -136,15 +142,15 @@ func ExampleRoot() {
 		policy,
 		delegation.WithNonce(nonce),
 	)
-	panicAndPrintIfErr(err)
+	printThenPanicOnErr(err)
 	data, id, err := tkn.ToSealed(issuerPrivKey)
-	panicAndPrintIfErr(err)
+	printThenPanicOnErr(err)
 
 	printCIDAndSealed(id, data)
 
 	//Output:
-	//CID: zdpuAnbsR3e6DK8hBk5WA7KwbHYN6CKY4a3Bv1GNehvFYShQ8
-	//DAG-CBOR (hex) out: 825840ebb01205ccc5ff09483f411210d9fee193502ae923713373f9fa3b2b6b586ba3949b4ad62020c92640d69bb949790b7e2af480f98e1cb474d06c0af72ebee60ea261684434ed0171737563616e2f646c6740312e302e302d72632e31a86361756478386469643a6b65793a7a364d6b7135596d624a6354725045784e44693236696d725443704b6865706a4246425348717242444e324172506b7663636d64682f666f6f2f62617263657870f66369737378386469643a6b65793a7a364d6b707a6e326e335a4754325661714d4753514333747a6d7a563454533953373169467344584531576e6f4e483263706f6c8383623d3d672e7374617475736564726166748363616c6c692e726576696577657283646c696b65662e656d61696c6d2a406578616d706c652e636f6d8363616e79652e7461677382626f728283623d3d612e646e65777383623d3d612e6570726573736373756278386469643a6b65793a7a364d6b707a6e326e335a4754325661714d4753514333747a6d7a563454533953373169467344584531576e6f4e4832646d657461a0656e6f6e63654c000102030405060708090a0b
+	//CID (base58BTC): zdpuAnbsR3e6DK8hBk5WA7KwbHYN6CKY4a3Bv1GNehvFYShQ8
+	//DAG-CBOR (base64) out: glhA67ASBczF/wlIP0ESENn+4ZNQKukjcTNz+fo7K2tYa6OUm0rWICDJJkDWm7lJeQt+KvSA+Y4ctHTQbAr3Lr7mDqJhaEQ07QFxc3VjYW4vZGxnQDEuMC4wLXJjLjGoY2F1ZHg4ZGlkOmtleTp6Nk1rcTVZbWJKY1RyUEV4TkRpMjZpbXJUQ3BLaGVwakJGQlNIcXJCRE4yQXJQa3ZjY21kaC9mb28vYmFyY2V4cPZjaXNzeDhkaWQ6a2V5Ono2TWtwem4ybjNaR1QyVmFxTUdTUUMzdHptelY0VFM5UzcxaUZzRFhFMVdub05IMmNwb2yDg2I9PWcuc3RhdHVzZWRyYWZ0g2NhbGxpLnJldmlld2Vyg2RsaWtlZi5lbWFpbG0qQGV4YW1wbGUuY29tg2NhbnllLnRhZ3OCYm9ygoNiPT1hLmRuZXdzg2I9PWEuZXByZXNzY3N1Yng4ZGlkOmtleTp6Nk1rcHpuMm4zWkdUMlZhcU1HU1FDM3R6bXpWNFRTOVM3MWlGc0RYRTFXbm9OSDJkbWV0YaBlbm9uY2VMAAECAwQFBgcICQoL
 	//Converted to DAG-JSON out:
 	//[
 	//	{
@@ -210,14 +216,16 @@ func ExampleRoot() {
 	//]
 }
 
+// The following example demonstrates how to get a delegation.Token from
+// a DAG-CBOR []byte.
 func ExampleToken_FromSealed() {
 	cborBytes := exampleCBORData()
-	fmt.Println("DAG-CBOR (hex) in:", hex.EncodeToString(cborBytes))
+	fmt.Println("DAG-CBOR (base64) in:", base64.StdEncoding.EncodeToString(cborBytes))
 
 	tkn, err := delegation.FromSealed(cborBytes)
-	panicAndPrintIfErr(err)
+	printThenPanicOnErr(err)
 
-	fmt.Println("CID:", envelope.CIDToBase58BTC(tkn.CID()))
+	fmt.Println("CID (base58BTC):", envelope.CIDToBase58BTC(tkn.CID()))
 	fmt.Println("Issuer (iss):", tkn.Issuer().String())
 	fmt.Println("Audience (aud):", tkn.Audience().String())
 	fmt.Println("Subject (sub):", tkn.Subject().String())
@@ -229,11 +237,11 @@ func ExampleToken_FromSealed() {
 	fmt.Println("Expiration (exp):", tkn.Expiration())
 
 	//Output:
-	//DAG-CBOR (hex) in: 825840ebb01205ccc5ff09483f411210d9fee193502ae923713373f9fa3b2b6b586ba3949b4ad62020c92640d69bb949790b7e2af480f98e1cb474d06c0af72ebee60ea261684434ed0171737563616e2f646c6740312e302e302d72632e31a86361756478386469643a6b65793a7a364d6b7135596d624a6354725045784e44693236696d725443704b6865706a4246425348717242444e324172506b7663636d64682f666f6f2f62617263657870f66369737378386469643a6b65793a7a364d6b707a6e326e335a4754325661714d4753514333747a6d7a563454533953373169467344584531576e6f4e483263706f6c8383623d3d672e7374617475736564726166748363616c6c692e726576696577657283646c696b65662e656d61696c6d2a406578616d706c652e636f6d8363616e79652e7461677382626f728283623d3d612e646e65777383623d3d612e6570726573736373756278386469643a6b65793a7a364d6b707a6e326e335a4754325661714d4753514333747a6d7a563454533953373169467344584531576e6f4e4832646d657461a0656e6f6e63654c000102030405060708090a0b
-	//CID: zdpuAnbsR3e6DK8hBk5WA7KwbHYN6CKY4a3Bv1GNehvFYShQ8
+	//DAG-CBOR (base64) in: glhAmnAkgfjAx4SA5pzJmtaHRJtTGNpF1y6oqb4yhGoM2H2EUGbBYT4rVDjMKBgCjhdGHjipm00L8iR5SsQh3sIEBaJhaEQ07QFxc3VjYW4vZGxnQDEuMC4wLXJjLjGoY2F1ZHg4ZGlkOmtleTp6Nk1rcTVZbWJKY1RyUEV4TkRpMjZpbXJUQ3BLaGVwakJGQlNIcXJCRE4yQXJQa3ZjY21kaC9mb28vYmFyY2V4cPZjaXNzeDhkaWQ6a2V5Ono2TWtwem4ybjNaR1QyVmFxTUdTUUMzdHptelY0VFM5UzcxaUZzRFhFMVdub05IMmNwb2yDg2I9PWcuc3RhdHVzZWRyYWZ0g2NhbGxpLnJldmlld2Vyg2RsaWtlZi5lbWFpbG0qQGV4YW1wbGUuY29tg2NhbnllLnRhZ3OCYm9ygoNiPT1hLmRuZXdzg2I9PWEuZXByZXNzY3N1Yng4ZGlkOmtleTp6Nk1rdEExdUJkQ3BxNHVKQnFFOWpqTWlMeXhaQmc5YTZ4Z1BQS0pqTXFzczZaYzJkbWV0YaBlbm9uY2VMAAECAwQFBgcICQoL
+	//CID (base58BTC): zdpuAw26pFuvZa2Z9YAtpZZnWN6VmnRFr7Z8LVY5c7RVWoxGY
 	//Issuer (iss): did:key:z6Mkpzn2n3ZGT2VaqMGSQC3tzmzV4TS9S71iFsDXE1WnoNH2
 	//Audience (aud): did:key:z6Mkq5YmbJcTrPExNDi26imrTCpKhepjBFBSHqrBDN2ArPkv
-	//Subject (sub): did:key:z6Mkpzn2n3ZGT2VaqMGSQC3tzmzV4TS9S71iFsDXE1WnoNH2
+	//Subject (sub): did:key:z6MktA1uBdCpq4uJBqE9jjMiLyxZBg9a6xgPPKJjMqss6Zc2
 	//Command (cmd): /foo/bar
 	//Policy (pol): TODO
 	//Nonce (nonce): 000102030405060708090a0b
@@ -243,63 +251,63 @@ func ExampleToken_FromSealed() {
 }
 
 func exampleCBORData() []byte {
-	data, err := hex.DecodeString("825840ebb01205ccc5ff09483f411210d9fee193502ae923713373f9fa3b2b6b586ba3949b4ad62020c92640d69bb949790b7e2af480f98e1cb474d06c0af72ebee60ea261684434ed0171737563616e2f646c6740312e302e302d72632e31a86361756478386469643a6b65793a7a364d6b7135596d624a6354725045784e44693236696d725443704b6865706a4246425348717242444e324172506b7663636d64682f666f6f2f62617263657870f66369737378386469643a6b65793a7a364d6b707a6e326e335a4754325661714d4753514333747a6d7a563454533953373169467344584531576e6f4e483263706f6c8383623d3d672e7374617475736564726166748363616c6c692e726576696577657283646c696b65662e656d61696c6d2a406578616d706c652e636f6d8363616e79652e7461677382626f728283623d3d612e646e65777383623d3d612e6570726573736373756278386469643a6b65793a7a364d6b707a6e326e335a4754325661714d4753514333747a6d7a563454533953373169467344584531576e6f4e4832646d657461a0656e6f6e63654c000102030405060708090a0b")
-	panicAndPrintIfErr(err)
+	data, err := base64.StdEncoding.DecodeString("glhAmnAkgfjAx4SA5pzJmtaHRJtTGNpF1y6oqb4yhGoM2H2EUGbBYT4rVDjMKBgCjhdGHjipm00L8iR5SsQh3sIEBaJhaEQ07QFxc3VjYW4vZGxnQDEuMC4wLXJjLjGoY2F1ZHg4ZGlkOmtleTp6Nk1rcTVZbWJKY1RyUEV4TkRpMjZpbXJUQ3BLaGVwakJGQlNIcXJCRE4yQXJQa3ZjY21kaC9mb28vYmFyY2V4cPZjaXNzeDhkaWQ6a2V5Ono2TWtwem4ybjNaR1QyVmFxTUdTUUMzdHptelY0VFM5UzcxaUZzRFhFMVdub05IMmNwb2yDg2I9PWcuc3RhdHVzZWRyYWZ0g2NhbGxpLnJldmlld2Vyg2RsaWtlZi5lbWFpbG0qQGV4YW1wbGUuY29tg2NhbnllLnRhZ3OCYm9ygoNiPT1hLmRuZXdzg2I9PWEuZXByZXNzY3N1Yng4ZGlkOmtleTp6Nk1rdEExdUJkQ3BxNHVKQnFFOWpqTWlMeXhaQmc5YTZ4Z1BQS0pqTXFzczZaYzJkbWV0YaBlbm9uY2VMAAECAwQFBgcICQoL")
+	printThenPanicOnErr(err)
 
 	return data
 }
 
 func exampleDID(didStr string) did.DID {
 	id, err := did.Parse(didStr)
-	panicAndPrintIfErr(err)
+	printThenPanicOnErr(err)
 
 	return id
 }
 
 func exampleCommand(cmdStr string) command.Command {
 	cmd, err := command.Parse(cmdStr)
-	panicAndPrintIfErr(err)
+	printThenPanicOnErr(err)
 
 	return cmd
 }
 
 func examplePolicy(policyJSON string) policy.Policy {
 	pol, err := policy.FromDagJson(policyJSON)
-	panicAndPrintIfErr(err)
+	printThenPanicOnErr(err)
 
 	return pol
 }
 
 func examplePrivKey(privKeyCfg string) crypto.PrivKey {
 	privKeyMar, err := crypto.ConfigDecodeKey(privKeyCfg)
-	panicAndPrintIfErr(err)
+	printThenPanicOnErr(err)
 
 	privKey, err := crypto.UnmarshalPrivateKey(privKeyMar)
-	panicAndPrintIfErr(err)
+	printThenPanicOnErr(err)
 
 	return privKey
 }
 
-func panicAndPrintIfErr(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
-
 func printCIDAndSealed(id cid.Cid, data []byte) {
-	fmt.Println("CID:", envelope.CIDToBase58BTC(id))
-	fmt.Println("DAG-CBOR (hex) out:", hex.EncodeToString(data))
+	fmt.Println("CID (base58BTC):", envelope.CIDToBase58BTC(id))
+	fmt.Println("DAG-CBOR (base64) out:", base64.StdEncoding.EncodeToString(data))
 	fmt.Println("Converted to DAG-JSON out:")
 
 	node, err := ipld.Decode(data, dagcbor.Decode)
-	panicAndPrintIfErr(err)
+	printThenPanicOnErr(err)
 
 	rawJSON, err := ipld.Encode(node, dagjson.Encode)
-	panicAndPrintIfErr(err)
+	printThenPanicOnErr(err)
 
 	prettyJSON := &bytes.Buffer{}
 	err = json.Indent(prettyJSON, rawJSON, "", "\t")
-	panicAndPrintIfErr(err)
+	printThenPanicOnErr(err)
 
 	fmt.Println(prettyJSON.String())
+}
+
+func printThenPanicOnErr(err error) {
+	if err != nil {
+		panic(err)
+	}
 }
