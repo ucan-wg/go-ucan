@@ -2,6 +2,8 @@ package did
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestParseDIDKey(t *testing.T) {
@@ -13,6 +15,18 @@ func TestParseDIDKey(t *testing.T) {
 	if d.String() != str {
 		t.Fatalf("expected %v to equal %v", d.String(), str)
 	}
+}
+
+func TestMustParseDIDKey(t *testing.T) {
+	str := "did:key:z6Mkod5Jr3yd5SC7UDueqK4dAAw5xYJYjksy722tA9Boxc4z"
+	require.NotPanics(t, func() {
+		d := MustParse(str)
+		require.Equal(t, str, d.String())
+	})
+	str = "did:key:z7Mkod5Jr3yd5SC7UDueqK4dAAw5xYJYjksy722tA9Boxc4z"
+	require.Panics(t, func() {
+		MustParse(str)
+	})
 }
 
 func TestDecodeDIDKey(t *testing.T) {

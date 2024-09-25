@@ -116,3 +116,11 @@ func Parse(str string) (DID, error) {
 	buf = append(buf, suffix...)
 	return DID{str: string(buf), code: DIDCore}, nil
 }
+
+func MustParse(str string) DID {
+	did, err := Parse(str)
+	if err != nil {
+		panic(err)
+	}
+	return did
+}
