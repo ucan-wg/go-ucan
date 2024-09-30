@@ -44,7 +44,10 @@ import (
 	"github.com/ucan-wg/go-ucan/tokens/internal/varsig"
 )
 
-const varsigHeaderKey = "h"
+const (
+	VarsigHeaderKey = "h"
+	UCANTagPrefix   = "ucan/"
+)
 
 // Tokener must be implemented by types that wish to be enclosed in a
 // UCAN Envelope (presumbably one of the UCAN token types).
@@ -140,27 +143,12 @@ func FromIPLD[T Tokener](node datamodel.Node) (T, error) {
 func fromIPLD[T Tokener](node datamodel.Node) (T, error) {
 	undef := *new(T)
 
-	signatureNode, err := node.LookupByIndex(0)
+	info, err := Inspect(node)
 	if err != nil {
 		return undef, err
 	}
 
-	signature, err := signatureNode.AsBytes()
-	if err != nil {
-		return undef, err
-	}
-
-	sigPayloadNode, err := node.LookupByIndex(1)
-	if err != nil {
-		return undef, err
-	}
-
-	varsigHeaderNode, err := sigPayloadNode.LookupByString(varsigHeaderKey)
-	if err != nil {
-		return undef, err
-	}
-
-	tokenPayloadNode, err := sigPayloadNode.LookupByString(undef.Tag())
+	tokenPayloadNode, err := info.SigPayloadNode.LookupByString(undef.Tag())
 	if err != nil {
 		return undef, err
 	}
@@ -217,21 +205,16 @@ func fromIPLD[T Tokener](node datamodel.Node) (T, error) {
 		return undef, err
 	}
 
-	varsigHeader, err := varsigHeaderNode.AsBytes()
-	if err != nil {
-		return undef, err
-	}
-
-	if string(varsigHeader) != string(issuerVarsigHeader) {
+	if string(info.VarsigHeader) != string(issuerVarsigHeader) {
 		return undef, errors.New("the VarsigHeader key type doesn't match the issuer's key type")
 	}
 
-	data, err := ipld.Encode(sigPayloadNode, dagcbor.Encode)
+	data, err := ipld.Encode(info.SigPayloadNode, dagcbor.Encode)
 	if err != nil {
 		return undef, err
 	}
 
-	ok, err = issuerPubKey.Verify(data, signature)
+	ok, err = issuerPubKey.Verify(data, info.Signature)
 	if err != nil || !ok {
 		return undef, errors.New("failed to verify the token's signature")
 	}
@@ -293,7 +276,7 @@ func ToIPLD(privKey crypto.PrivKey, token Tokener) (datamodel.Node, error) {
 	}
 
 	sigPayloadNode, err := qp.BuildMap(basicnode.Prototype.Any, 2, func(ma datamodel.MapAssembler) {
-		qp.MapEntry(ma, varsigHeaderKey, qp.Bytes(varsigHeader))
+		qp.MapEntry(ma, VarsigHeaderKey, qp.Bytes(varsigHeader))
 		qp.MapEntry(ma, token.Tag(), qp.Node(tokenPayloadNode))
 	})
 
@@ -311,4 +294,44 @@ func ToIPLD(privKey crypto.PrivKey, token Tokener) (datamodel.Node, error) {
 		qp.ListEntry(la, qp.Bytes(signature))
 		qp.ListEntry(la, qp.Node(sigPayloadNode))
 	})
+}
+
+type Info struct {
+	Signature      []byte
+	SigPayloadNode datamodel.Node
+	VarsigHeader   []byte
+}
+
+func Inspect(node datamodel.Node) (Info, error) {
+	var undef Info
+
+	signatureNode, err := node.LookupByIndex(0)
+	if err != nil {
+		return undef, err
+	}
+
+	signature, err := signatureNode.AsBytes()
+	if err != nil {
+		return undef, err
+	}
+
+	sigPayloadNode, err := node.LookupByIndex(1)
+	if err != nil {
+		return undef, err
+	}
+
+	varsigHeaderNode, err := sigPayloadNode.LookupByString(VarsigHeaderKey)
+	if err != nil {
+		return undef, err
+	}
+	varsigHeader, err := varsigHeaderNode.AsBytes()
+	if err != nil {
+		return undef, err
+	}
+
+	return Info{
+		Signature:      signature,
+		SigPayloadNode: sigPayloadNode,
+		VarsigHeader:   varsigHeader,
+	}, nil
 }
