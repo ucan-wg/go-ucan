@@ -1,4 +1,4 @@
-package tokens
+package token
 
 import (
 	"fmt"
@@ -10,8 +10,8 @@ import (
 	"github.com/ipld/go-ipld-prime/codec/dagjson"
 	"github.com/ipld/go-ipld-prime/datamodel"
 
-	"github.com/ucan-wg/go-ucan/tokens/delegation"
-	"github.com/ucan-wg/go-ucan/tokens/internal/envelope"
+	"github.com/ucan-wg/go-ucan/token/delegation"
+	"github.com/ucan-wg/go-ucan/token/internal/envelope"
 )
 
 // Decode unmarshals the input data using the format specified by the
@@ -20,7 +20,7 @@ import (
 // Token is invalid.
 // Supported and returned types are:
 // - delegation.Token
-func Decode(b []byte, decFn codec.Decoder) (any, error) {
+func Decode(b []byte, decFn codec.Decoder) (Token, error) {
 	node, err := ipld.Decode(b, decFn)
 	if err != nil {
 		return nil, err
@@ -29,7 +29,7 @@ func Decode(b []byte, decFn codec.Decoder) (any, error) {
 }
 
 // DecodeReader is the same as Decode, but accept an io.Reader.
-func DecodeReader(r io.Reader, decFn codec.Decoder) (any, error) {
+func DecodeReader(r io.Reader, decFn codec.Decoder) (Token, error) {
 	node, err := ipld.DecodeStreaming(r, decFn)
 	if err != nil {
 		return nil, err
@@ -42,12 +42,12 @@ func DecodeReader(r io.Reader, decFn codec.Decoder) (any, error) {
 // Token is invalid.
 // Supported and returned types are:
 // - delegation.Token
-func FromDagCbor(b []byte) (any, error) {
+func FromDagCbor(b []byte) (Token, error) {
 	return Decode(b, dagcbor.Decode)
 }
 
 // FromDagCborReader is the same as FromDagCbor, but accept an io.Reader.
-func FromDagCborReader(r io.Reader) (any, error) {
+func FromDagCborReader(r io.Reader) (Token, error) {
 	return DecodeReader(r, dagcbor.Decode)
 }
 
@@ -56,16 +56,16 @@ func FromDagCborReader(r io.Reader) (any, error) {
 // Token is invalid.
 // Supported and returned types are:
 // - delegation.Token
-func FromDagJson(b []byte) (any, error) {
+func FromDagJson(b []byte) (Token, error) {
 	return Decode(b, dagjson.Decode)
 }
 
 // FromDagJsonReader is the same as FromDagJson, but accept an io.Reader.
-func FromDagJsonReader(r io.Reader) (any, error) {
+func FromDagJsonReader(r io.Reader) (Token, error) {
 	return DecodeReader(r, dagjson.Decode)
 }
 
-func fromIPLD(node datamodel.Node) (any, error) {
+func fromIPLD(node datamodel.Node) (Token, error) {
 	tag, err := envelope.FindTag(node)
 	if err != nil {
 		return nil, err

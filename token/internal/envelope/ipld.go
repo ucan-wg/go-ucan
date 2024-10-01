@@ -43,7 +43,7 @@ import (
 	"github.com/libp2p/go-libp2p/core/crypto"
 
 	"github.com/ucan-wg/go-ucan/did"
-	"github.com/ucan-wg/go-ucan/tokens/internal/varsig"
+	"github.com/ucan-wg/go-ucan/token/internal/varsig"
 )
 
 const (
