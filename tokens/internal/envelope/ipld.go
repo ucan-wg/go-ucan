@@ -27,7 +27,9 @@ package envelope
 
 import (
 	"errors"
+	"fmt"
 	"io"
+	"strings"
 
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/codec"
@@ -141,16 +143,20 @@ func FromIPLD[T Tokener](node datamodel.Node) (T, error) {
 }
 
 func fromIPLD[T Tokener](node datamodel.Node) (T, error) {
-	undef := *new(T)
+	zero := *new(T)
 
-	info, err := Inspect(node)
+	info, err := inspect(node)
 	if err != nil {
-		return undef, err
+		return zero, err
 	}
 
-	tokenPayloadNode, err := info.SigPayloadNode.LookupByString(undef.Tag())
+	if info.Tag != zero.Tag() {
+		return zero, errors.New("data doesn't match the expected type")
+	}
+
+	tokenPayloadNode, err := info.SigPayloadNode.LookupByString(info.Tag)
 	if err != nil {
-		return undef, err
+		return zero, err
 	}
 
 	// This needs to be done before converting this node to its schema
@@ -158,65 +164,65 @@ func fromIPLD[T Tokener](node datamodel.Node) (T, error) {
 	// to use the wire name).
 	issuerNode, err := tokenPayloadNode.LookupByString("iss")
 	if err != nil {
-		return undef, err
+		return zero, err
 	}
 
 	// Replaces the datamodel.Node in tokenPayloadNode with a
 	// schema.TypedNode so that we can cast it to a *token.Token after
 	// unwrapping it.
-	nb := undef.Prototype().Representation().NewBuilder()
+	nb := zero.Prototype().Representation().NewBuilder()
 
 	err = nb.AssignNode(tokenPayloadNode)
 	if err != nil {
-		return undef, err
+		return zero, err
 	}
 
 	tokenPayloadNode = nb.Build()
 
 	tokenPayload := bindnode.Unwrap(tokenPayloadNode)
 	if tokenPayload == nil {
-		return undef, errors.New("failed to Unwrap the TokenPayload")
+		return zero, errors.New("failed to Unwrap the TokenPayload")
 	}
 
 	tkn, ok := tokenPayload.(T)
 	if !ok {
-		return undef, errors.New("failed to assert the TokenPayload type as *token.Token")
+		return zero, errors.New("failed to assert the TokenPayload type as *token.Token")
 	}
 
 	// Check that the issuer's DID contains a public key with a type that
 	// matches the VarsigHeader and then verify the SigPayload.
 	issuer, err := issuerNode.AsString()
 	if err != nil {
-		return undef, err
+		return zero, err
 	}
 
 	issuerDID, err := did.Parse(issuer)
 	if err != nil {
-		return undef, err
+		return zero, err
 	}
 
 	issuerPubKey, err := issuerDID.PubKey()
 	if err != nil {
-		return undef, err
+		return zero, err
 	}
 
 	issuerVarsigHeader, err := varsig.Encode(issuerPubKey.Type())
 	if err != nil {
-		return undef, err
+		return zero, err
 	}
 
 	if string(info.VarsigHeader) != string(issuerVarsigHeader) {
-		return undef, errors.New("the VarsigHeader key type doesn't match the issuer's key type")
+		return zero, errors.New("the VarsigHeader key type doesn't match the issuer's key type")
 	}
 
 	data, err := ipld.Encode(info.SigPayloadNode, dagcbor.Encode)
 	if err != nil {
-		return undef, err
+		return zero, err
 	}
 
 	ok, err = issuerPubKey.Verify(data, info.Signature)
 	if err != nil || !ok {
-		return undef, errors.New("failed to verify the token's signature")
+		return zero, errors.New("failed to verify the token's signature")
 	}
 
 	return tkn, nil
@@ -296,42 +302,109 @@ func ToIPLD(privKey crypto.PrivKey, token Tokener) (datamodel.Node, error) {
 	})
 }
 
-type Info struct {
+// FindTag inspect the given token IPLD representation and extract the token tag.
+func FindTag(node datamodel.Node) (string, error) {
+	sigPayloadNode, err := node.LookupByIndex(1)
+	if err != nil {
+		return "", err
+	}
+
+	it := sigPayloadNode.MapIterator()
+	i := 0
+
+	for !it.Done() {
+		if i >= 2 {
+			return "", fmt.Errorf("expected two and only two fields in SigPayload")
+		}
+		i++
+
+		k, _, err := it.Next()
+		if err != nil {
+			return "", err
+		}
+
+		key, err := k.AsString()
+		if err != nil {
+			return "", err
+		}
+
+		if strings.HasPrefix(key, UCANTagPrefix) {
+			return key, nil
+		}
+	}
+	return "", fmt.Errorf("no token tag found")
+}
+
+type info struct {
+	Tag            string
 	Signature      []byte
 	SigPayloadNode datamodel.Node
 	VarsigHeader   []byte
 }
 
-func Inspect(node datamodel.Node) (Info, error) {
-	var undef Info
+func inspect(node datamodel.Node) (info, error) {
+	var res info
 
 	signatureNode, err := node.LookupByIndex(0)
 	if err != nil {
-		return undef, err
+		return info{}, err
 	}
 
-	signature, err := signatureNode.AsBytes()
+	res.Signature, err = signatureNode.AsBytes()
 	if err != nil {
-		return undef, err
+		return info{}, err
 	}
 
-	sigPayloadNode, err := node.LookupByIndex(1)
+	res.SigPayloadNode, err = node.LookupByIndex(1)
 	if err != nil {
-		return undef, err
+		return info{}, err
 	}
 
-	varsigHeaderNode, err := sigPayloadNode.LookupByString(VarsigHeaderKey)
-	if err != nil {
-		return undef, err
-	}
-	varsigHeader, err := varsigHeaderNode.AsBytes()
-	if err != nil {
-		return undef, err
+	it := res.SigPayloadNode.MapIterator()
+	foundVarsigHeader := false
+	foundTokenPayload := false
+	i := 0
+
+	for !it.Done() {
+		if i >= 2 {
+			return info{}, fmt.Errorf("expected two and only two fields in SigPayload")
+		}
+		i++
+
+		k, v, err := it.Next()
+		if err != nil {
+			return info{}, err
+		}
+
+		key, err := k.AsString()
+		if err != nil {
+			return info{}, err
+		}
+
+		switch {
+		case key == VarsigHeaderKey:
+			foundVarsigHeader = true
+			res.VarsigHeader, err = v.AsBytes()
+			if err != nil {
+				return info{}, err
+			}
+		case strings.HasPrefix(key, UCANTagPrefix):
+			foundTokenPayload = true
+			res.Tag = key
+		default:
+			return info{}, fmt.Errorf("unexpected key type %q", key)
+		}
 	}
 
-	return Info{
-		Signature:      signature,
-		SigPayloadNode: sigPayloadNode,
-		VarsigHeader:   varsigHeader,
-	}, nil
+	if i != 2 {
+		return info{}, fmt.Errorf("expected two and only two fields in SigPayload: %d", i)
+	}
+	if !foundVarsigHeader {
+		return info{}, errors.New("failed to find VarsigHeader field")
+	}
+	if !foundTokenPayload {
+		return info{}, errors.New("failed to find TokenPayload field")
+	}
+
+	return res, nil
 }
