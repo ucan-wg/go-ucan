@@ -82,7 +82,7 @@ func FromSealedReader(r io.Reader) (*Token, error) {
 	return tkn, nil
 }
 
-// Encode marshals a View to the format specified by the provided
+// Encode marshals a Token to the format specified by the provided
 // codec.Encoder.
 func (t *Token) Encode(privKey crypto.PrivKey, encFn codec.Encoder) ([]byte, error) {
 	node, err := t.toIPLD(privKey)
@@ -103,7 +103,7 @@ func (t *Token) EncodeWriter(w io.Writer, privKey crypto.PrivKey, encFn codec.En
 	return ipld.EncodeStreaming(w, node, encFn)
 }
 
-// ToDagCbor marshals the View to the DAG-CBOR format.
+// ToDagCbor marshals the Token to the DAG-CBOR format.
 func (t *Token) ToDagCbor(privKey crypto.PrivKey) ([]byte, error) {
 	return t.Encode(privKey, dagcbor.Encode)
 }
@@ -113,7 +113,7 @@ func (t *Token) ToDagCborWriter(w io.Writer, privKey crypto.PrivKey) error {
 	return t.EncodeWriter(w, privKey, dagcbor.Encode)
 }
 
-// ToDagJson marshals the View to the DAG-JSON format.
+// ToDagJson marshals the Token to the DAG-JSON format.
 func (t *Token) ToDagJson(privKey crypto.PrivKey) ([]byte, error) {
 	return t.Encode(privKey, dagjson.Encode)
 }
@@ -124,16 +124,16 @@ func (t *Token) ToDagJsonWriter(w io.Writer, privKey crypto.PrivKey) error {
 }
 
 // Decode unmarshals the input data using the format specified by the
-// provided codec.Decoder into a View.
+// provided codec.Decoder into a Token.
 //
 // An error is returned if the conversion fails, or if the resulting
-// View is invalid.
+// Token is invalid.
 func Decode(b []byte, decFn codec.Decoder) (*Token, error) {
 	node, err := ipld.Decode(b, decFn)
 	if err != nil {
 		return nil, err
 	}
-	return fromIPLD(node)
+	return FromIPLD(node)
 }
 
 // DecodeReader is the same as Decode, but accept an io.Reader.
@@ -142,13 +142,13 @@ func DecodeReader(r io.Reader, decFn codec.Decoder) (*Token, error) {
 	if err != nil {
 		return nil, err
 	}
-	return fromIPLD(node)
+	return FromIPLD(node)
 }
 
-// FromDagCbor unmarshals the input data into a View.
+// FromDagCbor unmarshals the input data into a Token.
 //
 // An error is returned if the conversion fails, or if the resulting
-// View is invalid.
+// Token is invalid.
 func FromDagCbor(data []byte) (*Token, error) {
 	pay, err := envelope.FromDagCbor[*tokenPayloadModel](data)
 	if err != nil {
@@ -168,10 +168,10 @@ func FromDagCborReader(r io.Reader) (*Token, error) {
 	return DecodeReader(r, dagcbor.Decode)
 }
 
-// FromDagJson unmarshals the input data into a View.
+// FromDagJson unmarshals the input data into a Token.
 //
 // An error is returned if the conversion fails, or if the resulting
-// View is invalid.
+// Token is invalid.
 func FromDagJson(data []byte) (*Token, error) {
 	return Decode(data, dagjson.Decode)
 }
@@ -181,7 +181,8 @@ func FromDagJsonReader(r io.Reader) (*Token, error) {
 	return DecodeReader(r, dagjson.Decode)
 }
 
-func fromIPLD(node datamodel.Node) (*Token, error) {
+// FromIPLD decode the given IPLD representation into a Token.
+func FromIPLD(node datamodel.Node) (*Token, error) {
 	pay, err := envelope.FromIPLD[*tokenPayloadModel](node)
 	if err != nil {
 		return nil, err
