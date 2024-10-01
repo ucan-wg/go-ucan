@@ -11,7 +11,7 @@ import (
 	"github.com/ucan-wg/go-ucan/did"
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/policy"
-	"github.com/ucan-wg/go-ucan/tokens/delegation"
+	"github.com/ucan-wg/go-ucan/token/delegation"
 )
 
 const (

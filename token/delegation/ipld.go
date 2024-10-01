@@ -12,7 +12,7 @@ import (
 	"github.com/libp2p/go-libp2p/core/crypto"
 
 	"github.com/ucan-wg/go-ucan/did"
-	"github.com/ucan-wg/go-ucan/tokens/internal/envelope"
+	"github.com/ucan-wg/go-ucan/token/internal/envelope"
 )
 
 // ToSealed wraps the delegation token in an envelope, generates the
@@ -32,7 +32,7 @@ func (t *Token) ToSealed(privKey crypto.PrivKey) ([]byte, cid.Cid, error) {
 	return data, id, nil
 }
 
-// ToSealedWriter is the same as Seal but accepts an io.Writer.
+// ToSealedWriter is the same as ToSealed but accepts an io.Writer.
 func (t *Token) ToSealedWriter(w io.Writer, privKey crypto.PrivKey) (cid.Cid, error) {
 	cidWriter := envelope.NewCIDWriter(w)
 
@@ -93,7 +93,7 @@ func (t *Token) Encode(privKey crypto.PrivKey, encFn codec.Encoder) ([]byte, err
 	return ipld.Encode(node, encFn)
 }
 
-// EncodeWriter is the same as Encode but accepts an io.Writer.
+// EncodeWriter is the same as Encode, but accepts an io.Writer.
 func (t *Token) EncodeWriter(w io.Writer, privKey crypto.PrivKey, encFn codec.Encoder) error {
 	node, err := t.toIPLD(privKey)
 	if err != nil {
@@ -108,7 +108,7 @@ func (t *Token) ToDagCbor(privKey crypto.PrivKey) ([]byte, error) {
 	return t.Encode(privKey, dagcbor.Encode)
 }
 
-// ToDagCborWriter is the same as ToDagCbor but it accepts an io.Writer.
+// ToDagCborWriter is the same as ToDagCbor, but it accepts an io.Writer.
 func (t *Token) ToDagCborWriter(w io.Writer, privKey crypto.PrivKey) error {
 	return t.EncodeWriter(w, privKey, dagcbor.Encode)
 }
@@ -118,7 +118,7 @@ func (t *Token) ToDagJson(privKey crypto.PrivKey) ([]byte, error) {
 	return t.Encode(privKey, dagjson.Encode)
 }
 
-// ToDagJsonWriter is the same as ToDagJson but it accepts an io.Writer.
+// ToDagJsonWriter is the same as ToDagJson, but it accepts an io.Writer.
 func (t *Token) ToDagJsonWriter(w io.Writer, privKey crypto.PrivKey) error {
 	return t.EncodeWriter(w, privKey, dagjson.Encode)
 }

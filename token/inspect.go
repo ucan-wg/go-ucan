@@ -1,9 +1,9 @@
-package tokens
+package token
 
 import (
 	"github.com/ipld/go-ipld-prime/datamodel"
 
-	"github.com/ucan-wg/go-ucan/tokens/internal/envelope"
+	"github.com/ucan-wg/go-ucan/token/internal/envelope"
 )
 
 type Info = envelope.Info
