@@ -131,15 +131,10 @@ func FromIPLD[T Tokener](node datamodel.Node) (T, error) {
 		return zero, errors.New("data doesn't match the expected type")
 	}
 
-	tokenPayloadNode, err := info.sigPayloadNode.LookupByString(info.Tag)
-	if err != nil {
-		return zero, err
-	}
-
 	// This needs to be done before converting this node to its schema
 	// representation (afterwards, the field might be renamed os it's safer
 	// to use the wire name).
-	issuerNode, err := tokenPayloadNode.LookupByString("iss")
+	issuerNode, err := info.tokenPayloadNode.LookupByString("iss")
 	if err != nil {
 		return zero, err
 	}
@@ -149,12 +144,12 @@ func FromIPLD[T Tokener](node datamodel.Node) (T, error) {
 	// unwrapping it.
 	nb := zero.Prototype().Representation().NewBuilder()
 
-	err = nb.AssignNode(tokenPayloadNode)
+	err = nb.AssignNode(info.tokenPayloadNode)
 	if err != nil {
 		return zero, err
 	}
 
-	tokenPayloadNode = nb.Build()
+	tokenPayloadNode := nb.Build()
 
 	tokenPayload := bindnode.Unwrap(tokenPayloadNode)
 	if tokenPayload == nil {
@@ -279,11 +274,15 @@ func ToIPLD(privKey crypto.PrivKey, token Tokener) (datamodel.Node, error) {
 	})
 }
 
-// FindTag inspect the given token IPLD representation and extract the token tag.
+// FindTag inspects the given token IPLD representation and extract the token tag.
 func FindTag(node datamodel.Node) (string, error) {
 	sigPayloadNode, err := node.LookupByIndex(1)
 	if err != nil {
 		return "", err
+	}
+
+	if sigPayloadNode.Kind() != datamodel.Kind_Map {
+		return "", fmt.Errorf("unexpected type instead of map")
 	}
 
 	it := sigPayloadNode.MapIterator()
@@ -313,12 +312,14 @@ func FindTag(node datamodel.Node) (string, error) {
 }
 
 type Info struct {
-	Tag            string
-	Signature      []byte
-	sigPayloadNode datamodel.Node // private, we don't want to expose that
-	VarsigHeader   []byte
+	Tag              string
+	Signature        []byte
+	VarsigHeader     []byte
+	sigPayloadNode   datamodel.Node // private, we don't want to expose that
+	tokenPayloadNode datamodel.Node // private, we don't want to expose that
 }
 
+// Inspect inspects the given token IPLD representation and extract some envelope facts.
 func Inspect(node datamodel.Node) (Info, error) {
 	var res Info
 
@@ -335,6 +336,10 @@ func Inspect(node datamodel.Node) (Info, error) {
 	res.sigPayloadNode, err = node.LookupByIndex(1)
 	if err != nil {
 		return Info{}, err
+	}
+
+	if res.sigPayloadNode.Kind() != datamodel.Kind_Map {
+		return Info{}, fmt.Errorf("unexpected type instead of map")
 	}
 
 	it := res.sigPayloadNode.MapIterator()
@@ -368,6 +373,7 @@ func Inspect(node datamodel.Node) (Info, error) {
 		case strings.HasPrefix(key, UCANTagPrefix):
 			foundTokenPayload = true
 			res.Tag = key
+			res.tokenPayloadNode = v
 		default:
 			return Info{}, fmt.Errorf("unexpected key type %q", key)
 		}

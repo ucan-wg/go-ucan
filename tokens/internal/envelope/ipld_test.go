@@ -3,12 +3,16 @@ package envelope_test
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/base64"
 	"testing"
 
+	"github.com/ipld/go-ipld-prime"
+	"github.com/ipld/go-ipld-prime/codec/dagcbor"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/ucan-wg/go-ucan/tokens/internal/envelope"
 	"gotest.tools/v3/golden"
+
+	"github.com/ucan-wg/go-ucan/tokens/internal/envelope"
 )
 
 func TestDecode(t *testing.T) {
@@ -148,4 +152,21 @@ func TestHash(t *testing.T) {
 
 	require.Equal(t, hash1[:], hash2)
 	require.Equal(t, hash1[:], hash3)
+}
+
+func TestInspect(t *testing.T) {
+	t.Parallel()
+
+	data := golden.Get(t, "example.dagcbor")
+	node, err := ipld.Decode(data, dagcbor.Decode)
+	require.NoError(t, err)
+
+	expSig, err := base64.RawStdEncoding.DecodeString("fPqfwL3iFpbw9SvBiq0DIbUurv9o6c36R08tC/yslGrJcwV51ghzWahxdetpEf6T5LCszXX9I/K8khvnmAxjAg")
+	require.NoError(t, err)
+
+	info, err := envelope.Inspect(node)
+	require.NoError(t, err)
+	assert.Equal(t, expSig, info.Signature)
+	assert.Equal(t, "ucan/example@v1.0.0-rc.1", info.Tag)
+	assert.Equal(t, []byte{0x34, 0xed, 0x1, 0x71}, info.VarsigHeader)
 }
