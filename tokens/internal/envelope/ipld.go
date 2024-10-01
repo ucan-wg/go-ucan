@@ -94,19 +94,7 @@ func DecodeReader[T Tokener](r io.Reader, decFn codec.Decoder) (T, error) {
 // An error is returned if the conversion fails, or if the resulting
 // Tokener is invalid.
 func FromDagCbor[T Tokener](b []byte) (T, error) {
-	undef := *new(T)
-
-	node, err := ipld.Decode(b, dagcbor.Decode)
-	if err != nil {
-		return undef, err
-	}
-
-	tkn, err := fromIPLD[T](node)
-	if err != nil {
-		return undef, err
-	}
-
-	return tkn, nil
+	return Decode[T](b, dagcbor.Decode)
 }
 
 // FromDagCborReader is the same as FromDagCbor, but accept an io.Reader.
@@ -132,20 +120,9 @@ func FromDagJsonReader[T Tokener](r io.Reader) (T, error) {
 // An error is returned if the conversion fails, or if the resulting
 // Tokener is invalid.
 func FromIPLD[T Tokener](node datamodel.Node) (T, error) {
-	undef := *new(T)
-
-	tkn, err := fromIPLD[T](node)
-	if err != nil {
-		return undef, err
-	}
-
-	return tkn, nil
-}
-
-func fromIPLD[T Tokener](node datamodel.Node) (T, error) {
 	zero := *new(T)
 
-	info, err := inspect(node)
+	info, err := Inspect(node)
 	if err != nil {
 		return zero, err
 	}
@@ -154,7 +131,7 @@ func fromIPLD[T Tokener](node datamodel.Node) (T, error) {
 		return zero, errors.New("data doesn't match the expected type")
 	}
 
-	tokenPayloadNode, err := info.SigPayloadNode.LookupByString(info.Tag)
+	tokenPayloadNode, err := info.sigPayloadNode.LookupByString(info.Tag)
 	if err != nil {
 		return zero, err
 	}
@@ -215,7 +192,7 @@ func fromIPLD[T Tokener](node datamodel.Node) (T, error) {
 		return zero, errors.New("the VarsigHeader key type doesn't match the issuer's key type")
 	}
 
-	data, err := ipld.Encode(info.SigPayloadNode, dagcbor.Encode)
+	data, err := ipld.Encode(info.sigPayloadNode, dagcbor.Encode)
 	if err != nil {
 		return zero, err
 	}
@@ -335,50 +312,50 @@ func FindTag(node datamodel.Node) (string, error) {
 	return "", fmt.Errorf("no token tag found")
 }
 
-type info struct {
+type Info struct {
 	Tag            string
 	Signature      []byte
-	SigPayloadNode datamodel.Node
+	sigPayloadNode datamodel.Node // private, we don't want to expose that
 	VarsigHeader   []byte
 }
 
-func inspect(node datamodel.Node) (info, error) {
-	var res info
+func Inspect(node datamodel.Node) (Info, error) {
+	var res Info
 
 	signatureNode, err := node.LookupByIndex(0)
 	if err != nil {
-		return info{}, err
+		return Info{}, err
 	}
 
 	res.Signature, err = signatureNode.AsBytes()
 	if err != nil {
-		return info{}, err
+		return Info{}, err
 	}
 
-	res.SigPayloadNode, err = node.LookupByIndex(1)
+	res.sigPayloadNode, err = node.LookupByIndex(1)
 	if err != nil {
-		return info{}, err
+		return Info{}, err
 	}
 
-	it := res.SigPayloadNode.MapIterator()
+	it := res.sigPayloadNode.MapIterator()
 	foundVarsigHeader := false
 	foundTokenPayload := false
 	i := 0
 
 	for !it.Done() {
 		if i >= 2 {
-			return info{}, fmt.Errorf("expected two and only two fields in SigPayload")
+			return Info{}, fmt.Errorf("expected two and only two fields in SigPayload")
 		}
 		i++
 
 		k, v, err := it.Next()
 		if err != nil {
-			return info{}, err
+			return Info{}, err
 		}
 
 		key, err := k.AsString()
 		if err != nil {
-			return info{}, err
+			return Info{}, err
 		}
 
 		switch {
@@ -386,24 +363,24 @@ func inspect(node datamodel.Node) (info, error) {
 			foundVarsigHeader = true
 			res.VarsigHeader, err = v.AsBytes()
 			if err != nil {
-				return info{}, err
+				return Info{}, err
 			}
 		case strings.HasPrefix(key, UCANTagPrefix):
 			foundTokenPayload = true
 			res.Tag = key
 		default:
-			return info{}, fmt.Errorf("unexpected key type %q", key)
+			return Info{}, fmt.Errorf("unexpected key type %q", key)
 		}
 	}
 
 	if i != 2 {
-		return info{}, fmt.Errorf("expected two and only two fields in SigPayload: %d", i)
+		return Info{}, fmt.Errorf("expected two and only two fields in SigPayload: %d", i)
 	}
 	if !foundVarsigHeader {
-		return info{}, errors.New("failed to find VarsigHeader field")
+		return Info{}, errors.New("failed to find VarsigHeader field")
 	}
 	if !foundTokenPayload {
-		return info{}, errors.New("failed to find TokenPayload field")
+		return Info{}, errors.New("failed to find TokenPayload field")
 	}
 
 	return res, nil
