@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/base64"
+	"os"
 	"testing"
 
 	"github.com/ipld/go-ipld-prime"
@@ -169,4 +170,40 @@ func TestInspect(t *testing.T) {
 	assert.Equal(t, expSig, info.Signature)
 	assert.Equal(t, "ucan/example@v1.0.0-rc.1", info.Tag)
 	assert.Equal(t, []byte{0x34, 0xed, 0x1, 0x71}, info.VarsigHeader)
+}
+
+func FuzzInspect(f *testing.F) {
+	data, err := os.ReadFile("testdata/example.dagcbor")
+	require.NoError(f, err)
+
+	f.Add(data)
+
+	f.Fuzz(func(t *testing.T, data []byte) {
+		node, err := ipld.Decode(data, dagcbor.Decode)
+		if err != nil {
+			t.Skip()
+		}
+		_, err = envelope.Inspect(node)
+		if err != nil {
+			t.Skip()
+		}
+	})
+}
+
+func FuzzFindTag(f *testing.F) {
+	data, err := os.ReadFile("testdata/example.dagcbor")
+	require.NoError(f, err)
+
+	f.Add(data)
+
+	f.Fuzz(func(t *testing.T, data []byte) {
+		node, err := ipld.Decode(data, dagcbor.Decode)
+		if err != nil {
+			t.Skip()
+		}
+		_, err = envelope.FindTag(node)
+		if err != nil {
+			t.Skip()
+		}
+	})
 }
