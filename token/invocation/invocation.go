@@ -13,8 +13,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ipfs/go-cid"
-
 	"github.com/ucan-wg/go-ucan/did"
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/meta"
@@ -41,8 +39,6 @@ type Token struct {
 	// The timestamp at which the Invocation was created
 	invokedAt *time.Time
 	// TODO: cause
-	// The CID of the Token when enclosed in an Envelope and encoded to DAG-CBOR
-	cid cid.Cid
 }
 
 // Issuer returns the did.DID representing the Token's issuer.
@@ -82,13 +78,6 @@ func (t *Token) Meta() *meta.Meta {
 // Expiration returns the time at which the Token expires.
 func (t *Token) Expiration() *time.Time {
 	return t.expiration
-}
-
-// CID returns the content identifier of the Token model when enclosed
-// in an Envelope and encoded to DAG-CBOR.
-// Returns cid.Undef if the token has not been serialized or deserialized yet.
-func (t *Token) CID() cid.Cid {
-	return t.cid
 }
 
 func (t *Token) validate() error {

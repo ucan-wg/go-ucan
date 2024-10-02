@@ -39,9 +39,9 @@ func TestSchemaRoundTrip(t *testing.T) {
 		fmt.Println("cborBytes length", len(cborBytes))
 		fmt.Println("cbor", string(cborBytes))
 
-		p2, err := delegation.FromSealed(cborBytes)
+		p2, c2, err := delegation.FromSealed(cborBytes)
 		require.NoError(t, err)
-		assert.Equal(t, id, p2.CID())
+		assert.Equal(t, id, c2)
 		fmt.Println("read Cbor", p2)
 
 		readJson, err := p2.ToDagJson(privKey)
@@ -70,10 +70,9 @@ func TestSchemaRoundTrip(t *testing.T) {
 		assert.Equal(t, newCID, envelope.CIDToBase58BTC(id))
 
 		// buf = bytes.NewBuffer(cborBytes.Bytes())
-		p2, err := delegation.FromSealedReader(cborBytes)
+		p2, c2, err := delegation.FromSealedReader(cborBytes)
 		require.NoError(t, err)
-		t.Log(len(p2.CID().Bytes()), p2.CID().Bytes())
-		assert.Equal(t, envelope.CIDToBase58BTC(id), envelope.CIDToBase58BTC(p2.CID()))
+		assert.Equal(t, envelope.CIDToBase58BTC(id), envelope.CIDToBase58BTC(c2))
 
 		readJson := &bytes.Buffer{}
 		require.NoError(t, p2.ToDagJsonWriter(readJson, privKey))
@@ -96,7 +95,7 @@ func BenchmarkRoundTrip(b *testing.B) {
 	b.Run("via buffers", func(b *testing.B) {
 		p1, _ := delegation.FromDagJson(delegationJson)
 		cborBytes, _, _ := p1.ToSealed(privKey)
-		p2, _ := delegation.FromSealed(cborBytes)
+		p2, _, _ := delegation.FromSealed(cborBytes)
 
 		b.ResetTimer()
 
@@ -117,7 +116,7 @@ func BenchmarkRoundTrip(b *testing.B) {
 		b.Run("Unseal", func(b *testing.B) {
 			b.ReportAllocs()
 			for i := 0; i < b.N; i++ {
-				_, _ = delegation.FromSealed(cborBytes)
+				_, _, _ = delegation.FromSealed(cborBytes)
 			}
 		})
 
@@ -134,7 +133,7 @@ func BenchmarkRoundTrip(b *testing.B) {
 		cborBuf := &bytes.Buffer{}
 		_, _ = p1.ToSealedWriter(cborBuf, privKey)
 		cborBytes := cborBuf.Bytes()
-		p2, _ := delegation.FromSealedReader(bytes.NewReader(cborBytes))
+		p2, _, _ := delegation.FromSealedReader(bytes.NewReader(cborBytes))
 
 		b.ResetTimer()
 
@@ -161,7 +160,7 @@ func BenchmarkRoundTrip(b *testing.B) {
 			reader := bytes.NewReader(cborBytes)
 			for i := 0; i < b.N; i++ {
 				_, _ = reader.Seek(0, 0)
-				_, _ = delegation.FromSealedReader(reader)
+				_, _, _ = delegation.FromSealedReader(reader)
 			}
 		})
 

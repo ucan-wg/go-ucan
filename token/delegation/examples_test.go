@@ -223,10 +223,10 @@ func ExampleToken_FromSealed() {
 	cborBytes := exampleCBORData()
 	fmt.Println("DAG-CBOR (base64) in:", base64.StdEncoding.EncodeToString(cborBytes))
 
-	tkn, err := delegation.FromSealed(cborBytes)
+	tkn, c, err := delegation.FromSealed(cborBytes)
 	printThenPanicOnErr(err)
 
-	fmt.Println("CID (base58BTC):", envelope.CIDToBase58BTC(tkn.CID()))
+	fmt.Println("CID (base58BTC):", envelope.CIDToBase58BTC(c))
 	fmt.Println("Issuer (iss):", tkn.Issuer().String())
 	fmt.Println("Audience (aud):", tkn.Audience().String())
 	fmt.Println("Subject (sub):", tkn.Subject().String())

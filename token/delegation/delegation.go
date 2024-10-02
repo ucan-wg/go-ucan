@@ -15,7 +15,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p/core/crypto"
 
 	"github.com/ucan-wg/go-ucan/did"
@@ -44,8 +43,6 @@ type Token struct {
 	notBefore *time.Time
 	// The timestamp at which the Invocation becomes invalid
 	expiration *time.Time
-	// The CID of the Token when enclosed in an Envelope and encoded to DAG-CBOR
-	cid cid.Cid
 }
 
 // New creates a validated Token from the provided parameters and options.
@@ -67,7 +64,6 @@ func New(privKey crypto.PrivKey, aud did.DID, cmd command.Command, pol policy.Po
 		policy:   pol,
 		meta:     meta.NewMeta(),
 		nonce:    nil,
-		cid:      cid.Undef,
 	}
 
 	for _, opt := range opts {
@@ -154,13 +150,6 @@ func (t *Token) NotBefore() *time.Time {
 // Expiration returns the time at which the Token expires.
 func (t *Token) Expiration() *time.Time {
 	return t.expiration
-}
-
-// CID returns the content identifier of the Token model when enclosed
-// in an Envelope and encoded to DAG-CBOR.
-// Returns cid.Undef if the token has not been serialized or deserialized yet.
-func (t *Token) CID() cid.Cid {
-	return t.cid
 }
 
 func (t *Token) validate() error {
