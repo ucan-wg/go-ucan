@@ -47,39 +47,35 @@ func (t *Token) ToSealedWriter(w io.Writer, privKey crypto.PrivKey) (cid.Cid, er
 // verifies that the envelope's signature is correct based on the public
 // key taken from the issuer (iss) field and calculates the CID of the
 // incoming data.
-func FromSealed(data []byte) (*Token, error) {
+func FromSealed(data []byte) (*Token, cid.Cid, error) {
 	tkn, err := FromDagCbor(data)
 	if err != nil {
-		return nil, err
+		return nil, cid.Undef, err
 	}
 
 	id, err := envelope.CIDFromBytes(data)
 	if err != nil {
-		return nil, err
+		return nil, cid.Undef, err
 	}
 
-	tkn.cid = id
-
-	return tkn, nil
+	return tkn, id, nil
 }
 
 // FromSealedReader is the same as Unseal but accepts an io.Reader.
-func FromSealedReader(r io.Reader) (*Token, error) {
+func FromSealedReader(r io.Reader) (*Token, cid.Cid, error) {
 	cidReader := envelope.NewCIDReader(r)
 
 	tkn, err := FromDagCborReader(cidReader)
 	if err != nil {
-		return nil, err
+		return nil, cid.Undef, err
 	}
 
 	id, err := cidReader.CID()
 	if err != nil {
-		return nil, err
+		return nil, cid.Undef, err
 	}
 
-	tkn.cid = id
-
-	return tkn, nil
+	return tkn, id, nil
 }
 
 // Encode marshals a Token to the format specified by the provided
