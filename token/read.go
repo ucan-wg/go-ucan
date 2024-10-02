@@ -12,6 +12,7 @@ import (
 
 	"github.com/ucan-wg/go-ucan/token/delegation"
 	"github.com/ucan-wg/go-ucan/token/internal/envelope"
+	"github.com/ucan-wg/go-ucan/token/invocation"
 )
 
 // Decode unmarshals the input data using the format specified by the
@@ -74,6 +75,8 @@ func fromIPLD(node datamodel.Node) (Token, error) {
 	switch tag {
 	case delegation.Tag:
 		return delegation.FromIPLD(node)
+	case invocation.Tag:
+		return invocation.FromIPLD(node)
 	default:
 		return nil, fmt.Errorf(`unknown tag "%s"`, tag)
 	}
