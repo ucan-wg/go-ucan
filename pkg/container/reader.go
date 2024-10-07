@@ -1,14 +1,11 @@
 package container
 
 import (
-	"compress/flate"
-	"compress/gzip"
 	"encoding/base64"
 	"fmt"
 	"io"
 
 	"github.com/ipfs/go-cid"
-	cbor "github.com/ipfs/go-ipld-cbor"
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/codec/dagcbor"
 	"github.com/ipld/go-ipld-prime/datamodel"
@@ -20,8 +17,11 @@ import (
 
 var ErrNotFound = fmt.Errorf("not found")
 
+// Reader is a token container reader. It exposes the tokens conveniently decoded.
 type Reader map[cid.Cid]token.Token
 
+// GetToken returns an arbitrary decoded token, from its CID.
+// If not found, ErrNotFound is returned.
 func (ctn Reader) GetToken(cid cid.Cid) (token.Token, error) {
 	tkn, ok := ctn[cid]
 	if !ok {
@@ -30,6 +30,7 @@ func (ctn Reader) GetToken(cid cid.Cid) (token.Token, error) {
 	return tkn, nil
 }
 
+// GetDelegation is the same as GetToken but only return a delegation.Token, with the right type.
 func (ctn Reader) GetDelegation(cid cid.Cid) (*delegation.Token, error) {
 	tkn, err := ctn.GetToken(cid)
 	if err != nil {
@@ -41,6 +42,8 @@ func (ctn Reader) GetDelegation(cid cid.Cid) (*delegation.Token, error) {
 	return nil, fmt.Errorf("not a delegation token")
 }
 
+// GetInvocation returns the first found invocation.Token.
+// If none are found, ErrNotFound is returned.
 func (ctn Reader) GetInvocation() (*invocation.Token, error) {
 	for _, t := range ctn {
 		if inv, ok := t.(*invocation.Token); ok {
@@ -76,38 +79,7 @@ func FromCarBase64(r io.Reader) (Reader, error) {
 	return FromCar(base64.NewDecoder(base64.StdEncoding, r))
 }
 
-func FromCarGzip(r io.Reader) (Reader, error) {
-	r2, err := gzip.NewReader(r)
-	if err != nil {
-		return nil, err
-	}
-	defer r2.Close()
-	return FromCar(r2)
-}
-
-func FromCarGzipBase64(r io.Reader) (Reader, error) {
-	return FromCarGzip(base64.NewDecoder(base64.StdEncoding, r))
-}
-
 func FromCbor(r io.Reader) (Reader, error) {
-	var raw [][]byte
-	err := cbor.DecodeReader(r, &raw)
-	if err != nil {
-		return nil, err
-	}
-
-	ctn := make(Reader, len(raw))
-	for _, data := range raw {
-		err = ctn.addToken(data)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return ctn, nil
-}
-
-func FromCbor2(r io.Reader) (Reader, error) {
 	n, err := ipld.DecodeStreaming(r, dagcbor.Decode)
 	if err != nil {
 		return nil, err
@@ -138,29 +110,6 @@ func FromCbor2(r io.Reader) (Reader, error) {
 
 func FromCborBase64(r io.Reader) (Reader, error) {
 	return FromCbor(base64.NewDecoder(base64.StdEncoding, r))
-}
-
-func FromCborGzip(r io.Reader) (Reader, error) {
-	r2, err := gzip.NewReader(r)
-	if err != nil {
-		return nil, err
-	}
-	defer r2.Close()
-	return FromCbor(r2)
-}
-
-func FromCborGzipBase64(r io.Reader) (Reader, error) {
-	return FromCborGzip(base64.NewDecoder(base64.StdEncoding, r))
-}
-
-func FromCborFlate(r io.Reader) (Reader, error) {
-	r2 := flate.NewReader(r)
-	defer r2.Close()
-	return FromCbor(r2)
-}
-
-func FromCborFlateBase64(r io.Reader) (Reader, error) {
-	return FromCborFlate(base64.NewDecoder(base64.StdEncoding, r))
 }
 
 func (ctn Reader) addToken(data []byte) error {

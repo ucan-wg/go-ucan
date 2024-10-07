@@ -9,7 +9,12 @@ import (
 	"iter"
 
 	"github.com/ipfs/go-cid"
-	cbor "github.com/ipfs/go-ipld-cbor"
+	"github.com/ipld/go-ipld-prime"
+	"github.com/ipld/go-ipld-prime/codec/dagcbor"
+	"github.com/ipld/go-ipld-prime/datamodel"
+	"github.com/ipld/go-ipld-prime/fluent/qp"
+	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
+	"github.com/ipld/go-ipld-prime/node/basicnode"
 )
 
 /*
@@ -40,7 +45,7 @@ func writeCar(w io.Writer, roots []cid.Cid, blocks iter.Seq[carBlock]) error {
 		Roots:   roots,
 		Version: 1,
 	}
-	hb, err := cbor.DumpObject(h)
+	hb, err := h.Write()
 	if err != nil {
 		return err
 	}
@@ -67,11 +72,10 @@ func readCar(r io.Reader) (roots []cid.Cid, blocks iter.Seq2[carBlock, error], e
 	if err != nil {
 		return nil, nil, err
 	}
-	var h carHeader
-	if err := cbor.DecodeInto(hb, &h); err != nil {
-		return nil, nil, fmt.Errorf("invalid header: %v", err)
+	h, err := readHeader(hb)
+	if err != nil {
+		return nil, nil, err
 	}
-
 	if h.Version != 1 {
 		return nil, nil, fmt.Errorf("invalid car version: %d", h.Version)
 	}
@@ -183,6 +187,67 @@ type carHeader struct {
 	Version uint64
 }
 
-func init() {
-	cbor.RegisterCborType(carHeader{})
+const rootsKey = "roots"
+const versionKey = "version"
+
+func readHeader(data []byte) (*carHeader, error) {
+	var header carHeader
+
+	nd, err := ipld.Decode(data, dagcbor.Decode)
+	if err != nil {
+		return nil, err
+	}
+	if nd.Length() != 2 {
+		return nil, fmt.Errorf("malformed car header")
+	}
+	rootsNd, err := nd.LookupByString(rootsKey)
+	if err != nil {
+		return nil, fmt.Errorf("malformed car header")
+	}
+	it := rootsNd.ListIterator()
+	if it == nil {
+		return nil, fmt.Errorf("malformed car header")
+	}
+	header.Roots = make([]cid.Cid, 0, rootsNd.Length())
+	for !it.Done() {
+		_, nd, err := it.Next()
+		if err != nil {
+			return nil, err
+		}
+		lk, err := nd.AsLink()
+		if err != nil {
+			return nil, err
+		}
+		switch lk := lk.(type) {
+		case cidlink.Link:
+			header.Roots = append(header.Roots, lk.Cid)
+		default:
+			return nil, fmt.Errorf("malformed car header")
+		}
+	}
+	versionNd, err := nd.LookupByString(versionKey)
+	if err != nil {
+		return nil, fmt.Errorf("malformed car header")
+	}
+	version, err := versionNd.AsInt()
+	if err != nil {
+		return nil, fmt.Errorf("malformed car header")
+	}
+	header.Version = uint64(version)
+	return &header, nil
+}
+
+func (ch *carHeader) Write() ([]byte, error) {
+	nd, err := qp.BuildMap(basicnode.Prototype.Any, 2, func(ma datamodel.MapAssembler) {
+		qp.MapEntry(ma, rootsKey, qp.List(int64(len(ch.Roots)), func(la datamodel.ListAssembler) {
+			for _, root := range ch.Roots {
+				qp.ListEntry(la, qp.Link(cidlink.Link{Cid: root}))
+			}
+		}))
+		qp.MapEntry(ma, versionKey, qp.Int(1))
+	})
+	if err != nil {
+		return nil, err
+	}
+	return ipld.Encode(nd, dagcbor.Encode)
 }

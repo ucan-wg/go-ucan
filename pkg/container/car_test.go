@@ -38,3 +38,15 @@ func TestCarRoundTrip(t *testing.T) {
 	// Bytes equal after the round-trip
 	require.Equal(t, original, buf.Bytes())
 }
+
+func FuzzCarRead(f *testing.F) {
+	example, err := os.ReadFile("testdata/sample-v1.car")
+	require.NoError(f, err)
+
+	f.Add(example)
+
+	f.Fuzz(func(t *testing.T, data []byte) {
+		_, _, _ = readCar(bytes.NewReader(data))
+		// only looking for panics
+	})
+}

@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"fmt"
 	"io"
+	"strings"
 	"testing"
 	"time"
 
@@ -28,15 +29,8 @@ func TestContainerRoundTrip(t *testing.T) {
 	}{
 		{"car", Writer.ToCar, FromCar},
 		{"carBase64", Writer.ToCarBase64, FromCarBase64},
-		{"carGzip", Writer.ToCarGzip, FromCarGzip},
-		{"carGzipBase64", Writer.ToCarGzipBase64, FromCarGzipBase64},
 		{"cbor", Writer.ToCbor, FromCbor},
 		{"cborBase64", Writer.ToCborBase64, FromCborBase64},
-		{"cborGzip", Writer.ToCborGzip, FromCborGzip},
-		{"cborGzipBase64", Writer.ToCborGzipBase64, FromCborGzipBase64},
-		{"cborFlate", Writer.ToCborFlate, FromCborFlate},
-		{"cborFlateBase64", Writer.ToCborFlateBase64, FromCborFlateBase64},
-		{"cbor2", Writer.ToCbor2, FromCbor2},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			tokens := make(map[cid.Cid]*delegation.Token)
@@ -92,6 +86,14 @@ func TestContainerRoundTrip(t *testing.T) {
 }
 
 func BenchmarkContainerSerialisation(b *testing.B) {
+	var duration strings.Builder
+	var allocByte strings.Builder
+	var allocCount strings.Builder
+
+	for _, builder := range []strings.Builder{duration, allocByte, allocCount} {
+		builder.WriteString("car\tcarBase64\tcarGzip\tcarGzipBase64\tcbor\tcborBase64\tcborGzip\tcborGzipBase64\tcborFlate\tcborFlateBase64\n")
+	}
+
 	for _, tc := range []struct {
 		name   string
 		writer func(ctn Writer, w io.Writer) error
@@ -99,15 +101,8 @@ func BenchmarkContainerSerialisation(b *testing.B) {
 	}{
 		{"car", Writer.ToCar, FromCar},
 		{"carBase64", Writer.ToCarBase64, FromCarBase64},
-		{"carGzip", Writer.ToCarGzip, FromCarGzip},
-		{"carGzipBase64", Writer.ToCarGzipBase64, FromCarGzipBase64},
 		{"cbor", Writer.ToCbor, FromCbor},
 		{"cborBase64", Writer.ToCborBase64, FromCborBase64},
-		{"cborGzip", Writer.ToCborGzip, FromCborGzip},
-		{"cborGzipBase64", Writer.ToCborGzipBase64, FromCborGzipBase64},
-		{"cborFlate", Writer.ToCborFlate, FromCborFlate},
-		{"cborFlateBase64", Writer.ToCborFlateBase64, FromCborFlateBase64},
-		{"cbor2", Writer.ToCbor2, FromCbor2},
 	} {
 		writer := NewWriter()
 
