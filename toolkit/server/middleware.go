@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/ucan-wg/go-ucan/delegation"
 	"github.com/ucan-wg/go-ucan/did"
+	"github.com/ucan-wg/go-ucan/token/delegation"
 )
 
 type Middleware func(http.Handler) http.Handler
