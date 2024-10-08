@@ -123,6 +123,22 @@ func (m *Meta) Add(key string, val any) error {
 	return nil
 }
 
+// Equals tells if two Meta hold the same key/values.
+func (m *Meta) Equals(other *Meta) bool {
+	if len(m.Keys) != len(other.Keys) {
+		return false
+	}
+	if len(m.Values) != len(other.Values) {
+		return false
+	}
+	for _, key := range m.Keys {
+		if !ipld.DeepEqual(m.Values[key], other.Values[key]) {
+			return false
+		}
+	}
+	return true
+}
+
 func fqtn(val any) string {
 	var name string
 
