@@ -26,9 +26,9 @@ func TestCarRoundTrip(t *testing.T) {
 
 	buf := bytes.NewBuffer(nil)
 
-	err = writeCar(buf, roots, func(yield func(carBlock) bool) {
+	err = writeCar(buf, roots, func(yield func(carBlock, error) bool) {
 		for _, blk := range blks {
-			if !yield(blk) {
+			if !yield(blk, nil) {
 				return
 			}
 		}
@@ -39,14 +39,40 @@ func TestCarRoundTrip(t *testing.T) {
 	require.Equal(t, original, buf.Bytes())
 }
 
-func FuzzCarRead(f *testing.F) {
+func FuzzCarRoundTrip(f *testing.F) {
 	example, err := os.ReadFile("testdata/sample-v1.car")
 	require.NoError(f, err)
 
 	f.Add(example)
 
 	f.Fuzz(func(t *testing.T, data []byte) {
-		_, _, _ = readCar(bytes.NewReader(data))
-		// only looking for panics
+		roots, blocksIter, err := readCar(bytes.NewReader(data))
+		if err != nil {
+			// skip invalid binary
+			t.Skip()
+		}
+
+		// reading all the blocks, which force reading and verifying the full file
+		var blocks []carBlock
+		for block, err := range blocksIter {
+			if err != nil {
+				// error reading, invalid data
+				t.Skip()
+			}
+			blocks = append(blocks, block)
+		}
+
+		var buf bytes.Buffer
+		err = writeCar(&buf, roots, func(yield func(carBlock, error) bool) {
+			for _, blk := range blocks {
+				if !yield(blk, nil) {
+					return
+				}
+			}
+		})
+		require.NoError(t, err)
+
+		// test if the round-trip produce a byte-equal CAR
+		require.Equal(t, data, buf.Bytes())
 	})
 }

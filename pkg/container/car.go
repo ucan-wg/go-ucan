@@ -37,7 +37,7 @@ type carBlock struct {
 // writeCar writes a CARv1 file containing the blocks from the iterator.
 // If no roots are provided, a single EmptyCid is used as root to make the file
 // spec compliant.
-func writeCar(w io.Writer, roots []cid.Cid, blocks iter.Seq[carBlock]) error {
+func writeCar(w io.Writer, roots []cid.Cid, blocks iter.Seq2[carBlock, error]) error {
 	if len(roots) == 0 {
 		roots = []cid.Cid{EmptyCid}
 	}
@@ -54,7 +54,10 @@ func writeCar(w io.Writer, roots []cid.Cid, blocks iter.Seq[carBlock]) error {
 		return err
 	}
 
-	for block := range blocks {
+	for block, err := range blocks {
+		if err != nil {
+			return err
+		}
 		err = ldWrite(w, block.c.Bytes(), block.data)
 		if err != nil {
 			return err
@@ -144,6 +147,9 @@ func ldRead(r *bufio.Reader) ([]byte, error) {
 		}
 		return nil, err
 	}
+	if l == 0 {
+		return nil, fmt.Errorf("invalid zero size section")
+	}
 
 	if l > uint64(maxAllowedSectionSize) { // Don't OOM
 		return nil, fmt.Errorf("malformed car; header is bigger than MaxAllowedSectionSize")
@@ -151,6 +157,10 @@ func ldRead(r *bufio.Reader) ([]byte, error) {
 
 	buf := make([]byte, l)
 	if _, err := io.ReadFull(r, buf); err != nil {
+		if err == io.EOF {
+			// we should be able to read the promised bytes, this is not normal
+			return nil, io.ErrUnexpectedEOF
+		}
 		return nil, err
 	}
 

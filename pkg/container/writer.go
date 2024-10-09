@@ -27,9 +27,9 @@ func (ctn Writer) AddSealed(cid cid.Cid, data []byte) {
 }
 
 func (ctn Writer) ToCar(w io.Writer) error {
-	return writeCar(w, nil, func(yield func(carBlock) bool) {
+	return writeCar(w, nil, func(yield func(carBlock, error) bool) {
 		for c, bytes := range ctn {
-			if !yield(carBlock{c: c, data: bytes}) {
+			if !yield(carBlock{c: c, data: bytes}, nil) {
 				return
 			}
 		}
