@@ -13,71 +13,64 @@ func TestTop(t *testing.T) {
 }
 
 func TestIsValidCommand(t *testing.T) {
-	t.Parallel()
-
 	t.Run("succeeds when", func(t *testing.T) {
-		t.Parallel()
-
 		for _, testcase := range validTestcases(t) {
-			testcase := testcase
-
 			t.Run(testcase.name, func(t *testing.T) {
-				t.Parallel()
-
 				require.True(t, command.IsValid(testcase.inp))
 			})
 		}
 	})
 
 	t.Run("fails when", func(t *testing.T) {
-		t.Parallel()
-
 		for _, testcase := range invalidTestcases(t) {
-			testcase := testcase
-
 			t.Run(testcase.name, func(t *testing.T) {
-				t.Parallel()
-
 				require.False(t, command.IsValid(testcase.inp))
 			})
 		}
 	})
 }
 
+func TestNew(t *testing.T) {
+	require.Equal(t, command.Top(), command.New())
+	require.Equal(t, "/foo", command.New("foo").String())
+	require.Equal(t, "/foo/bar", command.New("foo", "bar").String())
+	require.Equal(t, "/foo/bar/baz", command.New("foo", "bar/baz").String())
+}
+
 func TestParseCommand(t *testing.T) {
-	t.Parallel()
-
 	t.Run("succeeds when", func(t *testing.T) {
-		t.Parallel()
-
 		for _, testcase := range validTestcases(t) {
-			testcase := testcase
-
 			t.Run(testcase.name, func(t *testing.T) {
-				t.Parallel()
-
 				cmd, err := command.Parse("/elem0/elem1/elem2")
 				require.NoError(t, err)
-				require.NotNil(t, cmd)
+				require.NotEmpty(t, cmd)
 			})
 		}
 	})
 
 	t.Run("fails when", func(t *testing.T) {
-		t.Parallel()
-
 		for _, testcase := range invalidTestcases(t) {
-			testcase := testcase
-
 			t.Run(testcase.name, func(t *testing.T) {
-				t.Parallel()
-
 				cmd, err := command.Parse(testcase.inp)
 				require.ErrorIs(t, err, testcase.err)
-				require.Equal(t, command.Command{}, cmd)
+				require.Zero(t, cmd)
 			})
 		}
 	})
+}
+
+func TestEquality(t *testing.T) {
+	require.True(t, command.MustParse("/foo/bar/baz") == command.MustParse("/foo/bar/baz"))
+	require.False(t, command.MustParse("/foo/bar/baz") == command.MustParse("/foo/bar/bazz"))
+	require.False(t, command.MustParse("/foo/bar") == command.MustParse("/foo/bar/baz"))
+}
+
+func TestJoin(t *testing.T) {
+	require.Equal(t, "/foo", command.Top().Join("foo").String())
+	require.Equal(t, "/foo/bar", command.Top().Join("foo/bar").String())
+	require.Equal(t, "/foo/bar", command.Top().Join("foo", "bar").String())
+	require.Equal(t, "/faz/boz/foo/bar", command.MustParse("/faz/boz").Join("foo/bar").String())
+	require.Equal(t, "/faz/boz/foo/bar", command.MustParse("/faz/boz").Join("foo", "bar").String())
 }
 
 type testcase struct {
