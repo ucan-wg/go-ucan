@@ -10,111 +10,46 @@ import (
 	varint "github.com/multiformats/go-varint"
 )
 
-const Prefix = "did:"
-const KeyPrefix = "did:key:"
-
-const DIDCore = 0x0d1d
-const Ed25519 = 0xed
-const RSA = uint64(multicodec.RsaPub)
-
-var MethodOffset = varint.UvarintSize(uint64(DIDCore))
-
-//
-// [did:key format]: https://w3c-ccg.github.io/did-method-key/
-type DID struct {
-	key  bool
-	code uint64
-	str  string
-}
+const Ed25519 = multicodec.Ed25519Pub // recommended
+const P256 = multicodec.P256Pub
+const Secp256k1 = multicodec.Secp256k1Pub
+const RSA = multicodec.RsaPub
 
 // Undef can be used to represent a nil or undefined DID, using DID{}
 // directly is also acceptable.
 var Undef = DID{}
 
-func (d DID) Defined() bool {
-	return d.str != ""
+// DID is a Decentralized Identifier of the did:key type, directly holding a cryptographic public key.
+// [did:key format]: https://w3c-ccg.github.io/did-method-key/
+type DID struct {
+	code  multicodec.Code
+	bytes string // as string instead of []byte to allow the == operator
 }
 
-func (d DID) Bytes() []byte {
-	if !d.Defined() {
-		return nil
-	}
-	return []byte(d.str)
-}
+func Parse(str string) (DID, error) {
+	const keyPrefix = "did:key:"
 
-func (d DID) Code() uint64 {
-	return d.code
-}
-
-func (d DID) DID() DID {
-	return d
-}
-
-func (d DID) Key() bool {
-	return d.key
-}
-
-func (d DID) PubKey() (crypto.PubKey, error) {
-	if !d.key {
-		return nil, fmt.Errorf("unsupported did type: %s", d.String())
+	if !strings.HasPrefix(str, keyPrefix) {
+		return Undef, fmt.Errorf("must start with 'did:key'")
 	}
 
-	unmarshaler, ok := map[multicodec.Code]crypto.PubKeyUnmarshaller{
-		multicodec.Ed25519Pub:   crypto.UnmarshalEd25519PublicKey,
-		multicodec.RsaPub:       crypto.UnmarshalRsaPublicKey,
-		multicodec.Secp256k1Pub: crypto.UnmarshalSecp256k1PublicKey,
-		multicodec.Es256:        crypto.UnmarshalECDSAPublicKey,
-	}[multicodec.Code(d.code)]
-	if !ok {
-		return nil, fmt.Errorf("unsupported multicodec: %d", d.code)
+	baseCodec, bytes, err := mbase.Decode(str[len(keyPrefix):])
+	if err != nil {
+		return Undef, err
 	}
-
-	return unmarshaler(d.Bytes()[varint.UvarintSize(d.code):])
-}
-
-// String formats the decentralized identity document (DID) as a string.
-func (d DID) String() string {
-	if d.key {
-		key, _ := mbase.Encode(mbase.Base58BTC, []byte(d.str))
-		return "did:key:" + key
+	if baseCodec != mbase.Base58BTC {
+		return Undef, fmt.Errorf("not Base58BTC encoded")
 	}
-	return "did:" + d.str[MethodOffset:]
-}
-
-func Decode(bytes []byte) (DID, error) {
 	code, _, err := varint.FromUvarint(bytes)
 	if err != nil {
 		return Undef, err
 	}
-	if code == Ed25519 || code == RSA {
-		return DID{str: string(bytes), code: code, key: true}, nil
-	} else if code == DIDCore {
-		return DID{str: string(bytes)}, nil
+	switch multicodec.Code(code) {
+	case Ed25519, P256, Secp256k1, RSA:
+		return DID{bytes: string(bytes), code: multicodec.Code(code)}, nil
+	default:
+		return Undef, fmt.Errorf("unsupported did:key multicodec: 0x%x", code)
 	}
-	return Undef, fmt.Errorf("unsupported DID encoding: 0x%x", code)
-}
-
-func Parse(str string) (DID, error) {
-	if !strings.HasPrefix(str, Prefix) {
-		return Undef, fmt.Errorf("must start with 'did:'")
-	}
-
-	if strings.HasPrefix(str, KeyPrefix) {
-		code, bytes, err := mbase.Decode(str[len(KeyPrefix):])
-		if err != nil {
-			return Undef, err
-		}
-		if code != mbase.Base58BTC {
-			return Undef, fmt.Errorf("not Base58BTC encoded")
-		}
-		return Decode(bytes)
-	}
-
-	buf := make([]byte, MethodOffset)
-	varint.PutUvarint(buf, DIDCore)
-	suffix, _ := strings.CutPrefix(str, Prefix)
-	buf = append(buf, suffix...)
-	return DID{str: string(buf), code: DIDCore}, nil
 }
 
 func MustParse(str string) DID {
@@ -123,4 +58,30 @@ func MustParse(str string) DID {
 		panic(err)
 	}
 	return did
+}
+
+// Defined tells if the DID is defined, not equal to Undef.
+func (d DID) Defined() bool {
+	return d.code == 0 || len(d.bytes) > 0
+}
+
+func (d DID) PubKey() (crypto.PubKey, error) {
+	unmarshaler, ok := map[multicodec.Code]crypto.PubKeyUnmarshaller{
+		Ed25519:   crypto.UnmarshalEd25519PublicKey,
+		P256:      crypto.UnmarshalECDSAPublicKey,
+		Secp256k1: crypto.UnmarshalSecp256k1PublicKey,
+		RSA:       crypto.UnmarshalRsaPublicKey,
+	}[d.code]
+	if !ok {
+		return nil, fmt.Errorf("unsupported multicodec: %d", d.code)
+	}
+
+	codeSize := varint.UvarintSize(uint64(d.code))
+	return unmarshaler([]byte(d.bytes)[codeSize:])
+}
+
+// String formats the decentralized identity document (DID) as a string.
+func (d DID) String() string {
+	key, _ := mbase.Encode(mbase.Base58BTC, []byte(d.bytes))
+	return "did:key:" + key
 }
