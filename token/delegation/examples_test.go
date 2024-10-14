@@ -54,7 +54,8 @@ func ExampleNew() {
 
 	tkn, err := delegation.New(issPriv, audDid, cmd, pol,
 		delegation.WithSubject(subDid),
-		delegation.WithExpirationAfter(time.Hour),
+		delegation.WithExpirationIn(time.Hour),
+		delegation.WithNotBeforeIn(time.Minute),
 		delegation.WithMeta("foo", "bar"),
 		delegation.WithMeta("baz", 123),
 	)
@@ -68,17 +69,17 @@ func ExampleNew() {
 
 	// Example output:
 	//
-	// issDid: did:key:z6MksKbqUiXRKVDHQJ2yezG83M6d68AQbz9rtajULF575X3s
+	// issDid: did:key:z6MkhVFznPeR572rTK51UjoTNpnF8cxuWfPm9oBMPr7y8ABe
 	//
-	// CID (base58BTC): zdpuAtXJQXZt123WNczSueoBrVcyKoJ2LH1aTmf41dZrisJJA
+	// CID (base58BTC): zdpuAv6g2eJSc4RJwEpmooGLVK4wJ4CZpnM92tPVYt5jtMoLW
 	//
-	// DAG-CBOR (base64) out: glhAGCWszoibTPgkBSe5pk03wsB2orGzRKFvxLeqoDTNixxzXTDGKTj4ZfZrGOyCxf6rNW5zP8x2esFKV/akgy/nAaJhaEQ07QFxc3VjYW4vZGxnQDEuMC4wLXJjLjGoY2F1ZHg4ZGlkOmtleTp6Nk1rcTVZbWJKY1RyUEV4TkRpMjZpbXJUQ3BLaGVwakJGQlNIcXJCRE4yQXJQa3ZjY21kaC9mb28vYmFyY2V4cBpnDPLWY2lzc3g4ZGlkOmtleTp6Nk1rc0ticVVpWFJLVkRIUUoyeWV6RzgzTTZkNjhBUWJ6OXJ0YWpVTEY1NzVYM3NjcG9sg4NiPT1nLnN0YXR1c2VkcmFmdINjYWxsaS5yZXZpZXdlcoNkbGlrZWYuZW1haWxtKkBleGFtcGxlLmNvbYNjYW55ZS50YWdzgmJvcoKDYj09YS5kbmV3c4NiPT1hLmVwcmVzc2NzdWJ4OGRpZDprZXk6ejZNa3RBMXVCZENwcTR1SkJxRTlqak1pTHl4WkJnOWE2eGdQUEtKak1xc3M2WmMyZG1ldGGiY2Jhehh7Y2Zvb2NiYXJlbm9uY2VMgb9wlP/cdMKutRg+
+	// DAG-CBOR (base64) out: glhA5rvl8uKmDVGvAVSt4m/0MGiXl9dZwljJJ9m2qHCoIB617l26UvMxyH5uvN9hM7ozfVATiq4mLhoGgm9IGnEEAqJhaEQ07QFxc3VjYW4vZGxnQDEuMC4wLXJjLjGpY2F1ZHg4ZGlkOmtleTp6Nk1rcTVZbWJKY1RyUEV4TkRpMjZpbXJUQ3BLaGVwakJGQlNIcXJCRE4yQXJQa3ZjY21kaC9mb28vYmFyY2V4cBpnDWzqY2lzc3g4ZGlkOmtleTp6Nk1raFZGem5QZVI1NzJyVEs1MVVqb1ROcG5GOGN4dVdmUG05b0JNUHI3eThBQmVjbmJmGmcNXxZjcG9sg4NiPT1nLnN0YXR1c2VkcmFmdINjYWxsaS5yZXZpZXdlcoNkbGlrZWYuZW1haWxtKkBleGFtcGxlLmNvbYNjYW55ZS50YWdzgmJvcoKDYj09YS5kbmV3c4NiPT1hLmVwcmVzc2NzdWJ4OGRpZDprZXk6ejZNa3RBMXVCZENwcTR1SkJxRTlqak1pTHl4WkJnOWE2eGdQUEtKak1xc3M2WmMyZG1ldGGiY2Jhehh7Y2Zvb2NiYXJlbm9uY2VMu0HMgJ5Y+M84I/66
 	//
 	// Converted to DAG-JSON out:
 	// [
 	//	{
 	//		"/": {
-	//			"bytes": "GCWszoibTPgkBSe5pk03wsB2orGzRKFvxLeqoDTNixxzXTDGKTj4ZfZrGOyCxf6rNW5zP8x2esFKV/akgy/nAQ"
+	//			"bytes": "5rvl8uKmDVGvAVSt4m/0MGiXl9dZwljJJ9m2qHCoIB617l26UvMxyH5uvN9hM7ozfVATiq4mLhoGgm9IGnEEAg"
 	//		}
 	//	},
 	//	{
@@ -90,15 +91,16 @@ func ExampleNew() {
 	//		"ucan/dlg@1.0.0-rc.1": {
 	//			"aud": "did:key:z6Mkq5YmbJcTrPExNDi26imrTCpKhepjBFBSHqrBDN2ArPkv",
 	//			"cmd": "/foo/bar",
-	//			"exp": 1728901846,
-	//			"iss": "did:key:z6MksKbqUiXRKVDHQJ2yezG83M6d68AQbz9rtajULF575X3s",
+	//			"exp": 1728933098,
+	//			"iss": "did:key:z6MkhVFznPeR572rTK51UjoTNpnF8cxuWfPm9oBMPr7y8ABe",
 	//			"meta": {
 	//				"baz": 123,
 	//				"foo": "bar"
 	//			},
+	//			"nbf": 1728929558,
 	//			"nonce": {
 	//				"/": {
-	//					"bytes": "gb9wlP/cdMKutRg+"
+	//					"bytes": "u0HMgJ5Y+M84I/66"
 	//				}
 	//			},
 	//			"pol": [
@@ -171,7 +173,8 @@ func ExampleRoot() {
 	}
 
 	tkn, err := delegation.Root(issPriv, audDid, cmd, pol,
-		delegation.WithExpirationAfter(time.Hour),
+		delegation.WithExpirationIn(time.Hour),
+		delegation.WithNotBeforeIn(time.Minute),
 		delegation.WithMeta("foo", "bar"),
 		delegation.WithMeta("baz", 123),
 	)
@@ -185,17 +188,17 @@ func ExampleRoot() {
 
 	// Example output:
 	//
-	// issDid: did:key:z6MkshW2ADRrmfBuuBpKJiyNd7acLK1yjnxFJuBimwjQ4Bo5
+	// issDid: did:key:z6MknWJqz17Y4AfsXSJUFKomuBR4GTkViM7kJYutzTMkCyFF
 	//
-	// CID (base58BTC): zdpuAoBzE3kJK1qZC9EXH7h6iCwym1TqfxT9XzUfFNfcjcAKh
+	// CID (base58BTC): zdpuAwLojgfvFCbjz2FsKrvN1khDQ9mFGT6b6pxjMfz73Roed
 	//
-	// DAG-CBOR (base64) out: glhADpyBSrTdRn2oZdJU26CjgFbaH7LbTDWyyAdgIwAW0p151XSdJwoBS2vTCp0+7sEkf4X2wl6N5IhxiKyQ8OkbCaJhaEQ07QFxc3VjYW4vZGxnQDEuMC4wLXJjLjGoY2F1ZHg4ZGlkOmtleTp6Nk1rcTVZbWJKY1RyUEV4TkRpMjZpbXJUQ3BLaGVwakJGQlNIcXJCRE4yQXJQa3ZjY21kaC9mb28vYmFyY2V4cBpnDPPCY2lzc3g4ZGlkOmtleTp6Nk1rc2hXMkFEUnJtZkJ1dUJwS0ppeU5kN2FjTEsxeWpueEZKdUJpbXdqUTRCbzVjcG9sg4NiPT1nLnN0YXR1c2VkcmFmdINjYWxsaS5yZXZpZXdlcoNkbGlrZWYuZW1haWxtKkBleGFtcGxlLmNvbYNjYW55ZS50YWdzgmJvcoKDYj09YS5kbmV3c4NiPT1hLmVwcmVzc2NzdWJ4OGRpZDprZXk6ejZNa3NoVzJBRFJybWZCdXVCcEtKaXlOZDdhY0xLMXlqbnhGSnVCaW13alE0Qm81ZG1ldGGiY2Jhehh7Y2Zvb2NiYXJlbm9uY2VMDmBGXMa/TCvhLHqu
+	// DAG-CBOR (base64) out: glhA6dBhbhhGE36CW22OxjOEIAqdDmBqCNsAhCRljnBdXd7YrVOUG+bnXGCIwd4dTGgpEdmY06PFIl7IXKXCh/ESBqJhaEQ07QFxc3VjYW4vZGxnQDEuMC4wLXJjLjGpY2F1ZHg4ZGlkOmtleTp6Nk1rcTVZbWJKY1RyUEV4TkRpMjZpbXJUQ3BLaGVwakJGQlNIcXJCRE4yQXJQa3ZjY21kaC9mb28vYmFyY2V4cBpnDW0wY2lzc3g4ZGlkOmtleTp6Nk1rbldKcXoxN1k0QWZzWFNKVUZLb211QlI0R1RrVmlNN2tKWXV0elRNa0N5RkZjbmJmGmcNX1xjcG9sg4NiPT1nLnN0YXR1c2VkcmFmdINjYWxsaS5yZXZpZXdlcoNkbGlrZWYuZW1haWxtKkBleGFtcGxlLmNvbYNjYW55ZS50YWdzgmJvcoKDYj09YS5kbmV3c4NiPT1hLmVwcmVzc2NzdWJ4OGRpZDprZXk6ejZNa25XSnF6MTdZNEFmc1hTSlVGS29tdUJSNEdUa1ZpTTdrSll1dHpUTWtDeUZGZG1ldGGiY2Jhehh7Y2Zvb2NiYXJlbm9uY2VMJOsjYi1Pq3OIB0La
 	//
 	// Converted to DAG-JSON out:
 	// [
 	//	{
 	//		"/": {
-	//			"bytes": "DpyBSrTdRn2oZdJU26CjgFbaH7LbTDWyyAdgIwAW0p151XSdJwoBS2vTCp0+7sEkf4X2wl6N5IhxiKyQ8OkbCQ"
+	//			"bytes": "6dBhbhhGE36CW22OxjOEIAqdDmBqCNsAhCRljnBdXd7YrVOUG+bnXGCIwd4dTGgpEdmY06PFIl7IXKXCh/ESBg"
 	//		}
 	//	},
 	//	{
@@ -207,15 +210,16 @@ func ExampleRoot() {
 	//		"ucan/dlg@1.0.0-rc.1": {
 	//			"aud": "did:key:z6Mkq5YmbJcTrPExNDi26imrTCpKhepjBFBSHqrBDN2ArPkv",
 	//			"cmd": "/foo/bar",
-	//			"exp": 1728902082,
-	//			"iss": "did:key:z6MkshW2ADRrmfBuuBpKJiyNd7acLK1yjnxFJuBimwjQ4Bo5",
+	//			"exp": 1728933168,
+	//			"iss": "did:key:z6MknWJqz17Y4AfsXSJUFKomuBR4GTkViM7kJYutzTMkCyFF",
 	//			"meta": {
 	//				"baz": 123,
 	//				"foo": "bar"
 	//			},
+	//			"nbf": 1728929628,
 	//			"nonce": {
 	//				"/": {
-	//					"bytes": "DmBGXMa/TCvhLHqu"
+	//					"bytes": "JOsjYi1Pq3OIB0La"
 	//				}
 	//			},
 	//			"pol": [
@@ -253,7 +257,7 @@ func ExampleRoot() {
 	//					]
 	//				]
 	//			],
-	//			"sub": "did:key:z6MkshW2ADRrmfBuuBpKJiyNd7acLK1yjnxFJuBimwjQ4Bo5"
+	//			"sub": "did:key:z6MknWJqz17Y4AfsXSJUFKomuBR4GTkViM7kJYutzTMkCyFF"
 	//		}
 	//	}
 	// ]
