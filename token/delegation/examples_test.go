@@ -2,10 +2,12 @@ package delegation_test
 
 import (
 	"bytes"
+	"crypto/rand"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime"
@@ -16,6 +18,8 @@ import (
 	"github.com/ucan-wg/go-ucan/did"
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/policy"
+	"github.com/ucan-wg/go-ucan/pkg/policy/literal"
+	"github.com/ucan-wg/go-ucan/pkg/policy/selector"
 	"github.com/ucan-wg/go-ucan/token/delegation"
 	"github.com/ucan-wg/go-ucan/token/internal/envelope"
 )
@@ -23,42 +27,58 @@ import (
 // The following example shows how to create a delegation.Token with
 // distinct DIDs for issuer (iss), audience (aud) and subject (sub).
 func ExampleNew() {
-	issuerPrivKey := examplePrivKey(issuerPrivKeyCfg)
-	audienceDID := exampleDID(AudienceDID)
-	command := exampleCommand(subJectCmd)
-	policy := examplePolicy(subjectPol)
-	subjectDID := exampleDID(subjectDID)
+	issPriv, issPub, err := crypto.GenerateEd25519Key(rand.Reader)
+	printThenPanicOnErr(err)
 
-	// Don't do this in your code - a nonce should be a cryptographically
-	// strong random slice of bytes to ensure the integrity of your private
-	// key.  For this example, a fixed nonce is required to obtain the fixed
-	// printed output (below).  If unsure of what value to supply for the
-	// nonce, don't pass the WithNonce option and one will be generated
-	// when the token is created.
-	nonce := []byte{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b}
+	issDid, err := did.FromPubKey(issPub)
+	printThenPanicOnErr(err)
+	fmt.Println("issDid:", issDid)
 
-	tkn, err := delegation.New(
-		issuerPrivKey,
-		audienceDID,
-		command,
-		policy,
-		delegation.WithSubject(subjectDID),
-		delegation.WithNonce(nonce),
+	audDid := did.MustParse(AudienceDID)
+	subDid := did.MustParse(subjectDID)
+
+	// The command defines the shape of the arguments that will be evaluated against the policy
+	cmd := command.MustParse("/foo/bar")
+
+	// The policy defines what is allowed to do.
+	pol := policy.Policy{
+		policy.Equal(selector.MustParse(".status"), literal.String("draft")),
+		policy.All(selector.MustParse(".reviewer"),
+			policy.MustLike(selector.MustParse(".email"), "*@example.com"),
+		),
+		policy.Any(selector.MustParse(".tags"), policy.Or(
+			policy.Equal(selector.Identity, literal.String("news")),
+			policy.Equal(selector.Identity, literal.String("press")),
+		)),
+	}
+
+	tkn, err := delegation.New(issPriv, audDid, cmd, pol,
+		delegation.WithSubject(subDid),
+		delegation.WithExpirationAfter(time.Hour),
+		delegation.WithMeta("foo", "bar"),
+		delegation.WithMeta("baz", 123),
 	)
 	printThenPanicOnErr(err)
-	data, id, err := tkn.ToSealed(issuerPrivKey)
+
+	// "Seal", meaning encode and wrap into a signed envelope.
+	data, id, err := tkn.ToSealed(issPriv)
 	printThenPanicOnErr(err)
 
 	printCIDAndSealed(id, data)
 
-	// Output:
-	// CID (base58BTC): zdpuAw26pFuvZa2Z9YAtpZZnWN6VmnRFr7Z8LVY5c7RVWoxGY
-	// DAG-CBOR (base64) out: glhAmnAkgfjAx4SA5pzJmtaHRJtTGNpF1y6oqb4yhGoM2H2EUGbBYT4rVDjMKBgCjhdGHjipm00L8iR5SsQh3sIEBaJhaEQ07QFxc3VjYW4vZGxnQDEuMC4wLXJjLjGoY2F1ZHg4ZGlkOmtleTp6Nk1rcTVZbWJKY1RyUEV4TkRpMjZpbXJUQ3BLaGVwakJGQlNIcXJCRE4yQXJQa3ZjY21kaC9mb28vYmFyY2V4cPZjaXNzeDhkaWQ6a2V5Ono2TWtwem4ybjNaR1QyVmFxTUdTUUMzdHptelY0VFM5UzcxaUZzRFhFMVdub05IMmNwb2yDg2I9PWcuc3RhdHVzZWRyYWZ0g2NhbGxpLnJldmlld2Vyg2RsaWtlZi5lbWFpbG0qQGV4YW1wbGUuY29tg2NhbnllLnRhZ3OCYm9ygoNiPT1hLmRuZXdzg2I9PWEuZXByZXNzY3N1Yng4ZGlkOmtleTp6Nk1rdEExdUJkQ3BxNHVKQnFFOWpqTWlMeXhaQmc5YTZ4Z1BQS0pqTXFzczZaYzJkbWV0YaBlbm9uY2VMAAECAwQFBgcICQoL
+	// Example output:
+	//
+	// issDid: did:key:z6MksKbqUiXRKVDHQJ2yezG83M6d68AQbz9rtajULF575X3s
+	//
+	// CID (base58BTC): zdpuAtXJQXZt123WNczSueoBrVcyKoJ2LH1aTmf41dZrisJJA
+	//
+	// DAG-CBOR (base64) out: glhAGCWszoibTPgkBSe5pk03wsB2orGzRKFvxLeqoDTNixxzXTDGKTj4ZfZrGOyCxf6rNW5zP8x2esFKV/akgy/nAaJhaEQ07QFxc3VjYW4vZGxnQDEuMC4wLXJjLjGoY2F1ZHg4ZGlkOmtleTp6Nk1rcTVZbWJKY1RyUEV4TkRpMjZpbXJUQ3BLaGVwakJGQlNIcXJCRE4yQXJQa3ZjY21kaC9mb28vYmFyY2V4cBpnDPLWY2lzc3g4ZGlkOmtleTp6Nk1rc0ticVVpWFJLVkRIUUoyeWV6RzgzTTZkNjhBUWJ6OXJ0YWpVTEY1NzVYM3NjcG9sg4NiPT1nLnN0YXR1c2VkcmFmdINjYWxsaS5yZXZpZXdlcoNkbGlrZWYuZW1haWxtKkBleGFtcGxlLmNvbYNjYW55ZS50YWdzgmJvcoKDYj09YS5kbmV3c4NiPT1hLmVwcmVzc2NzdWJ4OGRpZDprZXk6ejZNa3RBMXVCZENwcTR1SkJxRTlqak1pTHl4WkJnOWE2eGdQUEtKak1xc3M2WmMyZG1ldGGiY2Jhehh7Y2Zvb2NiYXJlbm9uY2VMgb9wlP/cdMKutRg+
+	//
 	// Converted to DAG-JSON out:
 	// [
 	//	{
 	//		"/": {
-	//			"bytes": "mnAkgfjAx4SA5pzJmtaHRJtTGNpF1y6oqb4yhGoM2H2EUGbBYT4rVDjMKBgCjhdGHjipm00L8iR5SsQh3sIEBQ"
+	//			"bytes": "GCWszoibTPgkBSe5pk03wsB2orGzRKFvxLeqoDTNixxzXTDGKTj4ZfZrGOyCxf6rNW5zP8x2esFKV/akgy/nAQ"
 	//		}
 	//	},
 	//	{
@@ -70,12 +90,15 @@ func ExampleNew() {
 	//		"ucan/dlg@1.0.0-rc.1": {
 	//			"aud": "did:key:z6Mkq5YmbJcTrPExNDi26imrTCpKhepjBFBSHqrBDN2ArPkv",
 	//			"cmd": "/foo/bar",
-	//			"exp": null,
-	//			"iss": "did:key:z6Mkpzn2n3ZGT2VaqMGSQC3tzmzV4TS9S71iFsDXE1WnoNH2",
-	//			"meta": {},
+	//			"exp": 1728901846,
+	//			"iss": "did:key:z6MksKbqUiXRKVDHQJ2yezG83M6d68AQbz9rtajULF575X3s",
+	//			"meta": {
+	//				"baz": 123,
+	//				"foo": "bar"
+	//			},
 	//			"nonce": {
 	//				"/": {
-	//					"bytes": "AAECAwQFBgcICQoL"
+	//					"bytes": "gb9wlP/cdMKutRg+"
 	//				}
 	//			},
 	//			"pol": [
@@ -123,40 +146,56 @@ func ExampleNew() {
 // - a delegation.Token with the subject (sub) set to the value of issuer
 // (iss).
 func ExampleRoot() {
-	issuerPrivKey := examplePrivKey(issuerPrivKeyCfg)
-	audienceDID := exampleDID(AudienceDID)
-	command := exampleCommand(subJectCmd)
-	policy := examplePolicy(subjectPol)
+	issPriv, issPub, err := crypto.GenerateEd25519Key(rand.Reader)
+	printThenPanicOnErr(err)
 
-	// Don't do this in your code - a nonce should be a cryptographically
-	// strong random slice of bytes to ensure the integrity of your private
-	// key.  For this example, a fixed nonce is required to obtain the fixed
-	// printed output (below).  If unsure of what value to supply for the
-	// nonce, don't pass the WithNonce option and one will be generated
-	// when the token is created.
-	nonce := []byte{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b}
+	issDid, err := did.FromPubKey(issPub)
+	printThenPanicOnErr(err)
+	fmt.Println("issDid:", issDid)
 
-	tkn, err := delegation.Root(
-		issuerPrivKey,
-		audienceDID,
-		command,
-		policy,
-		delegation.WithNonce(nonce),
+	audDid := did.MustParse(AudienceDID)
+
+	// The command defines the shape of the arguments that will be evaluated against the policy
+	cmd := command.MustParse("/foo/bar")
+
+	// The policy defines what is allowed to do.
+	pol := policy.Policy{
+		policy.Equal(selector.MustParse(".status"), literal.String("draft")),
+		policy.All(selector.MustParse(".reviewer"),
+			policy.MustLike(selector.MustParse(".email"), "*@example.com"),
+		),
+		policy.Any(selector.MustParse(".tags"), policy.Or(
+			policy.Equal(selector.Identity, literal.String("news")),
+			policy.Equal(selector.Identity, literal.String("press")),
+		)),
+	}
+
+	tkn, err := delegation.Root(issPriv, audDid, cmd, pol,
+		delegation.WithExpirationAfter(time.Hour),
+		delegation.WithMeta("foo", "bar"),
+		delegation.WithMeta("baz", 123),
 	)
 	printThenPanicOnErr(err)
-	data, id, err := tkn.ToSealed(issuerPrivKey)
+
+	// "Seal", meaning encode and wrap into a signed envelope.
+	data, id, err := tkn.ToSealed(issPriv)
 	printThenPanicOnErr(err)
 
 	printCIDAndSealed(id, data)
 
-	// Output:
-	// CID (base58BTC): zdpuAnbsR3e6DK8hBk5WA7KwbHYN6CKY4a3Bv1GNehvFYShQ8
-	// DAG-CBOR (base64) out: glhA67ASBczF/wlIP0ESENn+4ZNQKukjcTNz+fo7K2tYa6OUm0rWICDJJkDWm7lJeQt+KvSA+Y4ctHTQbAr3Lr7mDqJhaEQ07QFxc3VjYW4vZGxnQDEuMC4wLXJjLjGoY2F1ZHg4ZGlkOmtleTp6Nk1rcTVZbWJKY1RyUEV4TkRpMjZpbXJUQ3BLaGVwakJGQlNIcXJCRE4yQXJQa3ZjY21kaC9mb28vYmFyY2V4cPZjaXNzeDhkaWQ6a2V5Ono2TWtwem4ybjNaR1QyVmFxTUdTUUMzdHptelY0VFM5UzcxaUZzRFhFMVdub05IMmNwb2yDg2I9PWcuc3RhdHVzZWRyYWZ0g2NhbGxpLnJldmlld2Vyg2RsaWtlZi5lbWFpbG0qQGV4YW1wbGUuY29tg2NhbnllLnRhZ3OCYm9ygoNiPT1hLmRuZXdzg2I9PWEuZXByZXNzY3N1Yng4ZGlkOmtleTp6Nk1rcHpuMm4zWkdUMlZhcU1HU1FDM3R6bXpWNFRTOVM3MWlGc0RYRTFXbm9OSDJkbWV0YaBlbm9uY2VMAAECAwQFBgcICQoL
+	// Example output:
+	//
+	// issDid: did:key:z6MkshW2ADRrmfBuuBpKJiyNd7acLK1yjnxFJuBimwjQ4Bo5
+	//
+	// CID (base58BTC): zdpuAoBzE3kJK1qZC9EXH7h6iCwym1TqfxT9XzUfFNfcjcAKh
+	//
+	// DAG-CBOR (base64) out: glhADpyBSrTdRn2oZdJU26CjgFbaH7LbTDWyyAdgIwAW0p151XSdJwoBS2vTCp0+7sEkf4X2wl6N5IhxiKyQ8OkbCaJhaEQ07QFxc3VjYW4vZGxnQDEuMC4wLXJjLjGoY2F1ZHg4ZGlkOmtleTp6Nk1rcTVZbWJKY1RyUEV4TkRpMjZpbXJUQ3BLaGVwakJGQlNIcXJCRE4yQXJQa3ZjY21kaC9mb28vYmFyY2V4cBpnDPPCY2lzc3g4ZGlkOmtleTp6Nk1rc2hXMkFEUnJtZkJ1dUJwS0ppeU5kN2FjTEsxeWpueEZKdUJpbXdqUTRCbzVjcG9sg4NiPT1nLnN0YXR1c2VkcmFmdINjYWxsaS5yZXZpZXdlcoNkbGlrZWYuZW1haWxtKkBleGFtcGxlLmNvbYNjYW55ZS50YWdzgmJvcoKDYj09YS5kbmV3c4NiPT1hLmVwcmVzc2NzdWJ4OGRpZDprZXk6ejZNa3NoVzJBRFJybWZCdXVCcEtKaXlOZDdhY0xLMXlqbnhGSnVCaW13alE0Qm81ZG1ldGGiY2Jhehh7Y2Zvb2NiYXJlbm9uY2VMDmBGXMa/TCvhLHqu
+	//
 	// Converted to DAG-JSON out:
 	// [
 	//	{
 	//		"/": {
-	//			"bytes": "67ASBczF/wlIP0ESENn+4ZNQKukjcTNz+fo7K2tYa6OUm0rWICDJJkDWm7lJeQt+KvSA+Y4ctHTQbAr3Lr7mDg"
+	//			"bytes": "DpyBSrTdRn2oZdJU26CjgFbaH7LbTDWyyAdgIwAW0p151XSdJwoBS2vTCp0+7sEkf4X2wl6N5IhxiKyQ8OkbCQ"
 	//		}
 	//	},
 	//	{
@@ -168,12 +207,15 @@ func ExampleRoot() {
 	//		"ucan/dlg@1.0.0-rc.1": {
 	//			"aud": "did:key:z6Mkq5YmbJcTrPExNDi26imrTCpKhepjBFBSHqrBDN2ArPkv",
 	//			"cmd": "/foo/bar",
-	//			"exp": null,
-	//			"iss": "did:key:z6Mkpzn2n3ZGT2VaqMGSQC3tzmzV4TS9S71iFsDXE1WnoNH2",
-	//			"meta": {},
+	//			"exp": 1728902082,
+	//			"iss": "did:key:z6MkshW2ADRrmfBuuBpKJiyNd7acLK1yjnxFJuBimwjQ4Bo5",
+	//			"meta": {
+	//				"baz": 123,
+	//				"foo": "bar"
+	//			},
 	//			"nonce": {
 	//				"/": {
-	//					"bytes": "AAECAwQFBgcICQoL"
+	//					"bytes": "DmBGXMa/TCvhLHqu"
 	//				}
 	//			},
 	//			"pol": [
@@ -211,7 +253,7 @@ func ExampleRoot() {
 	//					]
 	//				]
 	//			],
-	//			"sub": "did:key:z6Mkpzn2n3ZGT2VaqMGSQC3tzmzV4TS9S71iFsDXE1WnoNH2"
+	//			"sub": "did:key:z6MkshW2ADRrmfBuuBpKJiyNd7acLK1yjnxFJuBimwjQ4Bo5"
 	//		}
 	//	}
 	// ]
@@ -220,8 +262,10 @@ func ExampleRoot() {
 // The following example demonstrates how to get a delegation.Token from
 // a DAG-CBOR []byte.
 func ExampleToken_FromSealed() {
-	cborBytes := exampleCBORData()
-	fmt.Println("DAG-CBOR (base64) in:", base64.StdEncoding.EncodeToString(cborBytes))
+	const cborBase64 = "glhAmnAkgfjAx4SA5pzJmtaHRJtTGNpF1y6oqb4yhGoM2H2EUGbBYT4rVDjMKBgCjhdGHjipm00L8iR5SsQh3sIEBaJhaEQ07QFxc3VjYW4vZGxnQDEuMC4wLXJjLjGoY2F1ZHg4ZGlkOmtleTp6Nk1rcTVZbWJKY1RyUEV4TkRpMjZpbXJUQ3BLaGVwakJGQlNIcXJCRE4yQXJQa3ZjY21kaC9mb28vYmFyY2V4cPZjaXNzeDhkaWQ6a2V5Ono2TWtwem4ybjNaR1QyVmFxTUdTUUMzdHptelY0VFM5UzcxaUZzRFhFMVdub05IMmNwb2yDg2I9PWcuc3RhdHVzZWRyYWZ0g2NhbGxpLnJldmlld2Vyg2RsaWtlZi5lbWFpbG0qQGV4YW1wbGUuY29tg2NhbnllLnRhZ3OCYm9ygoNiPT1hLmRuZXdzg2I9PWEuZXByZXNzY3N1Yng4ZGlkOmtleTp6Nk1rdEExdUJkQ3BxNHVKQnFFOWpqTWlMeXhaQmc5YTZ4Z1BQS0pqTXFzczZaYzJkbWV0YaBlbm9uY2VMAAECAwQFBgcICQoL"
+
+	cborBytes, err := base64.StdEncoding.DecodeString(cborBase64)
+	printThenPanicOnErr(err)
 
 	tkn, c, err := delegation.FromSealed(cborBytes)
 	printThenPanicOnErr(err)
@@ -231,62 +275,32 @@ func ExampleToken_FromSealed() {
 	fmt.Println("Audience (aud):", tkn.Audience().String())
 	fmt.Println("Subject (sub):", tkn.Subject().String())
 	fmt.Println("Command (cmd):", tkn.Command().String())
-	fmt.Println("Policy (pol): TODO")
+	fmt.Println("Policy (pol):", tkn.Policy().String())
 	fmt.Println("Nonce (nonce):", hex.EncodeToString(tkn.Nonce()))
-	fmt.Println("Meta (meta): TODO")
+	fmt.Println("Meta (meta):", tkn.Meta().String())
 	fmt.Println("NotBefore (nbf):", tkn.NotBefore())
 	fmt.Println("Expiration (exp):", tkn.Expiration())
 
 	// Output:
-	// DAG-CBOR (base64) in: glhAmnAkgfjAx4SA5pzJmtaHRJtTGNpF1y6oqb4yhGoM2H2EUGbBYT4rVDjMKBgCjhdGHjipm00L8iR5SsQh3sIEBaJhaEQ07QFxc3VjYW4vZGxnQDEuMC4wLXJjLjGoY2F1ZHg4ZGlkOmtleTp6Nk1rcTVZbWJKY1RyUEV4TkRpMjZpbXJUQ3BLaGVwakJGQlNIcXJCRE4yQXJQa3ZjY21kaC9mb28vYmFyY2V4cPZjaXNzeDhkaWQ6a2V5Ono2TWtwem4ybjNaR1QyVmFxTUdTUUMzdHptelY0VFM5UzcxaUZzRFhFMVdub05IMmNwb2yDg2I9PWcuc3RhdHVzZWRyYWZ0g2NhbGxpLnJldmlld2Vyg2RsaWtlZi5lbWFpbG0qQGV4YW1wbGUuY29tg2NhbnllLnRhZ3OCYm9ygoNiPT1hLmRuZXdzg2I9PWEuZXByZXNzY3N1Yng4ZGlkOmtleTp6Nk1rdEExdUJkQ3BxNHVKQnFFOWpqTWlMeXhaQmc5YTZ4Z1BQS0pqTXFzczZaYzJkbWV0YaBlbm9uY2VMAAECAwQFBgcICQoL
 	// CID (base58BTC): zdpuAw26pFuvZa2Z9YAtpZZnWN6VmnRFr7Z8LVY5c7RVWoxGY
 	// Issuer (iss): did:key:z6Mkpzn2n3ZGT2VaqMGSQC3tzmzV4TS9S71iFsDXE1WnoNH2
 	// Audience (aud): did:key:z6Mkq5YmbJcTrPExNDi26imrTCpKhepjBFBSHqrBDN2ArPkv
 	// Subject (sub): did:key:z6MktA1uBdCpq4uJBqE9jjMiLyxZBg9a6xgPPKJjMqss6Zc2
 	// Command (cmd): /foo/bar
-	// Policy (pol): TODO
+	// Policy (pol): [
+	//   ["==", ".status", "draft"],
+	//   ["all", ".reviewer",
+	//     ["like", ".email", "*@example.com"]],
+	//   ["any", ".tags",
+	//     ["or", [
+	//       ["==", ".", "news"],
+	//       ["==", ".", "press"]]]
+	//     ]
+	// ]
 	// Nonce (nonce): 000102030405060708090a0b
-	// Meta (meta): TODO
+	// Meta (meta): {}
 	// NotBefore (nbf): <nil>
 	// Expiration (exp): <nil>
-}
-
-func exampleCBORData() []byte {
-	data, err := base64.StdEncoding.DecodeString("glhAmnAkgfjAx4SA5pzJmtaHRJtTGNpF1y6oqb4yhGoM2H2EUGbBYT4rVDjMKBgCjhdGHjipm00L8iR5SsQh3sIEBaJhaEQ07QFxc3VjYW4vZGxnQDEuMC4wLXJjLjGoY2F1ZHg4ZGlkOmtleTp6Nk1rcTVZbWJKY1RyUEV4TkRpMjZpbXJUQ3BLaGVwakJGQlNIcXJCRE4yQXJQa3ZjY21kaC9mb28vYmFyY2V4cPZjaXNzeDhkaWQ6a2V5Ono2TWtwem4ybjNaR1QyVmFxTUdTUUMzdHptelY0VFM5UzcxaUZzRFhFMVdub05IMmNwb2yDg2I9PWcuc3RhdHVzZWRyYWZ0g2NhbGxpLnJldmlld2Vyg2RsaWtlZi5lbWFpbG0qQGV4YW1wbGUuY29tg2NhbnllLnRhZ3OCYm9ygoNiPT1hLmRuZXdzg2I9PWEuZXByZXNzY3N1Yng4ZGlkOmtleTp6Nk1rdEExdUJkQ3BxNHVKQnFFOWpqTWlMeXhaQmc5YTZ4Z1BQS0pqTXFzczZaYzJkbWV0YaBlbm9uY2VMAAECAwQFBgcICQoL")
-	printThenPanicOnErr(err)
-
-	return data
-}
-
-func exampleDID(didStr string) did.DID {
-	id, err := did.Parse(didStr)
-	printThenPanicOnErr(err)
-
-	return id
-}
-
-func exampleCommand(cmdStr string) command.Command {
-	cmd, err := command.Parse(cmdStr)
-	printThenPanicOnErr(err)
-
-	return cmd
-}
-
-func examplePolicy(policyJSON string) policy.Policy {
-	pol, err := policy.FromDagJson(policyJSON)
-	printThenPanicOnErr(err)
-
-	return pol
-}
-
-func examplePrivKey(privKeyCfg string) crypto.PrivKey {
-	privKeyMar, err := crypto.ConfigDecodeKey(privKeyCfg)
-	printThenPanicOnErr(err)
-
-	privKey, err := crypto.UnmarshalPrivateKey(privKeyMar)
-	printThenPanicOnErr(err)
-
-	return privKey
 }
 
 func printCIDAndSealed(id cid.Cid, data []byte) {

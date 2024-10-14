@@ -23,7 +23,7 @@ func (s Selector) String() string {
 	return res.String()
 }
 
-var Identity = segment{".", true, false, false, nil, "", 0}
+var Identity = MustParse(".")
 
 var (
 	indexRegex = regexp.MustCompile(`^-?\d+$`)

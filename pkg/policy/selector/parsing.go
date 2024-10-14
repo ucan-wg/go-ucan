@@ -27,7 +27,7 @@ func Parse(str string) (Selector, error) {
 			if len(sel) > 0 && sel[len(sel)-1].Identity() {
 				return nil, newParseError("selector contains unsupported recursive descent segment: '..'", str, col, tok)
 			}
-			sel = append(sel, Identity)
+			sel = append(sel, segment{".", true, false, false, nil, "", 0})
 		case "[]":
 			sel = append(sel, segment{tok, false, opt, true, nil, "", 0})
 		default:
