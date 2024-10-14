@@ -23,8 +23,6 @@ func (s Selector) String() string {
 	return res.String()
 }
 
-var Identity = MustParse(".")
-
 var (
 	indexRegex = regexp.MustCompile(`^-?\d+$`)
 	sliceRegex = regexp.MustCompile(`^((\-?\d+:\-?\d*)|(\-?\d*:\-?\d+))$`)

@@ -19,7 +19,6 @@ import (
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/policy"
 	"github.com/ucan-wg/go-ucan/pkg/policy/literal"
-	"github.com/ucan-wg/go-ucan/pkg/policy/selector"
 	"github.com/ucan-wg/go-ucan/token/delegation"
 	"github.com/ucan-wg/go-ucan/token/internal/envelope"
 )
@@ -41,16 +40,16 @@ func ExampleNew() {
 	cmd := command.MustParse("/foo/bar")
 
 	// The policy defines what is allowed to do.
-	pol := policy.Policy{
-		policy.Equal(selector.MustParse(".status"), literal.String("draft")),
-		policy.All(selector.MustParse(".reviewer"),
-			policy.MustLike(selector.MustParse(".email"), "*@example.com"),
+	pol := policy.MustConstruct(
+		policy.Equal(".status", literal.String("draft")),
+		policy.All(".reviewer",
+			policy.Like(".email", "*@example.com"),
 		),
-		policy.Any(selector.MustParse(".tags"), policy.Or(
-			policy.Equal(selector.Identity, literal.String("news")),
-			policy.Equal(selector.Identity, literal.String("press")),
+		policy.Any(".tags", policy.Or(
+			policy.Equal(".", literal.String("news")),
+			policy.Equal(".", literal.String("press")),
 		)),
-	}
+	)
 
 	tkn, err := delegation.New(issPriv, audDid, cmd, pol,
 		delegation.WithSubject(subDid),
@@ -161,16 +160,16 @@ func ExampleRoot() {
 	cmd := command.MustParse("/foo/bar")
 
 	// The policy defines what is allowed to do.
-	pol := policy.Policy{
-		policy.Equal(selector.MustParse(".status"), literal.String("draft")),
-		policy.All(selector.MustParse(".reviewer"),
-			policy.MustLike(selector.MustParse(".email"), "*@example.com"),
+	pol := policy.MustConstruct(
+		policy.Equal(".status", literal.String("draft")),
+		policy.All(".reviewer",
+			policy.Like(".email", "*@example.com"),
 		),
-		policy.Any(selector.MustParse(".tags"), policy.Or(
-			policy.Equal(selector.Identity, literal.String("news")),
-			policy.Equal(selector.Identity, literal.String("press")),
+		policy.Any(".tags", policy.Or(
+			policy.Equal(".", literal.String("news")),
+			policy.Equal(".", literal.String("press")),
 		)),
-	}
+	)
 
 	tkn, err := delegation.Root(issPriv, audDid, cmd, pol,
 		delegation.WithExpirationIn(time.Hour),

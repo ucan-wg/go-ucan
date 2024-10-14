@@ -1,19 +1,11 @@
 package literal
 
 import (
+	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime"
+	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
 )
-
-func Node(n ipld.Node) ipld.Node {
-	return n
-}
-
-func Link(cid ipld.Link) ipld.Node {
-	nb := basicnode.Prototype.Link.NewBuilder()
-	nb.AssignLink(cid)
-	return nb.Build()
-}
 
 func Bool(val bool) ipld.Node {
 	nb := basicnode.Prototype.Bool.NewBuilder()
@@ -43,6 +35,16 @@ func Bytes(val []byte) ipld.Node {
 	nb := basicnode.Prototype.Bytes.NewBuilder()
 	nb.AssignBytes(val)
 	return nb.Build()
+}
+
+func Link(link ipld.Link) ipld.Node {
+	nb := basicnode.Prototype.Link.NewBuilder()
+	nb.AssignLink(link)
+	return nb.Build()
+}
+
+func LinkCid(cid cid.Cid) ipld.Node {
+	return Link(cidlink.Link{Cid: cid})
 }
 
 func Null() ipld.Node {

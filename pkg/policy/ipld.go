@@ -61,7 +61,7 @@ func statementFromIPLD(path string, node datamodel.Node) (Statement, error) {
 			if err != nil {
 				return nil, err
 			}
-			return Not(statement), nil
+			return negation{statement: statement}, nil
 
 		case KindAnd, KindOr:
 			arg2, _ := node.LookupByIndex(1)
@@ -93,11 +93,11 @@ func statementFromIPLD(path string, node datamodel.Node) (Statement, error) {
 			if pattern.Kind() != datamodel.Kind_String {
 				return nil, ErrNotAString(combinePath(path, op, 2))
 			}
-			res, err := Like(sel, must.String(pattern))
+			g, err := parseGlob(must.String(pattern))
 			if err != nil {
 				return nil, ErrInvalidPattern(combinePath(path, op, 2), err)
 			}
-			return res, nil
+			return wildcard{selector: sel, pattern: g}, nil
 
 		case KindAll, KindAny:
 			sel, err := arg2AsSelector(op)

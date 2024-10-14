@@ -9,7 +9,7 @@ import (
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/codec/dagjson"
 
-	"github.com/ucan-wg/go-ucan/pkg/policy/selector"
+	selpkg "github.com/ucan-wg/go-ucan/pkg/policy/selector"
 )
 
 const (
@@ -27,6 +27,24 @@ const (
 )
 
 type Policy []Statement
+
+type Constructor func() (Statement, error)
+
+func Construct(cstors ...Constructor) (Policy, error) {
+	stmts, err := assemble(cstors)
+	if err != nil {
+		return nil, err
+	}
+	return stmts, nil
+}
+
+func MustConstruct(cstors ...Constructor) Policy {
+	pol, err := Construct(cstors...)
+	if err != nil {
+		panic(err)
+	}
+	return pol
+}
 
 func (p Policy) String() string {
 	if len(p) == 0 {
@@ -46,7 +64,7 @@ type Statement interface {
 
 type equality struct {
 	kind     string
-	selector selector.Selector
+	selector selpkg.Selector
 	value    ipld.Node
 }
 
@@ -62,24 +80,39 @@ func (e equality) String() string {
 	return fmt.Sprintf(`["%s", "%s", %s]`, e.kind, e.selector, strings.ReplaceAll(string(child), "\n", "\n  "))
 }
 
-func Equal(selector selector.Selector, value ipld.Node) Statement {
-	return equality{kind: KindEqual, selector: selector, value: value}
+func Equal(selector string, value ipld.Node) Constructor {
+	return func() (Statement, error) {
+		sel, err := selpkg.Parse(selector)
+		return equality{kind: KindEqual, selector: sel, value: value}, err
+	}
 }
 
-func GreaterThan(selector selector.Selector, value ipld.Node) Statement {
-	return equality{kind: KindGreaterThan, selector: selector, value: value}
+func GreaterThan(selector string, value ipld.Node) Constructor {
+	return func() (Statement, error) {
+		sel, err := selpkg.Parse(selector)
+		return equality{kind: KindGreaterThan, selector: sel, value: value}, err
+	}
 }
 
-func GreaterThanOrEqual(selector selector.Selector, value ipld.Node) Statement {
-	return equality{kind: KindGreaterThanOrEqual, selector: selector, value: value}
+func GreaterThanOrEqual(selector string, value ipld.Node) Constructor {
+	return func() (Statement, error) {
+		sel, err := selpkg.Parse(selector)
+		return equality{kind: KindGreaterThanOrEqual, selector: sel, value: value}, err
+	}
 }
 
-func LessThan(selector selector.Selector, value ipld.Node) Statement {
-	return equality{kind: KindLessThan, selector: selector, value: value}
+func LessThan(selector string, value ipld.Node) Constructor {
+	return func() (Statement, error) {
+		sel, err := selpkg.Parse(selector)
+		return equality{kind: KindLessThan, selector: sel, value: value}, err
+	}
 }
 
-func LessThanOrEqual(selector selector.Selector, value ipld.Node) Statement {
-	return equality{kind: KindLessThanOrEqual, selector: selector, value: value}
+func LessThanOrEqual(selector string, value ipld.Node) Constructor {
+	return func() (Statement, error) {
+		sel, err := selpkg.Parse(selector)
+		return equality{kind: KindLessThanOrEqual, selector: sel, value: value}, err
+	}
 }
 
 type negation struct {
@@ -95,8 +128,11 @@ func (n negation) String() string {
 	return fmt.Sprintf(`["%s", "%s"]`, n.Kind(), strings.ReplaceAll(child, "\n", "\n  "))
 }
 
-func Not(stmt Statement) Statement {
-	return negation{statement: stmt}
+func Not(cstor Constructor) Constructor {
+	return func() (Statement, error) {
+		stmt, err := cstor()
+		return negation{statement: stmt}, err
+	}
 }
 
 type connective struct {
@@ -116,16 +152,28 @@ func (c connective) String() string {
 	return fmt.Sprintf("[\"%s\", [\n  %s]]\n", c.kind, strings.Join(childs, ",\n  "))
 }
 
-func And(stmts ...Statement) Statement {
-	return connective{kind: KindAnd, statements: stmts}
+func And(cstors ...Constructor) Constructor {
+	return func() (Statement, error) {
+		stmts, err := assemble(cstors)
+		if err != nil {
+			return nil, err
+		}
+		return connective{kind: KindAnd, statements: stmts}, nil
+	}
 }
 
-func Or(stmts ...Statement) Statement {
-	return connective{kind: KindOr, statements: stmts}
+func Or(cstors ...Constructor) Constructor {
+	return func() (Statement, error) {
+		stmts, err := assemble(cstors)
+		if err != nil {
+			return nil, err
+		}
+		return connective{kind: KindOr, statements: stmts}, nil
+	}
 }
 
 type wildcard struct {
-	selector selector.Selector
+	selector selpkg.Selector
 	pattern  glob
 }
 
@@ -137,26 +185,20 @@ func (n wildcard) String() string {
 	return fmt.Sprintf(`["%s", "%s", "%s"]`, n.Kind(), n.selector, n.pattern)
 }
 
-func Like(selector selector.Selector, pattern string) (Statement, error) {
-	g, err := parseGlob(pattern)
-	if err != nil {
-		return nil, err
+func Like(selector string, pattern string) Constructor {
+	return func() (Statement, error) {
+		g, err := parseGlob(pattern)
+		if err != nil {
+			return nil, err
+		}
+		sel, err := selpkg.Parse(selector)
+		return wildcard{selector: sel, pattern: g}, err
 	}
-
-	return wildcard{selector: selector, pattern: g}, nil
-}
-
-func MustLike(selector selector.Selector, pattern string) Statement {
-	g, err := Like(selector, pattern)
-	if err != nil {
-		panic(err)
-	}
-	return g
 }
 
 type quantifier struct {
 	kind      string
-	selector  selector.Selector
+	selector  selpkg.Selector
 	statement Statement
 }
 
@@ -169,10 +211,36 @@ func (n quantifier) String() string {
 	return fmt.Sprintf("[\"%s\", \"%s\",\n  %s]", n.Kind(), n.selector, strings.ReplaceAll(child, "\n", "\n  "))
 }
 
-func All(selector selector.Selector, statement Statement) Statement {
-	return quantifier{kind: KindAll, selector: selector, statement: statement}
+func All(selector string, cstor Constructor) Constructor {
+	return func() (Statement, error) {
+		stmt, err := cstor()
+		if err != nil {
+			return nil, err
+		}
+		sel, err := selpkg.Parse(selector)
+		return quantifier{kind: KindAll, selector: sel, statement: stmt}, err
+	}
 }
 
-func Any(selector selector.Selector, statement Statement) Statement {
-	return quantifier{kind: KindAny, selector: selector, statement: statement}
+func Any(selector string, cstor Constructor) Constructor {
+	return func() (Statement, error) {
+		stmt, err := cstor()
+		if err != nil {
+			return nil, err
+		}
+		sel, err := selpkg.Parse(selector)
+		return quantifier{kind: KindAny, selector: sel, statement: stmt}, err
+	}
+}
+
+func assemble(cstors []Constructor) ([]Statement, error) {
+	stmts := make([]Statement, 0, len(cstors))
+	for _, cstor := range cstors {
+		stmt, err := cstor()
+		if err != nil {
+			return nil, err
+		}
+		stmts = append(stmts, stmt)
+	}
+	return stmts, nil
 }
