@@ -24,6 +24,15 @@ func WithExpiration(exp time.Time) Option {
 	}
 }
 
+// WithExpirationAfter set's the Token's optional "expiration" field to Now() plus the given duration.
+func WithExpirationAfter(exp time.Duration) Option {
+	return func(t *Token) error {
+		expTime := time.Now().Add(exp)
+		t.expiration = &expTime
+		return nil
+	}
+}
+
 // WithMeta adds a key/value pair in the "meta" field.
 //
 // WithMeta can be used multiple times in the same call.
@@ -52,7 +61,7 @@ func WithNotBefore(nbf time.Time) Option {
 // provided did.DID.
 //
 // This Option should only be used with the New constructor - since
-// Subject is a required parameter when creating a Token via the  Root
+// Subject is a required parameter when creating a Token via the Root
 // constructor, any value provided via this Option will be silently
 // overwritten.
 func WithSubject(sub did.DID) Option {

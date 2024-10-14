@@ -4,10 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/datamodel"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
+	"github.com/ipld/go-ipld-prime/printer"
 )
 
 var ErrUnsupported = errors.New("failure adding unsupported type to meta")
@@ -137,6 +139,25 @@ func (m *Meta) Equals(other *Meta) bool {
 		}
 	}
 	return true
+}
+
+func (m *Meta) String() string {
+	buf := strings.Builder{}
+	buf.WriteString("{")
+
+	var i int
+	for key, node := range m.Values {
+		if i > 0 {
+			buf.WriteString(", ")
+		}
+		i++
+		buf.WriteString(key)
+		buf.WriteString(":")
+		buf.WriteString(printer.Sprint(node))
+	}
+
+	buf.WriteString("}")
+	return buf.String()
 }
 
 func fqtn(val any) string {
