@@ -17,7 +17,6 @@ import (
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/policy"
 	"github.com/ucan-wg/go-ucan/pkg/policy/literal"
-	"github.com/ucan-wg/go-ucan/pkg/policy/selector"
 	"github.com/ucan-wg/go-ucan/token/delegation"
 )
 
@@ -159,10 +158,11 @@ func randToken() (*delegation.Token, cid.Cid, []byte) {
 	priv, iss := randDID()
 	_, aud := randDID()
 	cmd := command.New("foo", "bar")
-	pol := policy.Policy{policy.All(
-		selector.MustParse(".[]"),
-		policy.GreaterThan(selector.MustParse(".value"), literal.Int(2)),
-	)}
+	pol := policy.MustConstruct(
+		policy.All(".[]",
+			policy.GreaterThan(".value", literal.Int(2)),
+		),
+	)
 
 	opts := []delegation.Option{
 		delegation.WithExpiration(time.Now().Add(time.Hour)),

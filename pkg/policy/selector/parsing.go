@@ -6,12 +6,17 @@ import (
 	"strings"
 )
 
+var identity = Selector{segment{".", true, false, false, nil, "", 0}}
+
 func Parse(str string) (Selector, error) {
 	if len(str) == 0 {
 		return nil, newParseError("empty selector", str, 0, "")
 	}
 	if string(str[0]) != "." {
 		return nil, newParseError("selector must start with identity segment '.'", str, 0, string(str[0]))
+	}
+	if str == "." {
+		return identity, nil
 	}
 
 	col := 0
