@@ -313,7 +313,7 @@ func TestSelect(t *testing.T) {
 		sel, err := Parse(".")
 		require.NoError(t, err)
 
-		one, many, err := Select(sel, anode)
+		one, many, err := sel.Select(anode)
 		require.NoError(t, err)
 		require.NotEmpty(t, one)
 		require.Empty(t, many)
@@ -328,7 +328,7 @@ func TestSelect(t *testing.T) {
 		sel, err := Parse(".name.first")
 		require.NoError(t, err)
 
-		one, many, err := Select(sel, anode)
+		one, many, err := sel.Select(anode)
 		require.NoError(t, err)
 		require.NotEmpty(t, one)
 		require.Empty(t, many)
@@ -338,7 +338,7 @@ func TestSelect(t *testing.T) {
 		name := must.String(one)
 		require.Equal(t, alice.Name.First, name)
 
-		one, many, err = Select(sel, bnode)
+		one, many, err = sel.Select(bnode)
 		require.NoError(t, err)
 		require.NotEmpty(t, one)
 		require.Empty(t, many)
@@ -353,7 +353,7 @@ func TestSelect(t *testing.T) {
 		sel, err := Parse(".name.middle?")
 		require.NoError(t, err)
 
-		one, many, err := Select(sel, anode)
+		one, many, err := sel.Select(anode)
 		require.NoError(t, err)
 		require.NotEmpty(t, one)
 		require.Empty(t, many)
@@ -363,7 +363,7 @@ func TestSelect(t *testing.T) {
 		name := must.String(one)
 		require.Equal(t, *alice.Name.Middle, name)
 
-		one, many, err = Select(sel, bnode)
+		one, many, err = sel.Select(bnode)
 		require.NoError(t, err)
 		require.Empty(t, one)
 		require.Empty(t, many)
@@ -373,7 +373,7 @@ func TestSelect(t *testing.T) {
 		sel, err := Parse(".name.foo")
 		require.NoError(t, err)
 
-		one, many, err := Select(sel, anode)
+		one, many, err := sel.Select(anode)
 		require.Error(t, err)
 		require.Empty(t, one)
 		require.Empty(t, many)
@@ -387,7 +387,7 @@ func TestSelect(t *testing.T) {
 		sel, err := Parse(".name.foo?")
 		require.NoError(t, err)
 
-		one, many, err := Select(sel, anode)
+		one, many, err := sel.Select(anode)
 		require.NoError(t, err)
 		require.Empty(t, one)
 		require.Empty(t, many)
@@ -397,7 +397,7 @@ func TestSelect(t *testing.T) {
 		sel, err := Parse(".interests[]")
 		require.NoError(t, err)
 
-		one, many, err := Select(sel, anode)
+		one, many, err := sel.Select(anode)
 		require.NoError(t, err)
 		require.Empty(t, one)
 		require.NotEmpty(t, many)
@@ -417,7 +417,7 @@ func TestSelect(t *testing.T) {
 		sel, err := Parse(".interests[0][]")
 		require.NoError(t, err)
 
-		one, many, err := Select(sel, anode)
+		one, many, err := sel.Select(anode)
 		require.NoError(t, err)
 		require.Empty(t, one)
 		require.NotEmpty(t, many)
@@ -494,6 +494,6 @@ func FuzzParseAndSelect(f *testing.F) {
 		}
 
 		// look for panic()
-		_, _, _ = Select(sel, node)
+		_, _, _ = sel.Select(node)
 	})
 }

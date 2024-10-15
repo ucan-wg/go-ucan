@@ -52,7 +52,7 @@ func TestSupportedForms(t *testing.T) {
 			require.NoError(t, err)
 
 			// attempt to select
-			node, nodes, err := selector.Select(sel, makeNode(t, tc.Input))
+			node, nodes, err := sel.Select(makeNode(t, tc.Input))
 			require.NoError(t, err)
 			require.NotEqual(t, node != nil, len(nodes) > 0) // XOR (only one of node or nodes should be set)
 
@@ -97,7 +97,7 @@ func TestSupportedForms(t *testing.T) {
 			require.NoError(t, err)
 
 			// attempt to select
-			node, nodes, err := selector.Select(sel, makeNode(t, tc.Input))
+			node, nodes, err := sel.Select(makeNode(t, tc.Input))
 			require.NoError(t, err)
 			// TODO: should Select return a single node which is sometimes a list or null?
 			// require.Equal(t, datamodel.Null, node)
@@ -124,7 +124,7 @@ func TestSupportedForms(t *testing.T) {
 			require.NoError(t, err)
 
 			// attempt to select
-			node, nodes, err := selector.Select(sel, makeNode(t, tc.Input))
+			node, nodes, err := sel.Select(makeNode(t, tc.Input))
 			require.Error(t, err)
 			assert.Nil(t, node)
 			assert.Empty(t, nodes)

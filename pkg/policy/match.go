@@ -7,8 +7,6 @@ import (
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/datamodel"
 	"github.com/ipld/go-ipld-prime/must"
-
-	"github.com/ucan-wg/go-ucan/pkg/policy/selector"
 )
 
 // Match determines if the IPLD node matches the policy document.
@@ -26,7 +24,7 @@ func matchStatement(statement Statement, node ipld.Node) bool {
 	switch statement.Kind() {
 	case KindEqual:
 		if s, ok := statement.(equality); ok {
-			one, many, err := selector.Select(s.selector, node)
+			one, many, err := s.selector.Select(node)
 			if err != nil {
 				return false
 			}
@@ -45,7 +43,7 @@ func matchStatement(statement Statement, node ipld.Node) bool {
 		}
 	case KindGreaterThan:
 		if s, ok := statement.(equality); ok {
-			one, _, err := selector.Select(s.selector, node)
+			one, _, err := s.selector.Select(node)
 			if err != nil || one == nil {
 				return false
 			}
@@ -53,7 +51,7 @@ func matchStatement(statement Statement, node ipld.Node) bool {
 		}
 	case KindGreaterThanOrEqual:
 		if s, ok := statement.(equality); ok {
-			one, _, err := selector.Select(s.selector, node)
+			one, _, err := s.selector.Select(node)
 			if err != nil || one == nil {
 				return false
 			}
@@ -61,7 +59,7 @@ func matchStatement(statement Statement, node ipld.Node) bool {
 		}
 	case KindLessThan:
 		if s, ok := statement.(equality); ok {
-			one, _, err := selector.Select(s.selector, node)
+			one, _, err := s.selector.Select(node)
 			if err != nil || one == nil {
 				return false
 			}
@@ -69,7 +67,7 @@ func matchStatement(statement Statement, node ipld.Node) bool {
 		}
 	case KindLessThanOrEqual:
 		if s, ok := statement.(equality); ok {
-			one, _, err := selector.Select(s.selector, node)
+			one, _, err := s.selector.Select(node)
 			if err != nil || one == nil {
 				return false
 			}
@@ -104,7 +102,7 @@ func matchStatement(statement Statement, node ipld.Node) bool {
 		}
 	case KindLike:
 		if s, ok := statement.(wildcard); ok {
-			one, _, err := selector.Select(s.selector, node)
+			one, _, err := s.selector.Select(node)
 			if err != nil || one == nil {
 				return false
 			}
@@ -116,7 +114,7 @@ func matchStatement(statement Statement, node ipld.Node) bool {
 		}
 	case KindAll:
 		if s, ok := statement.(quantifier); ok {
-			_, many, err := selector.Select(s.selector, node)
+			_, many, err := s.selector.Select(node)
 			if err != nil || many == nil {
 				return false
 			}
@@ -130,7 +128,7 @@ func matchStatement(statement Statement, node ipld.Node) bool {
 		}
 	case KindAny:
 		if s, ok := statement.(quantifier); ok {
-			one, many, err := selector.Select(s.selector, node)
+			one, many, err := s.selector.Select(node)
 			if err != nil {
 				return false
 			}

@@ -15,6 +15,12 @@ import (
 // https://github.com/ucan-wg/delegation/blob/4094d5878b58f5d35055a3b93fccda0b8329ebae/README.md#selectors
 type Selector []segment
 
+// Select perform the selection described by the selector on the input IPLD DAG.
+// If no error, Select returns either one ipld.Node or a []ipld.Node.
+func (s Selector) Select(subject ipld.Node) (ipld.Node, []ipld.Node, error) {
+	return resolve(s, subject, nil)
+}
+
 func (s Selector) String() string {
 	var res strings.Builder
 	for _, seg := range s {
@@ -72,12 +78,6 @@ func (s segment) Field() string {
 // Index is an index of a slice.
 func (s segment) Index() int {
 	return s.index
-}
-
-// Select uses a selector to extract an IPLD node or set of nodes from the
-// passed subject node.
-func Select(sel Selector, subject ipld.Node) (ipld.Node, []ipld.Node, error) {
-	return resolve(sel, subject, nil)
 }
 
 func resolve(sel Selector, subject ipld.Node, at []string) (ipld.Node, []ipld.Node, error) {
