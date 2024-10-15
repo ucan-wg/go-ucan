@@ -24,8 +24,8 @@ func WithExpiration(exp time.Time) Option {
 	}
 }
 
-// WithExpirationAfter set's the Token's optional "expiration" field to Now() plus the given duration.
-func WithExpirationAfter(exp time.Duration) Option {
+// WithExpirationIn set's the Token's optional "expiration" field to Now() plus the given duration.
+func WithExpirationIn(exp time.Duration) Option {
 	return func(t *Token) error {
 		expTime := time.Now().Add(exp)
 		t.expiration = &expTime
@@ -53,6 +53,16 @@ func WithNotBefore(nbf time.Time) Option {
 		}
 
 		t.notBefore = &nbf
+		return nil
+	}
+}
+
+// WithNotBeforeIn set's the Token's optional "notBefore" field to the value
+// of the provided time.Time.
+func WithNotBeforeIn(nbf time.Duration) Option {
+	return func(t *Token) error {
+		nbfTime := time.Now().Add(nbf)
+		t.notBefore = &nbfTime
 		return nil
 	}
 }
