@@ -1,4 +1,4 @@
-// Package delegation implements the UCAN [invocation] specification with
+// Package invocation implements the UCAN [invocation] specification with
 // an immutable Token type as well as methods to convert the Token to and
 // from the [envelope]-enclosed, signed and DAG-CBOR-encoded form that
 // should most commonly be used for transport and storage.
