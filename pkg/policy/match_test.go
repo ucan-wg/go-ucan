@@ -23,15 +23,15 @@ func TestMatch(t *testing.T) {
 			nd := nb.Build()
 
 			pol := MustConstruct(Equal(".", literal.String("test")))
-			ok := Match(pol, nd)
+			ok := pol.Match(nd)
 			require.True(t, ok)
 
 			pol = MustConstruct(Equal(".", literal.String("test2")))
-			ok = Match(pol, nd)
+			ok = pol.Match(nd)
 			require.False(t, ok)
 
 			pol = MustConstruct(Equal(".", literal.Int(138)))
-			ok = Match(pol, nd)
+			ok = pol.Match(nd)
 			require.False(t, ok)
 		})
 
@@ -42,15 +42,15 @@ func TestMatch(t *testing.T) {
 			nd := nb.Build()
 
 			pol := MustConstruct(Equal(".", literal.Int(138)))
-			ok := Match(pol, nd)
+			ok := pol.Match(nd)
 			require.True(t, ok)
 
 			pol = MustConstruct(Equal(".", literal.Int(1138)))
-			ok = Match(pol, nd)
+			ok = pol.Match(nd)
 			require.False(t, ok)
 
 			pol = MustConstruct(Equal(".", literal.String("138")))
-			ok = Match(pol, nd)
+			ok = pol.Match(nd)
 			require.False(t, ok)
 		})
 
@@ -61,15 +61,15 @@ func TestMatch(t *testing.T) {
 			nd := nb.Build()
 
 			pol := MustConstruct(Equal(".", literal.Float(1.138)))
-			ok := Match(pol, nd)
+			ok := pol.Match(nd)
 			require.True(t, ok)
 
 			pol = MustConstruct(Equal(".", literal.Float(11.38)))
-			ok = Match(pol, nd)
+			ok = pol.Match(nd)
 			require.False(t, ok)
 
 			pol = MustConstruct(Equal(".", literal.String("138")))
-			ok = Match(pol, nd)
+			ok = pol.Match(nd)
 			require.False(t, ok)
 		})
 
@@ -83,15 +83,15 @@ func TestMatch(t *testing.T) {
 			nd := nb.Build()
 
 			pol := MustConstruct(Equal(".", literal.Link(l0)))
-			ok := Match(pol, nd)
+			ok := pol.Match(nd)
 			require.True(t, ok)
 
 			pol = MustConstruct(Equal(".", literal.Link(l1)))
-			ok = Match(pol, nd)
+			ok = pol.Match(nd)
 			require.False(t, ok)
 
 			pol = MustConstruct(Equal(".", literal.String("bafybeif4owy5gno5lwnixqm52rwqfodklf76hsetxdhffuxnplvijskzqq")))
-			ok = Match(pol, nd)
+			ok = pol.Match(nd)
 			require.False(t, ok)
 		})
 
@@ -105,19 +105,19 @@ func TestMatch(t *testing.T) {
 			nd := nb.Build()
 
 			pol := MustConstruct(Equal(".foo", literal.String("bar")))
-			ok := Match(pol, nd)
+			ok := pol.Match(nd)
 			require.True(t, ok)
 
 			pol = MustConstruct(Equal(".[\"foo\"]", literal.String("bar")))
-			ok = Match(pol, nd)
+			ok = pol.Match(nd)
 			require.True(t, ok)
 
 			pol = MustConstruct(Equal(".foo", literal.String("baz")))
-			ok = Match(pol, nd)
+			ok = pol.Match(nd)
 			require.False(t, ok)
 
 			pol = MustConstruct(Equal(".foobar", literal.String("bar")))
-			ok = Match(pol, nd)
+			ok = pol.Match(nd)
 			require.False(t, ok)
 		})
 
@@ -130,11 +130,11 @@ func TestMatch(t *testing.T) {
 			nd := nb.Build()
 
 			pol := MustConstruct(Equal(".[0]", literal.String("foo")))
-			ok := Match(pol, nd)
+			ok := pol.Match(nd)
 			require.True(t, ok)
 
 			pol = MustConstruct(Equal(".[1]", literal.String("foo")))
-			ok = Match(pol, nd)
+			ok = pol.Match(nd)
 			require.False(t, ok)
 		})
 	})
@@ -147,7 +147,7 @@ func TestMatch(t *testing.T) {
 			nd := nb.Build()
 
 			pol := MustConstruct(GreaterThan(".", literal.Int(1)))
-			ok := Match(pol, nd)
+			ok := pol.Match(nd)
 			require.True(t, ok)
 		})
 
@@ -158,11 +158,11 @@ func TestMatch(t *testing.T) {
 			nd := nb.Build()
 
 			pol := MustConstruct(GreaterThanOrEqual(".", literal.Int(1)))
-			ok := Match(pol, nd)
+			ok := pol.Match(nd)
 			require.True(t, ok)
 
 			pol = MustConstruct(GreaterThanOrEqual(".", literal.Int(138)))
-			ok = Match(pol, nd)
+			ok = pol.Match(nd)
 			require.True(t, ok)
 		})
 
@@ -173,7 +173,7 @@ func TestMatch(t *testing.T) {
 			nd := nb.Build()
 
 			pol := MustConstruct(GreaterThan(".", literal.Float(1)))
-			ok := Match(pol, nd)
+			ok := pol.Match(nd)
 			require.True(t, ok)
 		})
 
@@ -184,11 +184,11 @@ func TestMatch(t *testing.T) {
 			nd := nb.Build()
 
 			pol := MustConstruct(GreaterThanOrEqual(".", literal.Float(1)))
-			ok := Match(pol, nd)
+			ok := pol.Match(nd)
 			require.True(t, ok)
 
 			pol = MustConstruct(GreaterThanOrEqual(".", literal.Float(1.38)))
-			ok = Match(pol, nd)
+			ok = pol.Match(nd)
 			require.True(t, ok)
 		})
 
@@ -199,7 +199,7 @@ func TestMatch(t *testing.T) {
 			nd := nb.Build()
 
 			pol := MustConstruct(LessThan(".", literal.Int(1138)))
-			ok := Match(pol, nd)
+			ok := pol.Match(nd)
 			require.True(t, ok)
 		})
 
@@ -210,11 +210,11 @@ func TestMatch(t *testing.T) {
 			nd := nb.Build()
 
 			pol := MustConstruct(LessThanOrEqual(".", literal.Int(1138)))
-			ok := Match(pol, nd)
+			ok := pol.Match(nd)
 			require.True(t, ok)
 
 			pol = MustConstruct(LessThanOrEqual(".", literal.Int(138)))
-			ok = Match(pol, nd)
+			ok = pol.Match(nd)
 			require.True(t, ok)
 		})
 	})
@@ -226,11 +226,11 @@ func TestMatch(t *testing.T) {
 		nd := nb.Build()
 
 		pol := MustConstruct(Not(Equal(".", literal.Bool(true))))
-		ok := Match(pol, nd)
+		ok := pol.Match(nd)
 		require.True(t, ok)
 
 		pol = MustConstruct(Not(Equal(".", literal.Bool(false))))
-		ok = Match(pol, nd)
+		ok = pol.Match(nd)
 		require.False(t, ok)
 	})
 
@@ -246,7 +246,7 @@ func TestMatch(t *testing.T) {
 				LessThan(".", literal.Int(1138)),
 			),
 		)
-		ok := Match(pol, nd)
+		ok := pol.Match(nd)
 		require.True(t, ok)
 
 		pol = MustConstruct(
@@ -255,11 +255,11 @@ func TestMatch(t *testing.T) {
 				Equal(".", literal.Int(1138)),
 			),
 		)
-		ok = Match(pol, nd)
+		ok = pol.Match(nd)
 		require.False(t, ok)
 
 		pol = MustConstruct(And())
-		ok = Match(pol, nd)
+		ok = pol.Match(nd)
 		require.True(t, ok)
 	})
 
@@ -275,7 +275,7 @@ func TestMatch(t *testing.T) {
 				LessThan(".", literal.Int(1138)),
 			),
 		)
-		ok := Match(pol, nd)
+		ok := pol.Match(nd)
 		require.True(t, ok)
 
 		pol = MustConstruct(
@@ -284,11 +284,11 @@ func TestMatch(t *testing.T) {
 				Equal(".", literal.Int(1138)),
 			),
 		)
-		ok = Match(pol, nd)
+		ok = pol.Match(nd)
 		require.False(t, ok)
 
 		pol = MustConstruct(Or())
-		ok = Match(pol, nd)
+		ok = pol.Match(nd)
 		require.True(t, ok)
 	})
 
@@ -309,7 +309,7 @@ func TestMatch(t *testing.T) {
 					nd := nb.Build()
 
 					pol := MustConstruct(Like(".", pattern))
-					ok := Match(pol, nd)
+					ok := pol.Match(nd)
 					require.True(t, ok)
 				})
 			}(s)
@@ -330,7 +330,7 @@ func TestMatch(t *testing.T) {
 					nd := nb.Build()
 
 					pol := MustConstruct(Like(".", pattern))
-					ok := Match(pol, nd)
+					ok := pol.Match(nd)
 					require.False(t, ok)
 				})
 			}(s)
@@ -361,11 +361,11 @@ func TestMatch(t *testing.T) {
 			nd := nb.Build()
 
 			pol := MustConstruct(All(".[]", GreaterThan(".value", literal.Int(2))))
-			ok := Match(pol, nd)
+			ok := pol.Match(nd)
 			require.True(t, ok)
 
 			pol = MustConstruct(All(".[]", GreaterThan(".value", literal.Int(20))))
-			ok = Match(pol, nd)
+			ok = pol.Match(nd)
 			require.False(t, ok)
 		})
 
@@ -382,11 +382,11 @@ func TestMatch(t *testing.T) {
 			nd := nb.Build()
 
 			pol := MustConstruct(Any(".[]", GreaterThan(".value", literal.Int(60))))
-			ok := Match(pol, nd)
+			ok := pol.Match(nd)
 			require.True(t, ok)
 
 			pol = MustConstruct(Any(".[]", GreaterThan(".value", literal.Int(100))))
-			ok = Match(pol, nd)
+			ok = pol.Match(nd)
 			require.False(t, ok)
 		})
 	})
@@ -405,7 +405,7 @@ func TestPolicyExamples(t *testing.T) {
 
 		pol, err := FromDagJson(policy)
 		require.NoError(t, err)
-		return Match(pol, data)
+		return pol.Match(data)
 	}
 
 	t.Run("And", func(t *testing.T) {
@@ -509,6 +509,6 @@ func FuzzMatch(f *testing.F) {
 			t.Skip()
 		}
 
-		Match(policy, dataNode)
+		policy.Match(dataNode)
 	})
 }

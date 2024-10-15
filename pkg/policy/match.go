@@ -12,8 +12,8 @@ import (
 )
 
 // Match determines if the IPLD node matches the policy document.
-func Match(policy Policy, node ipld.Node) bool {
-	for _, stmt := range policy {
+func (p Policy) Match(node datamodel.Node) bool {
+	for _, stmt := range p {
 		ok := matchStatement(stmt, node)
 		if !ok {
 			return false
