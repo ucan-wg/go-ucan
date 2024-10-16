@@ -431,6 +431,32 @@ func TestSelect(t *testing.T) {
 	})
 }
 
+func TestMatch(t *testing.T) {
+	for _, tc := range []struct {
+		sel       string
+		path      []string
+		want      bool
+		remaining []string
+	}{
+		{sel: ".foo.bar", path: []string{"foo", "bar"}, want: true, remaining: []string{}},
+		{sel: ".foo.bar", path: []string{"foo"}, want: true, remaining: []string{}},
+		{sel: ".foo.bar", path: []string{"foo", "bar", "baz"}, want: true, remaining: []string{"baz"}},
+		{sel: ".foo.bar", path: []string{"foo", "faa"}, want: false},
+		{sel: ".foo.[]", path: []string{"foo", "faa"}, want: false},
+		{sel: ".foo.[]", path: []string{"foo"}, want: true, remaining: []string{}},
+		{sel: ".foo.bar?", path: []string{"foo"}, want: true, remaining: []string{}},
+		{sel: ".foo.bar?", path: []string{"foo", "bar"}, want: true, remaining: []string{}},
+		{sel: ".foo.bar?", path: []string{"foo", "baz"}, want: false},
+	} {
+		t.Run(tc.sel, func(t *testing.T) {
+			sel := MustParse(tc.sel)
+			res, remain := sel.MatchPath(tc.path...)
+			require.Equal(t, tc.want, res)
+			require.EqualValues(t, tc.remaining, remain)
+		})
+	}
+}
+
 func FuzzParse(f *testing.F) {
 	selectorCorpus := []string{
 		`.`, `.[]`, `.[]?`, `.[][]?`, `.x`, `.["x"]`, `.[0]`, `.[-1]`, `.[0]`,

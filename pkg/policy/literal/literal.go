@@ -1,3 +1,4 @@
+// Package literal holds a collection of functions to create IPLD types to use in policies, selector and args.
 package literal
 
 import (

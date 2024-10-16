@@ -2,11 +2,17 @@ package selector
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 )
 
-var identity = Selector{segment{".", true, false, false, nil, "", 0}}
+var (
+	identity   = Selector{segment{str: ".", identity: true}}
+	indexRegex = regexp.MustCompile(`^-?\d+$`)
+	sliceRegex = regexp.MustCompile(`^((\-?\d+:\-?\d*)|(\-?\d*:\-?\d+))$`)
+	fieldRegex = regexp.MustCompile(`^\.[a-zA-Z_]*?$`)
+)
 
 func Parse(str string) (Selector, error) {
 	if len(str) == 0 {
@@ -32,9 +38,9 @@ func Parse(str string) (Selector, error) {
 			if len(sel) > 0 && sel[len(sel)-1].Identity() {
 				return nil, newParseError("selector contains unsupported recursive descent segment: '..'", str, col, tok)
 			}
-			sel = append(sel, segment{".", true, false, false, nil, "", 0})
+			sel = append(sel, segment{str: ".", identity: true})
 		case "[]":
-			sel = append(sel, segment{tok, false, opt, true, nil, "", 0})
+			sel = append(sel, segment{str: tok, optional: opt, iterator: true})
 		default:
 			if strings.HasPrefix(seg, "[") && strings.HasSuffix(seg, "]") {
 				lookup := seg[1 : len(seg)-1]
