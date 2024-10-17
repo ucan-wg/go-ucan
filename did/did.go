@@ -10,10 +10,18 @@ import (
 	varint "github.com/multiformats/go-varint"
 )
 
-const Ed25519 = multicodec.Ed25519Pub // recommended
-const P256 = multicodec.P256Pub
-const Secp256k1 = multicodec.Secp256k1Pub
-const RSA = multicodec.RsaPub
+// Signature algorithms from the [did:key specification]
+//
+// [did:key specification]: https://w3c-ccg.github.io/did-method-key/#signature-method-creation-algorithm
+const (
+	X25519    = multicodec.X25519Pub
+	Ed25519   = multicodec.Ed25519Pub // UCAN required/recommended
+	P256      = multicodec.P256Pub    // UCAN required
+	P384      = multicodec.P384Pub
+	P521      = multicodec.P521Pub
+	Secp256k1 = multicodec.Secp256k1Pub // UCAN required
+	RSA       = multicodec.RsaPub
+)
 
 // Undef can be used to represent a nil or undefined DID, using DID{}
 // directly is also acceptable.
@@ -65,10 +73,14 @@ func (d DID) Defined() bool {
 	return d.code == 0 || len(d.bytes) > 0
 }
 
+// PubKey returns the public key encapsulated in the did:key.
 func (d DID) PubKey() (crypto.PubKey, error) {
 	unmarshaler, ok := map[multicodec.Code]crypto.PubKeyUnmarshaller{
+		X25519:    crypto.UnmarshalEd25519PublicKey,
 		Ed25519:   crypto.UnmarshalEd25519PublicKey,
 		P256:      crypto.UnmarshalECDSAPublicKey,
+		P384:      crypto.UnmarshalECDSAPublicKey,
+		P521:      crypto.UnmarshalECDSAPublicKey,
 		Secp256k1: crypto.UnmarshalSecp256k1PublicKey,
 		RSA:       crypto.UnmarshalRsaPublicKey,
 	}[d.code]
