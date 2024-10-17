@@ -1,6 +1,9 @@
 package did
 
 import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/x509"
 	"fmt"
 	"strings"
 
@@ -34,6 +37,10 @@ type DID struct {
 	bytes string // as string instead of []byte to allow the == operator
 }
 
+// Parse returns the DID from the string representation or an error if
+// the prefix and method are incorrect, if an unknown encryption algorithm
+// is specified or if the method-specific-identifier's bytes don't
+// represent a public key for the specified encryption algorithm.
 func Parse(str string) (DID, error) {
 	const keyPrefix = "did:key:"
 
@@ -60,6 +67,7 @@ func Parse(str string) (DID, error) {
 	}
 }
 
+// MustParse is like Parse but panics instead of returning an error.
 func MustParse(str string) DID {
 	did, err := Parse(str)
 	if err != nil {
@@ -73,16 +81,16 @@ func (d DID) Defined() bool {
 	return d.code == 0 || len(d.bytes) > 0
 }
 
-// PubKey returns the public key encapsulated in the did:key.
+// PubKey returns the public key encapsulated by the did:key.
 func (d DID) PubKey() (crypto.PubKey, error) {
 	unmarshaler, ok := map[multicodec.Code]crypto.PubKeyUnmarshaller{
 		X25519:    crypto.UnmarshalEd25519PublicKey,
 		Ed25519:   crypto.UnmarshalEd25519PublicKey,
-		P256:      crypto.UnmarshalECDSAPublicKey,
-		P384:      crypto.UnmarshalECDSAPublicKey,
-		P521:      crypto.UnmarshalECDSAPublicKey,
+		P256:      ecdsaPubKeyUnmarshaler(elliptic.P256()),
+		P384:      ecdsaPubKeyUnmarshaler(elliptic.P384()),
+		P521:      ecdsaPubKeyUnmarshaler(elliptic.P521()),
 		Secp256k1: crypto.UnmarshalSecp256k1PublicKey,
-		RSA:       crypto.UnmarshalRsaPublicKey,
+		RSA:       rsaPubKeyUnmarshaller,
 	}[d.code]
 	if !ok {
 		return nil, fmt.Errorf("unsupported multicodec: %d", d.code)
@@ -96,4 +104,37 @@ func (d DID) PubKey() (crypto.PubKey, error) {
 func (d DID) String() string {
 	key, _ := mbase.Encode(mbase.Base58BTC, []byte(d.bytes))
 	return "did:key:" + key
+}
+
+func ecdsaPubKeyUnmarshaler(curve elliptic.Curve) crypto.PubKeyUnmarshaller {
+	return func(data []byte) (crypto.PubKey, error) {
+		x, y := elliptic.UnmarshalCompressed(curve, data)
+
+		ecdsaPublicKey := &ecdsa.PublicKey{
+			Curve: curve,
+			X:     x,
+			Y:     y,
+		}
+
+		pkix, err := x509.MarshalPKIXPublicKey(ecdsaPublicKey)
+		if err != nil {
+			return nil, err
+		}
+
+		return crypto.UnmarshalECDSAPublicKey(pkix)
+	}
+}
+
+func rsaPubKeyUnmarshaller(data []byte) (crypto.PubKey, error) {
+	rsaPublicKey, err := x509.ParsePKCS1PublicKey(data)
+	if err != nil {
+		return nil, err
+	}
+
+	pkix, err := x509.MarshalPKIXPublicKey(rsaPublicKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return crypto.UnmarshalRsaPublicKey(pkix)
 }

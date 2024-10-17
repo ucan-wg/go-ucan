@@ -27,6 +27,10 @@ func TestFromPubKey(t *testing.T) {
 	require.NoError(t, err)
 	_, ecdsaP521, err := crypto.GenerateECDSAKeyPairWithCurve(elliptic.P521(), rand.Reader)
 	require.NoError(t, err)
+	_, ed25519, err := crypto.GenerateEd25519Key(rand.Reader)
+	require.NoError(t, err)
+	_, rsa, err := crypto.GenerateRSAKeyPair(2048, rand.Reader)
+	require.NoError(t, err)
 	_, secp256k1PubKey1, err := crypto.GenerateSecp256k1Key(rand.Reader)
 	require.NoError(t, err)
 
@@ -47,7 +51,9 @@ func TestFromPubKey(t *testing.T) {
 	t.Run("ECDSA with P256 curve", test(ecdsaP256, did.P256))
 	t.Run("ECDSA with P384 curve", test(ecdsaP384, did.P384))
 	t.Run("ECDSA with P521 curve", test(ecdsaP521, did.P521))
-	t.Run("With secp256k1 (secp256k1)", test(secp256k1PubKey1, did.Secp256k1))
+	t.Run("Ed25519", test(ed25519, did.Ed25519))
+	t.Run("RSA", test(rsa, did.RSA))
+	t.Run("secp256k1", test(secp256k1PubKey1, did.Secp256k1))
 
 	id, err := did.FromPubKey(examplePubKey(t))
 	require.NoError(t, err)

@@ -4,6 +4,8 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
 	"errors"
 	"fmt"
 
@@ -84,6 +86,8 @@ func GenerateECDSAWithCurve(code multicodec.Code) (crypto.PrivKey, DID, error) {
 
 }
 
+// FromPrivKey is a convenience function that returns the DID associated
+// with the public key associated with the provided private key.
 func FromPrivKey(privKey crypto.PrivKey) (DID, error) {
 	return FromPubKey(privKey.GetPublic())
 }
@@ -117,17 +121,53 @@ func FromPubKey(pubKey crypto.PubKey) (DID, error) {
 		}
 	}
 
-	pubBytes, err := pubKey.Raw()
-	if err != nil {
-		return Undef, err
+	var bytes []byte
+
+	switch pubKey.Type() {
+	case pb.KeyType_ECDSA:
+		pkix, err := pubKey.Raw()
+		if err != nil {
+			return Undef, err
+		}
+
+		publicKey, err := x509.ParsePKIXPublicKey(pkix)
+		if err != nil {
+			return Undef, err
+		}
+
+		ecdsaPublicKey := publicKey.(*ecdsa.PublicKey)
+
+		bytes = elliptic.MarshalCompressed(ecdsaPublicKey.Curve, ecdsaPublicKey.X, ecdsaPublicKey.Y)
+	case pb.KeyType_Ed25519, pb.KeyType_Secp256k1:
+		var err error
+
+		if bytes, err = pubKey.Raw(); err != nil {
+			return Undef, err
+		}
+	case pb.KeyType_RSA:
+		var err error
+
+		pkix, err := pubKey.Raw()
+		if err != nil {
+			return Undef, err
+		}
+
+		publicKey, err := x509.ParsePKIXPublicKey(pkix)
+		if err != nil {
+			return Undef, err
+		}
+
+		bytes = x509.MarshalPKCS1PublicKey(publicKey.(*rsa.PublicKey))
 	}
 
 	return DID{
 		code:  code,
-		bytes: string(append(varint.ToUvarint(uint64(code)), pubBytes...)),
+		bytes: string(append(varint.ToUvarint(uint64(code)), bytes...)),
 	}, nil
 }
 
+// ToPubKey returns the crypto.PubKey encapsulated in the DID formed by
+// parsing the provided string.
 func ToPubKey(s string) (crypto.PubKey, error) {
 	id, err := Parse(s)
 	if err != nil {
