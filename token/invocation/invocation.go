@@ -18,6 +18,7 @@ import (
 	"github.com/ucan-wg/go-ucan/pkg/args"
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/meta"
+	"github.com/ucan-wg/go-ucan/token/delegation"
 	"github.com/ucan-wg/go-ucan/token/internal/nonce"
 	"github.com/ucan-wg/go-ucan/token/internal/parse"
 )
@@ -33,11 +34,12 @@ type Token struct {
 
 	// The Command
 	command command.Command
-	// The Command's Arguments
+	// The Command's arguments
 	arguments *args.Args
-	// Delegations that prove the chain of authority
+	// CIDs of the delegation.Token that prove the chain of authority
+	// They need to form a strictly linear chain, and being ordered starting from the root Delegation (issued by the Subject),
+	// in a strict sequence where the aud of the previous Delegation matches the iss of the next Delegation.
 	proof []cid.Cid
-
 	// Arbitrary Metadata
 	meta *meta.Meta
 
@@ -98,6 +100,22 @@ func New(iss, sub did.DID, cmd command.Command, prf []cid.Cid, opts ...Option) (
 	return &tkn, nil
 }
 
+type DelegationLoader interface {
+	GetDelegation(cid cid.Cid) (*delegation.Token, error)
+}
+
+func (t *Token) ExecutionAllowed(loader DelegationLoader) bool {
+	return t.executionAllowed(loader, t.arguments)
+}
+
+func (t *Token) ExecutionAllowedWithArgsHook(loader DelegationLoader, hook func(*args.Args) *args.Args) bool {
+	return t.executionAllowed(loader, hook(t.arguments))
+}
+
+func (t *Token) executionAllowed(loader DelegationLoader, arguments *args.Args) bool {
+	panic("TODO")
+}
+
 // Issuer returns the did.DID representing the Token's issuer.
 func (t *Token) Issuer() did.DID {
 	return t.issuer
@@ -155,6 +173,21 @@ func (t *Token) InvokedAt() *time.Time {
 // which describes the Receipt that requested the invocation.
 func (t *Token) Cause() *cid.Cid {
 	return t.cause
+}
+
+// IsValidNow verifies that the token can be used at the current time, based on expiration or "not before" fields.
+// This does NOT do any other kind of verifications.
+func (t *Token) IsValidNow() bool {
+	return t.IsValidAt(time.Now())
+}
+
+// IsValidNow verifies that the token can be used at the given time, based on expiration or "not before" fields.
+// This does NOT do any other kind of verifications.
+func (t *Token) IsValidAt(ti time.Time) bool {
+	if t.expiration == nil && ti.After(*t.expiration) {
+		return false
+	}
+	return true
 }
 
 func (t *Token) validate() error {

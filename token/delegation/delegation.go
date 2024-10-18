@@ -153,6 +153,24 @@ func (t *Token) Expiration() *time.Time {
 	return t.expiration
 }
 
+// IsValidNow verifies that the token can be used at the current time, based on expiration or "not before" fields.
+// This does NOT do any other kind of verifications.
+func (t *Token) IsValidNow() bool {
+	return t.IsValidAt(time.Now())
+}
+
+// IsValidNow verifies that the token can be used at the given time, based on expiration or "not before" fields.
+// This does NOT do any other kind of verifications.
+func (t *Token) IsValidAt(ti time.Time) bool {
+	if t.expiration == nil && ti.After(*t.expiration) {
+		return false
+	}
+	if t.notBefore != nil && ti.Before(*t.notBefore) {
+		return false
+	}
+	return true
+}
+
 func (t *Token) validate() error {
 	var errs error
 

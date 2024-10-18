@@ -2,11 +2,11 @@ package token
 
 import (
 	"io"
+	"time"
 
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime/codec"
 	"github.com/libp2p/go-libp2p/core/crypto"
-
 	"github.com/ucan-wg/go-ucan/did"
 	"github.com/ucan-wg/go-ucan/pkg/meta"
 )
@@ -18,6 +18,19 @@ type Token interface {
 	Issuer() did.DID
 	// Meta returns the Token's metadata.
 	Meta() meta.ReadOnly
+	// TODO: not sure we actually need that interface
+
+	// IsValidNow verifies that the token can be used at the current time, based on expiration or "not before" fields.
+	// This does NOT do any other kind of verifications.
+	IsValidNow() bool
+	// IsValidNow verifies that the token can be used at the given time, based on expiration or "not before" fields.
+	// This does NOT do any other kind of verifications.
+	IsValidAt(t time.Time) bool
+
+	// 	// Issuer returns the did.DID representing the Token's issuer.
+	// 	Issuer() did.DID
+	// 	// Meta returns the Token's metadata.
+	// 	Meta() *meta.Meta
 }
 
 type Marshaller interface {

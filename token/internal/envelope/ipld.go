@@ -187,8 +187,7 @@ func FromIPLD[T Tokener](node datamodel.Node) (T, error) {
 		return zero, errors.New("the VarsigHeader key type doesn't match the issuer's key type")
 	}
 
-	// TODO: this re-encode the payload! Is there a less wasteful way?
-
+	// TODO: can we use the already serialized CBOR data here, instead of encoding again the payload?
 	data, err := ipld.Encode(info.sigPayloadNode, dagcbor.Encode)
 	if err != nil {
 		return zero, err
