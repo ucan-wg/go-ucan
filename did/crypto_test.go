@@ -5,7 +5,9 @@ import (
 	"crypto/rand"
 	"testing"
 
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/libp2p/go-libp2p/core/crypto"
+	"github.com/libp2p/go-libp2p/core/crypto/pb"
 	"github.com/multiformats/go-multicodec"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -26,6 +28,8 @@ func TestFromPubKey(t *testing.T) {
 	_, ecdsaP384, err := crypto.GenerateECDSAKeyPairWithCurve(elliptic.P384(), rand.Reader)
 	require.NoError(t, err)
 	_, ecdsaP521, err := crypto.GenerateECDSAKeyPairWithCurve(elliptic.P521(), rand.Reader)
+	require.NoError(t, err)
+	_, ecdsaSecp256k1, err := crypto.GenerateECDSAKeyPairWithCurve(secp256k1.S256(), rand.Reader)
 	require.NoError(t, err)
 	_, ed25519, err := crypto.GenerateEd25519Key(rand.Reader)
 	require.NoError(t, err)
@@ -55,9 +59,23 @@ func TestFromPubKey(t *testing.T) {
 	t.Run("RSA", test(rsa, did.RSA))
 	t.Run("secp256k1", test(secp256k1PubKey1, did.Secp256k1))
 
-	id, err := did.FromPubKey(examplePubKey(t))
-	require.NoError(t, err)
-	require.Equal(t, exampleDID(t), id)
+	t.Run("ECDSA with secp256k1 curve (coerced)", func(t *testing.T) {
+		t.Parallel()
+
+		id, err := did.FromPubKey(ecdsaSecp256k1)
+		require.NoError(t, err)
+		p, err := id.PubKey()
+		require.NoError(t, err)
+		require.Equal(t, pb.KeyType_Secp256k1, p.Type())
+	})
+
+	t.Run("unmarshaled example key (secp256k1)", func(t *testing.T) {
+		t.Parallel()
+
+		id, err := did.FromPubKey(examplePubKey(t))
+		require.NoError(t, err)
+		require.Equal(t, exampleDID(t), id)
+	})
 }
 
 func TestToPubKey(t *testing.T) {
