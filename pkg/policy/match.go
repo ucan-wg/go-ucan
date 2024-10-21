@@ -121,15 +121,38 @@ func matchStatement(statement Statement, node ipld.Node) bool {
 		}
 	case KindAll:
 		if s, ok := statement.(quantifier); ok {
-			_, many, err := s.selector.Select(node)
-			if err != nil || len(many) == 0 {
+			one, many, err := s.selector.Select(node)
+			if err != nil {
 				return false
 			}
 
-			for _, n := range many {
-				ok := matchStatement(s.statement, n)
-				if !ok {
-					return false
+			if one != nil {
+				it := one.ListIterator()
+				if it != nil {
+					for !it.Done() {
+						_, v, err := it.Next()
+						if err != nil {
+							return false
+						}
+						ok := matchStatement(s.statement, v)
+						if !ok {
+							return false
+						}
+					}
+				} else {
+					ok := matchStatement(s.statement, one)
+					if !ok {
+						return false
+					}
+				}
+			}
+
+			if len(many) > 0 {
+				for _, n := range many {
+					ok := matchStatement(s.statement, n)
+					if !ok {
+						return false
+					}
 				}
 			}
 
