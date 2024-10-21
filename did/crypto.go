@@ -79,11 +79,9 @@ func GenerateECDSAWithCurve(code multicodec.Code) (crypto.PrivKey, DID, error) {
 		return nil, Undef, err
 	}
 
-	_ = priv
-	_ = pub
+	did, err := FromPubKey(pub)
 
-	return nil, Undef, nil // TODO
-
+	return priv, did, err
 }
 
 // FromPrivKey is a convenience function that returns the DID associated
