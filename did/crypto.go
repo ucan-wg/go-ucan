@@ -28,7 +28,7 @@ func GenerateEd25519() (crypto.PrivKey, DID, error) {
 }
 
 // GenerateRSA generates a RSA private key and the matching DID.
-func GenerateSecp256k1() (crypto.PrivKey, DID, error) {
+func GenerateRSA() (crypto.PrivKey, DID, error) {
 	// NIST Special Publication 800-57 Part 1 Revision 5
 	// Section 5.6.1.1 (Table 2)
 	// Paraphrased: 2048-bit RSA keys are secure until 2030 and 3072-bit keys are recommended for longer-term security.
@@ -43,7 +43,7 @@ func GenerateSecp256k1() (crypto.PrivKey, DID, error) {
 }
 
 // GenerateEd25519 generates a Secp256k1 private key and the matching DID.
-func GenerateRSA() (crypto.PrivKey, DID, error) {
+func GenerateSecp256k1() (crypto.PrivKey, DID, error) {
 	priv, pub, err := crypto.GenerateSecp256k1Key(rand.Reader)
 	if err != nil {
 		return nil, Undef, nil
