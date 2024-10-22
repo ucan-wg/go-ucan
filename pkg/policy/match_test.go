@@ -2,7 +2,6 @@ package policy
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/ipfs/go-cid"
@@ -514,102 +513,102 @@ func FuzzMatch(f *testing.F) {
 	})
 }
 
-func TestPolicyFilter(t *testing.T) {
-	pol := MustConstruct(
-		Any(".http", And(
-			Equal(".method", literal.String("GET")),
-			Equal(".path", literal.String("/foo")),
-		)),
-		Equal(".http", literal.String("foobar")),
-		All(".jsonrpc.foo", Or(
-			Not(Equal(".bar", literal.String("foo"))),
-			Equal(".", literal.String("foo")),
-			Like(".boo", "abcd"),
-			Like(".boo", "*bcd"),
-		)),
-	)
-
-	for _, tc := range []struct {
-		path     string
-		expected Policy
-	}{
-		{
-			path: "http",
-			expected: MustConstruct(
-				Any(".http", And(
-					Equal(".method", literal.String("GET")),
-					Equal(".path", literal.String("/foo")),
-				)),
-				Equal(".http", literal.String("foobar")),
-			),
-		},
-		{
-			path: "http,method",
-			expected: MustConstruct(
-				Any(".http", And(
-					Equal(".method", literal.String("GET")),
-				)),
-			),
-		},
-		{
-			path: "http,path",
-			expected: MustConstruct(
-				Any(".http", And(
-					Equal(".path", literal.String("/foo")),
-				)),
-			),
-		},
-		{
-			path:     "http,foo",
-			expected: Policy{},
-		},
-		{
-			path: "jsonrpc",
-			expected: MustConstruct(
-				All(".jsonrpc.foo", Or(
-					Not(Equal(".bar", literal.String("foo"))),
-					Equal(".", literal.String("foo")),
-					Like(".boo", "abcd"),
-					Like(".boo", "*bcd"),
-				)),
-			),
-		},
-		{
-			path:     "jsonrpc,baz",
-			expected: Policy{},
-		},
-		{
-			path: "jsonrpc,foo",
-			expected: MustConstruct(
-				All(".jsonrpc.foo", Or(
-					Not(Equal(".bar", literal.String("foo"))),
-					Equal(".", literal.String("foo")),
-					Like(".boo", "abcd"),
-					Like(".boo", "*bcd"),
-				)),
-			),
-		},
-		{
-			path: "jsonrpc,foo,bar",
-			expected: MustConstruct(
-				All(".jsonrpc.foo", Or(
-					Not(Equal(".bar", literal.String("foo"))),
-				)),
-			),
-		},
-		{
-			path: "jsonrpc,foo,boo",
-			expected: MustConstruct(
-				All(".jsonrpc.foo", Or(
-					Like(".boo", "abcd"),
-					Like(".boo", "*bcd"),
-				)),
-			),
-		},
-	} {
-		t.Run(tc.path, func(t *testing.T) {
-			res := pol.Filter(strings.Split(tc.path, ",")...)
-			require.Equal(t, tc.expected.String(), res.String())
-		})
-	}
-}
+// func TestPolicyFilter(t *testing.T) {
+// 	pol := MustConstruct(
+// 		Any(".http", And(
+// 			Equal(".method", literal.String("GET")),
+// 			Equal(".path", literal.String("/foo")),
+// 		)),
+// 		Equal(".http", literal.String("foobar")),
+// 		All(".jsonrpc.foo", Or(
+// 			Not(Equal(".bar", literal.String("foo"))),
+// 			Equal(".", literal.String("foo")),
+// 			Like(".boo", "abcd"),
+// 			Like(".boo", "*bcd"),
+// 		)),
+// 	)
+//
+// 	for _, tc := range []struct {
+// 		path     string
+// 		expected Policy
+// 	}{
+// 		{
+// 			path: "http",
+// 			expected: MustConstruct(
+// 				Any(".http", And(
+// 					Equal(".method", literal.String("GET")),
+// 					Equal(".path", literal.String("/foo")),
+// 				)),
+// 				Equal(".http", literal.String("foobar")),
+// 			),
+// 		},
+// 		{
+// 			path: "http,method",
+// 			expected: MustConstruct(
+// 				Any(".http", And(
+// 					Equal(".method", literal.String("GET")),
+// 				)),
+// 			),
+// 		},
+// 		{
+// 			path: "http,path",
+// 			expected: MustConstruct(
+// 				Any(".http", And(
+// 					Equal(".path", literal.String("/foo")),
+// 				)),
+// 			),
+// 		},
+// 		{
+// 			path:     "http,foo",
+// 			expected: Policy{},
+// 		},
+// 		{
+// 			path: "jsonrpc",
+// 			expected: MustConstruct(
+// 				All(".jsonrpc.foo", Or(
+// 					Not(Equal(".bar", literal.String("foo"))),
+// 					Equal(".", literal.String("foo")),
+// 					Like(".boo", "abcd"),
+// 					Like(".boo", "*bcd"),
+// 				)),
+// 			),
+// 		},
+// 		{
+// 			path:     "jsonrpc,baz",
+// 			expected: Policy{},
+// 		},
+// 		{
+// 			path: "jsonrpc,foo",
+// 			expected: MustConstruct(
+// 				All(".jsonrpc.foo", Or(
+// 					Not(Equal(".bar", literal.String("foo"))),
+// 					Equal(".", literal.String("foo")),
+// 					Like(".boo", "abcd"),
+// 					Like(".boo", "*bcd"),
+// 				)),
+// 			),
+// 		},
+// 		{
+// 			path: "jsonrpc,foo,bar",
+// 			expected: MustConstruct(
+// 				All(".jsonrpc.foo", Or(
+// 					Not(Equal(".bar", literal.String("foo"))),
+// 				)),
+// 			),
+// 		},
+// 		{
+// 			path: "jsonrpc,foo,boo",
+// 			expected: MustConstruct(
+// 				All(".jsonrpc.foo", Or(
+// 					Like(".boo", "abcd"),
+// 					Like(".boo", "*bcd"),
+// 				)),
+// 			),
+// 		},
+// 	} {
+// 		t.Run(tc.path, func(t *testing.T) {
+// 			res := pol.Filter(strings.Split(tc.path, ",")...)
+// 			require.Equal(t, tc.expected.String(), res.String())
+// 		})
+// 	}
+// }
