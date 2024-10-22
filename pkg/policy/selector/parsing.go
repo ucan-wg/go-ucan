@@ -25,6 +25,9 @@ func Parse(str string) (Selector, error) {
 	if str == "." {
 		return identity, nil
 	}
+	if str == ".?" {
+		return Selector{segment{str: ".?", identity: true, optional: true}}, nil
+	}
 
 	col := 0
 	var sel Selector
@@ -32,7 +35,7 @@ func Parse(str string) (Selector, error) {
 		seg := tok
 		opt := strings.HasSuffix(tok, "?")
 		if opt {
-			seg = tok[0 : len(tok)-1]
+			seg = strings.TrimRight(tok, "?")
 		}
 		switch {
 		case seg == ".":
