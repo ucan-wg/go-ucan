@@ -263,6 +263,10 @@ func FuzzParseAndSelect(f *testing.F) {
 		}
 
 		// look for panic()
-		_, _ = sel.Select(node)
+		_, err = sel.Select(node)
+		if err != nil && !IsResolutionErr(err) {
+			// not normal, we should only have resolution errors
+			t.Fatal(err)
+		}
 	})
 }

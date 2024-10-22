@@ -21,9 +21,8 @@ type Selector []segment
 // Select perform the selection described by the selector on the input IPLD DAG.
 // Select can return:
 //   - exactly one matched IPLD node
-//   - an error that can be checked with IsResolutionErr(err) to distinguish not being able to resolve to a node,
-//     or another type of error.
-//   - nil and no error, if the selector couldn't match on an optional segment (with ?).
+//   - a resolutionerr error if not being able to resolve to a node
+//   - nil and no errors, if the selector couldn't match on an optional segment (with ?).
 func (s Selector) Select(subject ipld.Node) (ipld.Node, error) {
 	return resolve(s, subject, nil)
 }
@@ -108,8 +107,8 @@ func resolve(sel Selector, subject ipld.Node, at []string) (ipld.Node, error) {
 			case cur == nil || cur.Kind() == datamodel.Kind_Null:
 				if seg.Optional() {
 					// build an empty list
-					n, err := qp.BuildList(basicnode.Prototype.Any, 0, func(_ datamodel.ListAssembler) {})
-					return n, err
+					n, _ := qp.BuildList(basicnode.Prototype.Any, 0, func(_ datamodel.ListAssembler) {})
+					return n, nil
 				}
 				return nil, newResolutionError(fmt.Sprintf("can not iterate over kind: %s", kindString(cur)), at)
 
@@ -119,16 +118,24 @@ func resolve(sel Selector, subject ipld.Node, at []string) (ipld.Node, error) {
 
 			case cur.Kind() == datamodel.Kind_Map:
 				// iterators on maps collect the values
-				return qp.BuildList(basicnode.Prototype.Any, cur.Length(), func(l datamodel.ListAssembler) {
+				nd, err := qp.BuildList(basicnode.Prototype.Any, cur.Length(), func(l datamodel.ListAssembler) {
 					it := cur.MapIterator()
 					for !it.Done() {
 						_, v, err := it.Next()
 						if err != nil {
-							panic(err) // recovered by BuildList
+							// recovered by BuildList
+							// Error is bubbled up, but should never occur as we already checked the type,
+							// and are using the iterator correctly.
+							// This is verified with fuzzing.
+							panic(err)
 						}
 						qp.ListEntry(l, qp.Node(v))
 					}
 				})
+				if err != nil {
+					panic("should never happen")
+				}
+				return nd, nil
 
 			default:
 				return nil, newResolutionError(fmt.Sprintf("can not iterate over kind: %s", kindString(cur)), at)
@@ -144,9 +151,7 @@ func resolve(sel Selector, subject ipld.Node, at []string) (ipld.Node, error) {
 			case cur.Kind() == datamodel.Kind_Map:
 				n, err := cur.LookupByString(seg.Field())
 				if err != nil {
-					if !isMissing(err) {
-						return nil, err
-					}
+					// the only possible error is missing field as we already check the type
 					if seg.Optional() {
 						cur = nil
 					} else {
@@ -187,7 +192,7 @@ func resolve(sel Selector, subject ipld.Node, at []string) (ipld.Node, error) {
 				return nil, newResolutionError(fmt.Sprintf("can not slice on kind: %s", kindString(cur)), at)
 			}
 
-			if start < 0 || end < start || end > length {
+			if start < 0 || end < start || end >= length {
 				err := newResolutionError(fmt.Sprintf("slice out of bounds: [%d:%d]", start, end), at)
 				return nil, errIfNotOptional(seg, err)
 			}
@@ -198,13 +203,16 @@ func resolve(sel Selector, subject ipld.Node, at []string) (ipld.Node, error) {
 					for i := start; i <= end; i++ {
 						item, err := cur.LookupByIndex(i)
 						if err != nil {
-							panic(err) // recovered by BuildList
+							// recovered by BuildList
+							// Error is bubbled up, but should never occur as we already checked the type and boundaries
+							// This is verified with fuzzing.
+							panic(err)
 						}
 						qp.ListEntry(l, qp.Node(item))
 					}
 				})
 				if err != nil {
-					return nil, errIfNotOptional(seg, err)
+					panic("should never happen")
 				}
 				cur = sliced
 			case datamodel.Kind_Bytes:

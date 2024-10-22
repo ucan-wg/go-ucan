@@ -38,54 +38,43 @@ func matchStatement(statement Statement, node ipld.Node) bool {
 	switch statement.Kind() {
 	case KindEqual:
 		if s, ok := statement.(equality); ok {
-			one, many, err := s.selector.Select(node)
+			res, err := s.selector.Select(node)
 			if err != nil {
 				return false
 			}
-			if one != nil {
-				return datamodel.DeepEqual(s.value, one)
-			}
-			if many != nil {
-				for _, n := range many {
-					if eq := datamodel.DeepEqual(s.value, n); eq {
-						return true
-					}
-				}
-			}
-
-			return false
+			return datamodel.DeepEqual(s.value, res)
 		}
 	case KindGreaterThan:
 		if s, ok := statement.(equality); ok {
-			one, _, err := s.selector.Select(node)
-			if err != nil || one == nil {
+			res, err := s.selector.Select(node)
+			if err != nil {
 				return false
 			}
-			return isOrdered(s.value, one, gt)
+			return isOrdered(s.value, res, gt)
 		}
 	case KindGreaterThanOrEqual:
 		if s, ok := statement.(equality); ok {
-			one, _, err := s.selector.Select(node)
-			if err != nil || one == nil {
+			res, err := s.selector.Select(node)
+			if err != nil {
 				return false
 			}
-			return isOrdered(s.value, one, gte)
+			return isOrdered(s.value, res, gte)
 		}
 	case KindLessThan:
 		if s, ok := statement.(equality); ok {
-			one, _, err := s.selector.Select(node)
-			if err != nil || one == nil {
+			res, err := s.selector.Select(node)
+			if err != nil {
 				return false
 			}
-			return isOrdered(s.value, one, lt)
+			return isOrdered(s.value, res, lt)
 		}
 	case KindLessThanOrEqual:
 		if s, ok := statement.(equality); ok {
-			one, _, err := s.selector.Select(node)
-			if err != nil || one == nil {
+			res, err := s.selector.Select(node)
+			if err != nil {
 				return false
 			}
-			return isOrdered(s.value, one, lte)
+			return isOrdered(s.value, res, lte)
 		}
 	case KindNot:
 		if s, ok := statement.(negation); ok {
@@ -116,24 +105,32 @@ func matchStatement(statement Statement, node ipld.Node) bool {
 		}
 	case KindLike:
 		if s, ok := statement.(wildcard); ok {
-			one, _, err := s.selector.Select(node)
-			if err != nil || one == nil {
-				return false
-			}
-			v, err := one.AsString()
+			res, err := s.selector.Select(node)
 			if err != nil {
 				return false
+			}
+			v, err := res.AsString()
+			if err != nil {
+				return false // not a string
 			}
 			return s.pattern.Match(v)
 		}
 	case KindAll:
 		if s, ok := statement.(quantifier); ok {
-			_, many, err := s.selector.Select(node)
-			if err != nil || many == nil {
+			res, err := s.selector.Select(node)
+			if err != nil {
 				return false
 			}
-			for _, n := range many {
-				ok := matchStatement(s.statement, n)
+			it := res.ListIterator()
+			if it == nil {
+				return false // not a list
+			}
+			for !it.Done() {
+				_, v, err := it.Next()
+				if err != nil {
+					return false
+				}
+				ok := matchStatement(s.statement, v)
 				if !ok {
 					return false
 				}
@@ -142,25 +139,24 @@ func matchStatement(statement Statement, node ipld.Node) bool {
 		}
 	case KindAny:
 		if s, ok := statement.(quantifier); ok {
-			one, many, err := s.selector.Select(node)
+			res, err := s.selector.Select(node)
 			if err != nil {
 				return false
 			}
-			if one != nil {
-				ok := matchStatement(s.statement, one)
+			it := res.ListIterator()
+			if it == nil {
+				return false // not a list
+			}
+			for !it.Done() {
+				_, v, err := it.Next()
+				if err != nil {
+					return false
+				}
+				ok := matchStatement(s.statement, v)
 				if ok {
 					return true
 				}
 			}
-			if many != nil {
-				for _, n := range many {
-					ok := matchStatement(s.statement, n)
-					if ok {
-						return true
-					}
-				}
-			}
-
 			return false
 		}
 	}
