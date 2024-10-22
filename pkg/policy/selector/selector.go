@@ -1,11 +1,15 @@
 package selector
 
 import (
+	"errors"
 	"fmt"
+	"math"
+	"strconv"
 	"strings"
 
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/datamodel"
+	"github.com/ipld/go-ipld-prime/fluent/qp"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
 	"github.com/ipld/go-ipld-prime/schema"
 )
@@ -15,16 +19,20 @@ import (
 type Selector []segment
 
 // Select perform the selection described by the selector on the input IPLD DAG.
-// If no error, Select returns either one ipld.Node or a []ipld.Node.
-func (s Selector) Select(subject ipld.Node) (ipld.Node, []ipld.Node, error) {
+// Select can return:
+//   - exactly one matched IPLD node
+//   - an error that can be checked with IsResolutionErr(err) to distinguish not being able to resolve to a node,
+//     or another type of error.
+//   - nil and no error, if the selector couldn't match on an optional segment (with ?).
+func (s Selector) Select(subject ipld.Node) (ipld.Node, error) {
 	return resolve(s, subject, nil)
 }
 
-// MatchPath tells if the selector operates on the given (string only) path segments.
-// It returns the segments that didn't get consumed by the matching.
-func (s Selector) MatchPath(pathSegment ...string) (bool, []string) {
-	return matchPath(s, pathSegment)
-}
+// // MatchPath tells if the selector operates on the given (string only) path segments.
+// // It returns the segments that didn't get consumed by the matching.
+// func (s Selector) MatchPath(pathSegment ...string) (bool, []string) {
+// 	return matchPath(s, pathSegment)
+// }
 
 func (s Selector) String() string {
 	var res strings.Builder
@@ -39,7 +47,7 @@ type segment struct {
 	identity bool
 	optional bool
 	iterator bool
-	slice    []int
+	slice    []int64 // either 0-length or 2-length
 	field    string
 	index    int
 }
@@ -65,7 +73,7 @@ func (s segment) Iterator() bool {
 }
 
 // Slice flags that this segment targets a range of a slice.
-func (s segment) Slice() []int {
+func (s segment) Slice() []int64 {
 	return s.slice
 }
 
@@ -79,336 +87,221 @@ func (s segment) Index() int {
 	return s.index
 }
 
-func resolve(sel Selector, subject ipld.Node, at []string) (ipld.Node, []ipld.Node, error) {
-	cur := subject
-	for i, seg := range sel {
-		if seg.Identity() {
-			continue
+func resolve(sel Selector, subject ipld.Node, at []string) (ipld.Node, error) {
+	errIfNotOptional := func(s segment, err error) error {
+		if !s.Optional() {
+			return err
 		}
-
-		// 1st level: handle the different segment types (iterator, field, slice, index)
-		// 2nd level: handle different node kinds (list, map, string, bytes)
-		switch {
-		case seg.Iterator():
-			if cur == nil || cur.Kind() == datamodel.Kind_Null {
-				if seg.Optional() {
-					// build empty list
-					nb := basicnode.Prototype.List.NewBuilder()
-					assembler, err := nb.BeginList(0)
-					if err != nil {
-						return nil, nil, err
-					}
-
-					if err = assembler.Finish(); err != nil {
-						return nil, nil, err
-					}
-
-					return nb.Build(), nil, nil
-				} else {
-					return nil, nil, newResolutionError(fmt.Sprintf("can not iterate over kind: %s", kindString(cur)), at)
-				}
-			} else {
-				var many []ipld.Node
-				switch cur.Kind() {
-				case datamodel.Kind_List:
-					it := cur.ListIterator()
-					for !it.Done() {
-						_, v, err := it.Next()
-						if err != nil {
-							return nil, nil, err
-						}
-
-						// check if there are more iterator segments
-						if len(sel) > i+1 && sel[i+1].Iterator() {
-							if v.Kind() == datamodel.Kind_List {
-								// recursively resolve the remaining selector segments
-								var o ipld.Node
-								var m []ipld.Node
-								o, m, err = resolve(sel[i+1:], v, at)
-								if err != nil {
-									// if the segment is optional and an error occurs, skip the current iteration.
-									if seg.Optional() {
-										continue
-									} else {
-										return nil, nil, err
-									}
-								}
-								if m != nil {
-									many = append(many, m...)
-								} else if o != nil {
-									many = append(many, o)
-								}
-							} else {
-								// if the current value is not a list and the next segment is optional, skip the current iteration
-								if sel[i+1].Optional() {
-									continue
-								} else {
-									return nil, nil, newResolutionError(fmt.Sprintf("can not iterate over kind: %s", kindString(v)), at)
-								}
-							}
-						} else {
-							// if there are no more iterator segments, append the current value to the result
-							many = append(many, v)
-						}
-					}
-				case datamodel.Kind_Map:
-					it := cur.MapIterator()
-					for !it.Done() {
-						_, v, err := it.Next()
-						if err != nil {
-							return nil, nil, err
-						}
-
-						if len(sel) > i+1 && sel[i+1].Iterator() {
-							if v.Kind() == datamodel.Kind_List {
-								var o ipld.Node
-								var m []ipld.Node
-								o, m, err = resolve(sel[i+1:], v, at)
-								if err != nil {
-									if seg.Optional() {
-										continue
-									} else {
-										return nil, nil, err
-									}
-								}
-								if m != nil {
-									many = append(many, m...)
-								} else if o != nil {
-									many = append(many, o)
-								}
-							} else {
-								if sel[i+1].Optional() {
-									continue
-								} else {
-									return nil, nil, newResolutionError(fmt.Sprintf("can not iterate over kind: %s", kindString(v)), at)
-								}
-							}
-						} else {
-							many = append(many, v)
-						}
-					}
-				default:
-					return nil, nil, newResolutionError(fmt.Sprintf("can not iterate over kind: %s", kindString(cur)), at)
-				}
-
-				return nil, many, nil
-			}
-
-		case seg.Field() != "":
-			at = append(at, seg.Field())
-			if cur == nil {
-				if seg.Optional() {
-					cur = nil
-				} else {
-					return nil, nil, newResolutionError(fmt.Sprintf("can not access field: %s on kind: %s", seg.Field(), kindString(cur)), at)
-				}
-			} else {
-				switch cur.Kind() {
-				case datamodel.Kind_Map:
-					n, err := cur.LookupByString(seg.Field())
-					if err != nil {
-						if isMissing(err) {
-							if seg.Optional() {
-								cur = nil
-							} else {
-								return nil, nil, newResolutionError(fmt.Sprintf("object has no field named: %s", seg.Field()), at)
-							}
-						} else {
-							return nil, nil, err
-						}
-					} else {
-						cur = n
-					}
-				case datamodel.Kind_List:
-					var many []ipld.Node
-					it := cur.ListIterator()
-					for !it.Done() {
-						_, v, err := it.Next()
-						if err != nil {
-							return nil, nil, err
-						}
-						if v.Kind() == datamodel.Kind_Map {
-							n, err := v.LookupByString(seg.Field())
-							if err == nil {
-								many = append(many, n)
-							}
-						}
-					}
-					if len(many) > 0 {
-						cur = nil
-						return nil, many, nil
-					} else if seg.Optional() {
-						cur = nil
-					} else {
-						return nil, nil, newResolutionError(fmt.Sprintf("no elements in list have field named: %s", seg.Field()), at)
-					}
-				default:
-					if seg.Optional() {
-						cur = nil
-					} else {
-						return nil, nil, newResolutionError(fmt.Sprintf("can not access field: %s on kind: %s", seg.Field(), kindString(cur)), at)
-					}
-				}
-			}
-
-		case seg.Slice() != nil:
-			if cur == nil {
-				if seg.Optional() {
-					cur = nil
-				} else {
-					return nil, nil, newResolutionError(fmt.Sprintf("can not slice on kind: %s", kindString(cur)), at)
-				}
-			} else {
-				slice := seg.Slice()
-				var start, end, length int64
-				switch cur.Kind() {
-				case datamodel.Kind_List:
-					length = cur.Length()
-					start, end = resolveSliceIndices(slice, length)
-				case datamodel.Kind_Bytes:
-					b, _ := cur.AsBytes()
-					length = int64(len(b))
-					start, end = resolveSliceIndices(slice, length)
-				case datamodel.Kind_String:
-					str, _ := cur.AsString()
-					length = int64(len(str))
-					start, end = resolveSliceIndices(slice, length)
-				default:
-					return nil, nil, newResolutionError(fmt.Sprintf("can not slice on kind: %s", kindString(cur)), at)
-				}
-
-				if start < 0 || end < start || end > length {
-					if seg.Optional() {
-						cur = nil
-					} else {
-						return nil, nil, newResolutionError(fmt.Sprintf("slice out of bounds: [%d:%d]", start, end), at)
-					}
-				} else {
-					switch cur.Kind() {
-					case datamodel.Kind_List:
-						if end > cur.Length() {
-							end = cur.Length()
-						}
-						nb := basicnode.Prototype.List.NewBuilder()
-						assembler, _ := nb.BeginList(int64(end - start))
-						for i := start; i < end; i++ {
-							item, _ := cur.LookupByIndex(int64(i))
-							assembler.AssembleValue().AssignNode(item)
-						}
-						assembler.Finish()
-						cur = nb.Build()
-					case datamodel.Kind_Bytes:
-						b, _ := cur.AsBytes()
-						l := int64(len(b))
-						if end > l {
-							end = l
-						}
-						cur = basicnode.NewBytes(b[start:end])
-					case datamodel.Kind_String:
-						str, _ := cur.AsString()
-						l := int64(len(str))
-						if end > l {
-							end = l
-						}
-						cur = basicnode.NewString(str[start:end])
-					}
-				}
-			}
-
-		default: // Index()
-			at = append(at, fmt.Sprintf("%d", seg.Index()))
-			if cur == nil {
-				if seg.Optional() {
-					cur = nil
-				} else {
-					return nil, nil, newResolutionError(fmt.Sprintf("can not access index: %d on kind: %s", seg.Index(), kindString(cur)), at)
-				}
-			} else {
-				idx := seg.Index()
-				switch cur.Kind() {
-				case datamodel.Kind_List:
-					if idx < 0 {
-						idx = int(cur.Length()) + idx
-					}
-					if idx < 0 || idx >= int(cur.Length()) {
-						if seg.Optional() {
-							cur = nil
-						} else {
-							return nil, nil, newResolutionError(fmt.Sprintf("index out of bounds: %d", seg.Index()), at)
-						}
-					} else {
-						cur, _ = cur.LookupByIndex(int64(idx))
-					}
-				case datamodel.Kind_String:
-					str, _ := cur.AsString()
-					if idx < 0 {
-						idx = len(str) + idx
-					}
-					if idx < 0 || idx >= len(str) {
-						if seg.Optional() {
-							cur = nil
-						} else {
-							return nil, nil, newResolutionError(fmt.Sprintf("index out of bounds: %d", seg.Index()), at)
-						}
-					} else {
-						cur = basicnode.NewString(string(str[idx]))
-					}
-				case datamodel.Kind_Bytes:
-					b, _ := cur.AsBytes()
-					if idx < 0 {
-						idx = len(b) + idx
-					}
-					if idx < 0 || idx >= len(b) {
-						if seg.Optional() {
-							cur = nil
-						} else {
-							return nil, nil, newResolutionError(fmt.Sprintf("index out of bounds: %d", seg.Index()), at)
-						}
-					} else {
-						cur = basicnode.NewInt(int64(b[idx]))
-					}
-				default:
-					return nil, nil, newResolutionError(fmt.Sprintf("can not access index: %d on kind: %s", seg.Index(), kindString(cur)), at)
-				}
-			}
-		}
+		return nil
 	}
 
-	return cur, nil, nil
-}
-
-func matchPath(sel Selector, path []string) (bool, []string) {
+	cur := subject
 	for _, seg := range sel {
-		if len(path) == 0 {
-			return true, path
-		}
+		// 1st level: handle the different segment types (iterator, field, slice, index)
+		// 2nd level: handle different node kinds (list, map, string, bytes)
 		switch {
 		case seg.Identity():
 			continue
 
 		case seg.Iterator():
-			// we have reached a [] iterator, it should have matched earlier
-			return false, nil
+			switch {
+			case cur == nil || cur.Kind() == datamodel.Kind_Null:
+				if seg.Optional() {
+					// build an empty list
+					n, err := qp.BuildList(basicnode.Prototype.Any, 0, func(_ datamodel.ListAssembler) {})
+					return n, err
+				}
+				return nil, newResolutionError(fmt.Sprintf("can not iterate over kind: %s", kindString(cur)), at)
+
+			case cur.Kind() == datamodel.Kind_List:
+				// iterators are no-op on list
+				continue
+
+			case cur.Kind() == datamodel.Kind_Map:
+				// iterators on maps collect the values
+				return qp.BuildList(basicnode.Prototype.Any, cur.Length(), func(l datamodel.ListAssembler) {
+					it := cur.MapIterator()
+					for !it.Done() {
+						_, v, err := it.Next()
+						if err != nil {
+							panic(err) // recovered by BuildList
+						}
+						qp.ListEntry(l, qp.Node(v))
+					}
+				})
+
+			default:
+				return nil, newResolutionError(fmt.Sprintf("can not iterate over kind: %s", kindString(cur)), at)
+			}
 
 		case seg.Field() != "":
-			// if exact match on the segment, we continue
-			if path[0] == seg.Field() {
-				path = path[1:]
-				continue
-			}
-			return false, nil
+			at = append(at, seg.Field())
+			switch {
+			case cur == nil:
+				err := newResolutionError(fmt.Sprintf("can not access field: %s on kind: %s", seg.Field(), kindString(cur)), at)
+				return nil, errIfNotOptional(seg, err)
 
-		case seg.Slice() != nil:
-			// we have reached a [<int>:<int>] slicing, it should have matched earlier
-			return false, nil
+			case cur.Kind() == datamodel.Kind_Map:
+				n, err := cur.LookupByString(seg.Field())
+				if err != nil {
+					if !isMissing(err) {
+						return nil, err
+					}
+					if seg.Optional() {
+						cur = nil
+					} else {
+						return nil, newResolutionError(fmt.Sprintf("object has no field named: %s", seg.Field()), at)
+					}
+				} else {
+					cur = n
+				}
+
+			default:
+				err := newResolutionError(fmt.Sprintf("can not access field: %s on kind: %s", seg.Field(), kindString(cur)), at)
+				return nil, errIfNotOptional(seg, err)
+			}
+
+		case len(seg.Slice()) > 0:
+			if cur == nil {
+				err := newResolutionError(fmt.Sprintf("can not slice on kind: %s", kindString(cur)), at)
+				return nil, errIfNotOptional(seg, err)
+			}
+
+			slice := seg.Slice()
+			var start, end, length int64
+			switch cur.Kind() {
+			case datamodel.Kind_List:
+				length = cur.Length()
+				start, end = resolveSliceIndices(slice, length)
+			case datamodel.Kind_Bytes:
+				b, _ := cur.AsBytes()
+				length = int64(len(b))
+				start, end = resolveSliceIndices(slice, length)
+
+			// TODO: cleanup if confirmed that slicing/indexing on string is not legal
+			// case datamodel.Kind_String:
+			// 	str, _ := cur.AsString()
+			// 	length = int64(len(str))
+			// 	start, end = resolveSliceIndices(slice, length)
+			default:
+				return nil, newResolutionError(fmt.Sprintf("can not slice on kind: %s", kindString(cur)), at)
+			}
+
+			if start < 0 || end < start || end > length {
+				err := newResolutionError(fmt.Sprintf("slice out of bounds: [%d:%d]", start, end), at)
+				return nil, errIfNotOptional(seg, err)
+			}
+
+			switch cur.Kind() {
+			case datamodel.Kind_List:
+				sliced, err := qp.BuildList(basicnode.Prototype.Any, end-start, func(l datamodel.ListAssembler) {
+					for i := start; i <= end; i++ {
+						item, err := cur.LookupByIndex(i)
+						if err != nil {
+							panic(err) // recovered by BuildList
+						}
+						qp.ListEntry(l, qp.Node(item))
+					}
+				})
+				if err != nil {
+					return nil, errIfNotOptional(seg, err)
+				}
+				cur = sliced
+			case datamodel.Kind_Bytes:
+				b, _ := cur.AsBytes()
+				cur = basicnode.NewBytes(b[start:end])
+				// TODO: cleanup if confirmed that slicing/indexing on string is not legal
+				// case datamodel.Kind_String:
+				// 	str, _ := cur.AsString()
+				// 	cur = basicnode.NewString(str[start:end])
+			}
+			return cur, nil
 
 		default: // Index()
-			// we have reached a [<int>] indexing, it should have matched earlier
-			return false, nil
+			at = append(at, strconv.Itoa(seg.Index()))
+
+			if cur == nil {
+				err := newResolutionError(fmt.Sprintf("can not access index: %d on kind: %s", seg.Index(), kindString(cur)), at)
+				return nil, errIfNotOptional(seg, err)
+			}
+
+			idx := seg.Index()
+			switch cur.Kind() {
+			case datamodel.Kind_List:
+				if idx < 0 {
+					idx = int(cur.Length()) + idx
+				}
+				if idx < 0 || idx >= int(cur.Length()) {
+					err := newResolutionError(fmt.Sprintf("index out of bounds: %d", seg.Index()), at)
+					return nil, errIfNotOptional(seg, err)
+				}
+				cur, _ = cur.LookupByIndex(int64(idx))
+
+			// TODO: cleanup if confirmed that slicing/indexing on string is not legal
+			// case datamodel.Kind_String:
+			// 	str, _ := cur.AsString()
+			// 	if idx < 0 {
+			// 		idx = len(str) + idx
+			// 	}
+			// 	if idx < 0 || idx >= len(str) {
+			// 		err := newResolutionError(fmt.Sprintf("index out of bounds: %d", seg.Index()), at)
+			// 		return nil, errIfNotOptional(seg, err)
+			// 	}
+			// 	cur = basicnode.NewString(string(str[idx]))
+
+			case datamodel.Kind_Bytes:
+				b, _ := cur.AsBytes()
+				if idx < 0 {
+					idx = len(b) + idx
+				}
+				if idx < 0 || idx >= len(b) {
+					err := newResolutionError(fmt.Sprintf("index out of bounds: %d", seg.Index()), at)
+					return nil, errIfNotOptional(seg, err)
+				}
+				cur = basicnode.NewInt(int64(b[idx]))
+
+			default:
+				return nil, newResolutionError(fmt.Sprintf("can not access index: %d on kind: %s", seg.Index(), kindString(cur)), at)
+			}
 		}
 	}
-	return true, path
+
+	// segment exhausted, we return where we are
+	return cur, nil
 }
+
+// func matchPath(sel Selector, path []string) (bool, []string) {
+// 	for _, seg := range sel {
+// 		if len(path) == 0 {
+// 			return true, path
+// 		}
+// 		switch {
+// 		case seg.Identity():
+// 			continue
+//
+// 		case seg.Iterator():
+// 			// we have reached a [] iterator, it should have matched earlier
+// 			return false, nil
+//
+// 		case seg.Field() != "":
+// 			// if exact match on the segment, we continue
+// 			if path[0] == seg.Field() {
+// 				path = path[1:]
+// 				continue
+// 			}
+// 			return false, nil
+//
+// 		case seg.Slice() != nil:
+// 			// we have reached a [<int>:<int>] slicing, it should have matched earlier
+// 			return false, nil
+//
+// 		default: // Index()
+// 			// we have reached a [<int>] indexing, it should have matched earlier
+// 			return false, nil
+// 		}
+// 	}
+// 	return true, path
+// }
 
 // resolveSliceIndices resolves the start and end indices for slicing a list or byte array.
 //
@@ -422,26 +315,30 @@ func matchPath(sel Selector, path []string) (bool, []string) {
 // Returns:
 //   - start: The resolved start index for slicing.
 //   - end: The resolved end index for slicing.
-func resolveSliceIndices(slice []int, length int64) (int64, int64) {
-	start, end := int64(0), length
-	if len(slice) > 0 {
-		start = int64(slice[0])
-		if start < 0 {
-			start = length + start
-			if start < 0 {
-				start = 0
-			}
-		}
+func resolveSliceIndices(slice []int64, length int64) (start int64, end int64) {
+	if len(slice) != 2 {
+		panic("should always be 2-length")
 	}
-	if len(slice) > 1 {
-		end = int64(slice[1])
-		if end <= 0 {
-			end = length + end
-			if end < start {
-				end = start
-			}
-		}
+
+	start, end = slice[0], slice[1]
+
+	// adjust boundaries
+	switch {
+	case slice[0] == math.MinInt:
+		start = 0
+	case slice[0] < 0:
+		start = length + slice[0]
 	}
+	switch {
+	case slice[1] == math.MaxInt:
+		end = length - 1
+	case slice[1] < 0:
+		end = length + slice[1]
+	}
+
+	// TODO: is backward iteration allowed?
+	// if yes, we need to return a +1 or -1 "step"
+	// if no, we need to error
 
 	return start, end
 }
@@ -464,6 +361,10 @@ func isMissing(err error) bool {
 		return true
 	}
 	return false
+}
+
+func IsResolutionErr(err error) bool {
+	return errors.As(err, &resolutionerr{})
 }
 
 type resolutionerr struct {
