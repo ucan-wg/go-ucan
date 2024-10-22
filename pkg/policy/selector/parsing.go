@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 )
 
 var (
@@ -102,10 +103,10 @@ func tokenize(str string) []string {
 	ctx := ""
 
 	for col < len(str) {
-		char := string(str[col])
+		char, size := utf8.DecodeRuneInString(str[col:])
 
-		if char == "\"" && string(str[col-1]) != "\\" {
-			col++
+		if char == '"' && (col == 0 || str[col-1] != '\\') {
+			col += size
 			if ctx == "\"" {
 				ctx = ""
 			} else {
@@ -115,17 +116,17 @@ func tokenize(str string) []string {
 		}
 
 		if ctx == "\"" {
-			col++
+			col += size
 			continue
 		}
 
-		if char == "." || char == "[" {
+		if char == '.' || char == '[' {
 			if ofs < col {
 				toks = append(toks, str[ofs:col])
 			}
 			ofs = col
 		}
-		col++
+		col += size
 	}
 
 	if ofs < col && ctx != "\"" {
