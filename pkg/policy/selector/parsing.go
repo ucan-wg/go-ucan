@@ -61,7 +61,11 @@ func Parse(str string) (Selector, error) {
 
 			// explicit field, ["abcd"]
 			case strings.HasPrefix(lookup, "\"") && strings.HasSuffix(lookup, "\""):
-				sel = append(sel, segment{str: tok, optional: opt, field: lookup[1 : len(lookup)-1]})
+				fieldName := lookup[1 : len(lookup)-1]
+				if strings.Contains(fieldName, ":") {
+					return nil, newParseError(fmt.Sprintf("invalid segment: %s", seg), str, col, tok)
+				}
+				sel = append(sel, segment{str: tok, optional: opt, field: fieldName})
 
 			// slice [3:5] or [:5] or [3:], also negative numbers
 			case sliceRegex.MatchString(lookup):
