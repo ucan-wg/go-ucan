@@ -187,20 +187,6 @@ func TestSelect(t *testing.T) {
 		require.Equal(t, "el", str) // assert sliced substring
 	})
 
-	t.Run("index on string", func(t *testing.T) {
-		sel, err := Parse(`.[2]`)
-		require.NoError(t, err)
-
-		node := basicnode.NewString("hello")
-		res, err := sel.Select(node)
-		require.NoError(t, err)
-		require.NotEmpty(t, res)
-
-		str, err := res.AsString()
-		require.NoError(t, err)
-		require.Equal(t, "l", str) // assert indexed character
-	})
-
 	t.Run("out of bounds slicing", func(t *testing.T) {
 		node, err := qp.BuildList(basicnode.Prototype.Any, 3, func(la datamodel.ListAssembler) {
 			qp.ListEntry(la, qp.Int(1))

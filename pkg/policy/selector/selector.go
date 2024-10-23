@@ -229,17 +229,18 @@ func resolve(sel Selector, subject ipld.Node, at []string) (ipld.Node, error) {
 				}
 				cur, _ = cur.LookupByIndex(int64(idx))
 
-			case datamodel.Kind_String:
-				str, _ := cur.AsString()
-				runes := []rune(str)
-				if idx < 0 {
-					idx = len(runes) + idx
-				}
-				if idx < 0 || idx >= len(runes) {
-					err := newResolutionError(fmt.Sprintf("index out of bounds: %d", seg.Index()), at)
-					return nil, errIfNotOptional(seg, err)
-				}
-				cur = basicnode.NewString(string(runes[idx]))
+			//	TODO: not supported yet
+			//case datamodel.Kind_String:
+			//	str, _ := cur.AsString()
+			//	runes := []rune(str)
+			//	if idx < 0 {
+			//		idx = len(runes) + idx
+			//	}
+			//	if idx < 0 || idx >= len(runes) {
+			//		err := newResolutionError(fmt.Sprintf("index out of bounds: %d", seg.Index()), at)
+			//		return nil, errIfNotOptional(seg, err)
+			//	}
+			//	cur = basicnode.NewString(string(runes[idx]))
 
 			case datamodel.Kind_Bytes:
 				b, _ := cur.AsBytes()
