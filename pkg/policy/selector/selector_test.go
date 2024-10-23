@@ -7,6 +7,8 @@ import (
 
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/codec/dagjson"
+	"github.com/ipld/go-ipld-prime/datamodel"
+	"github.com/ipld/go-ipld-prime/fluent/qp"
 	"github.com/ipld/go-ipld-prime/must"
 	basicnode "github.com/ipld/go-ipld-prime/node/basic"
 	"github.com/ipld/go-ipld-prime/node/bindnode"
@@ -172,7 +174,7 @@ func TestSelect(t *testing.T) {
 	})
 
 	t.Run("slice on string", func(t *testing.T) {
-		sel, err := Parse(`["foo"].[1:3]`)
+		sel, err := Parse(`.[1:3]`)
 		require.NoError(t, err)
 
 		node := basicnode.NewString("hello")
@@ -182,11 +184,11 @@ func TestSelect(t *testing.T) {
 
 		str, err := res.AsString()
 		require.NoError(t, err)
-		require.Equal(t, "el", str)
+		require.Equal(t, "el", str) // assert sliced substring
 	})
 
 	t.Run("index on string", func(t *testing.T) {
-		sel, err := Parse(`["foo"].[2]`)
+		sel, err := Parse(`.[2]`)
 		require.NoError(t, err)
 
 		node := basicnode.NewString("hello")
@@ -196,54 +198,68 @@ func TestSelect(t *testing.T) {
 
 		str, err := res.AsString()
 		require.NoError(t, err)
-		require.Equal(t, "l", str)
+		require.Equal(t, "l", str) // assert indexed character
 	})
 
-	//t.Run("out of bounds slicing", func(t *testing.T) {
-	//	sel, err := Parse(`.[10:20]`)
-	//	require.NoError(t, err)
-	//
-	//	node, err := qp.BuildList(basicnode.Prototype.Any, 3, func(la datamodel.ListAssembler) {
-	//		qp.ListEntry(la, qp.Int(1))
-	//		qp.ListEntry(la, qp.Int(2))
-	//		qp.ListEntry(la, qp.Int(3))
-	//	})
-	//	require.NoError(t, err)
-	//
-	//	res, err := sel.Select(node)
-	//	require.NoError(t, err)
-	//	require.NotEmpty(t, res)
-	//
-	//	bytes, err := res.AsBytes()
-	//	require.NoError(t, err)
-	//
-	//	list, err := qp.DecodeList(basicnode.Prototype.Any, bytes)
-	//	require.NoError(t, err)
-	//	require.Equal(t, 0, list.Length())
-	//})
-	//
-	//t.Run("backward slicing", func(t *testing.T) {
-	//	sel, err := Parse(`.[5:2]`)
-	//	require.NoError(t, err)
-	//
-	//	node, err := qp.BuildList(basicnode.Prototype.Any, 3, func(la datamodel.ListAssembler) {
-	//		qp.ListEntry(la, qp.Int(1))
-	//		qp.ListEntry(la, qp.Int(2))
-	//		qp.ListEntry(la, qp.Int(3))
-	//	})
-	//	require.NoError(t, err)
-	//
-	//	res, err := sel.Select(node)
-	//	require.NoError(t, err)
-	//	require.NotEmpty(t, res)
-	//
-	//	bytes, err := res.AsBytes()
-	//	require.NoError(t, err)
-	//
-	//	list, err := qp.DecodeList(basicnode.Prototype.Any, bytes)
-	//	require.NoError(t, err)
-	//	require.Equal(t, 0, list.Length())
-	//})
+	t.Run("out of bounds slicing", func(t *testing.T) {
+		node, err := qp.BuildList(basicnode.Prototype.Any, 3, func(la datamodel.ListAssembler) {
+			qp.ListEntry(la, qp.Int(1))
+			qp.ListEntry(la, qp.Int(2))
+			qp.ListEntry(la, qp.Int(3))
+		})
+		require.NoError(t, err)
+
+		sel, err := Parse(`.[10:20]`)
+		require.NoError(t, err)
+
+		res, err := sel.Select(node)
+		require.NoError(t, err)
+		require.NotEmpty(t, res)
+		require.Equal(t, int64(0), res.Length())
+
+		_, err = res.LookupByIndex(0)
+		require.ErrorIs(t, err, datamodel.ErrNotExists{}) // assert empty result for out of bounds slice
+	})
+
+	t.Run("backward slicing", func(t *testing.T) {
+		node, err := qp.BuildList(basicnode.Prototype.Any, 3, func(la datamodel.ListAssembler) {
+			qp.ListEntry(la, qp.Int(1))
+			qp.ListEntry(la, qp.Int(2))
+			qp.ListEntry(la, qp.Int(3))
+		})
+		require.NoError(t, err)
+
+		sel, err := Parse(`.[5:2]`)
+		require.NoError(t, err)
+
+		res, err := sel.Select(node)
+		require.NoError(t, err)
+		require.NotEmpty(t, res)
+		require.Equal(t, int64(0), res.Length())
+
+		_, err = res.LookupByIndex(0)
+		require.ErrorIs(t, err, datamodel.ErrNotExists{}) // assert empty result for backward slice
+	})
+
+	t.Run("slice with negative index", func(t *testing.T) {
+		node, err := qp.BuildList(basicnode.Prototype.Any, 3, func(la datamodel.ListAssembler) {
+			qp.ListEntry(la, qp.Int(1))
+			qp.ListEntry(la, qp.Int(2))
+			qp.ListEntry(la, qp.Int(3))
+		})
+		require.NoError(t, err)
+
+		sel, err := Parse(`.[0:-1]`)
+		require.NoError(t, err)
+
+		res, err := sel.Select(node)
+		require.NoError(t, err)
+		require.NotEmpty(t, res)
+
+		val, err := res.LookupByIndex(1)
+		require.NoError(t, err)
+		require.Equal(t, 2, int(must.Int(val))) // Assert sliced value at index 1
+	})
 }
 
 // func TestMatch(t *testing.T) {
