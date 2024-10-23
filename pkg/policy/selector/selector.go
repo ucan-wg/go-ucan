@@ -173,34 +173,12 @@ func resolve(sel Selector, subject ipld.Node, at []string) (ipld.Node, error) {
 			}
 
 			slice := seg.Slice()
-			var start, end, length int64
-			switch cur.Kind() {
-			case datamodel.Kind_List:
-				length = cur.Length()
-				start, end = resolveSliceIndices(slice, length)
-			case datamodel.Kind_Bytes:
-				b, _ := cur.AsBytes()
-				length = int64(len(b))
-				start, end = resolveSliceIndices(slice, length)
-
-			// TODO: cleanup if confirmed that slicing/indexing on string is not legal
-			// case datamodel.Kind_String:
-			// 	str, _ := cur.AsString()
-			// 	length = int64(len(str))
-			// 	start, end = resolveSliceIndices(slice, length)
-			default:
-				return nil, newResolutionError(fmt.Sprintf("can not slice on kind: %s", kindString(cur)), at)
-			}
-
-			if start < 0 || end < start || end >= length {
-				err := newResolutionError(fmt.Sprintf("slice out of bounds: [%d:%d]", start, end), at)
-				return nil, errIfNotOptional(seg, err)
-			}
 
 			switch cur.Kind() {
 			case datamodel.Kind_List:
+				start, end := resolveSliceIndices(slice, cur.Length())
 				sliced, err := qp.BuildList(basicnode.Prototype.Any, end-start, func(l datamodel.ListAssembler) {
-					for i := start; i <= end; i++ {
+					for i := start; i < end; i++ {
 						item, err := cur.LookupByIndex(i)
 						if err != nil {
 							// recovered by BuildList
@@ -215,15 +193,21 @@ func resolve(sel Selector, subject ipld.Node, at []string) (ipld.Node, error) {
 					panic("should never happen")
 				}
 				cur = sliced
+
 			case datamodel.Kind_Bytes:
 				b, _ := cur.AsBytes()
+				start, end := resolveSliceIndices(slice, int64(len(b)))
 				cur = basicnode.NewBytes(b[start:end])
-				// TODO: cleanup if confirmed that slicing/indexing on string is not legal
-				// case datamodel.Kind_String:
-				// 	str, _ := cur.AsString()
-				// 	cur = basicnode.NewString(str[start:end])
+
+			case datamodel.Kind_String:
+				str, _ := cur.AsString()
+				runes := []rune(str)
+				start, end := resolveSliceIndices(slice, int64(len(runes)))
+				cur = basicnode.NewString(string(runes[start:end]))
+
+			default:
+				return nil, newResolutionError(fmt.Sprintf("can not slice on kind: %s", kindString(cur)), at)
 			}
-			return cur, nil
 
 		default: // Index()
 			at = append(at, strconv.Itoa(seg.Index()))
@@ -322,7 +306,7 @@ func resolve(sel Selector, subject ipld.Node, at []string) (ipld.Node, error) {
 //
 // Returns:
 //   - start: The resolved start index for slicing.
-//   - end: The resolved end index for slicing.
+//   - end: The resolved **excluded** end index for slicing.
 func resolveSliceIndices(slice []int64, length int64) (start int64, end int64) {
 	if len(slice) != 2 {
 		panic("should always be 2-length")
@@ -339,14 +323,21 @@ func resolveSliceIndices(slice []int64, length int64) (start int64, end int64) {
 	}
 	switch {
 	case slice[1] == math.MaxInt:
-		end = length - 1
+		end = length
 	case slice[1] < 0:
 		end = length + slice[1]
 	}
 
+	// backward iteration is not allowed, shortcut to an empty result
 	if start >= end {
-		// backward iteration is not allowed, shortcut to an empty result
 		start, end = 0, 0
+	}
+	// clamp out of bound
+	if start < 0 {
+		start = 0
+	}
+	if end > length {
+		end = length
 	}
 
 	return start, end
