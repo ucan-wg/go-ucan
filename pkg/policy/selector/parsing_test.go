@@ -336,21 +336,6 @@ func TestParse(t *testing.T) {
 	t.Run("idempotent optional", func(t *testing.T) {
 		sel, err := Parse(".foo???")
 		require.NoError(t, err)
-		//require.Equal(t, 2, len(sel))
-		//require.True(t, sel[0].Identity())
-		//require.False(t, sel[0].Optional())
-		//require.False(t, sel[0].Iterator())
-		//require.Empty(t, sel[0].Slice())
-		//require.Empty(t, sel[0].Field())
-		//require.Empty(t, sel[0].Index())
-		//require.False(t, sel[1].Identity())
-		//require.True(t, sel[1].Optional())
-		//require.False(t, sel[1].Iterator())
-		//require.Empty(t, sel[1].Slice())
-		//require.Equal(t, sel[1].Field(), "foo")
-		//require.Empty(t, sel[1].Index())
-
-		// TODO: understand why the original test expects a leading identity segment
 		require.Equal(t, 1, len(sel))
 		require.False(t, sel[0].Identity())
 		require.True(t, sel[0].Optional())
