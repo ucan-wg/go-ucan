@@ -344,9 +344,10 @@ func resolveSliceIndices(slice []int64, length int64) (start int64, end int64) {
 		end = length + slice[1]
 	}
 
-	// TODO: is backward iteration allowed?
-	// if yes, we need to return a +1 or -1 "step"
-	// if no, we need to error
+	if start >= end {
+		// backward iteration is not allowed, shortcut to an empty result
+		start, end = 0, 0
+	}
 
 	return start, end
 }
