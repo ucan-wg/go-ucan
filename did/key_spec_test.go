@@ -34,18 +34,16 @@ func TestDidKeyVectors(t *testing.T) {
 		// This test vector only contains a DID Document
 		// "x25519.json",
 	} {
-		vs := loadTestVectors(t, f)
+		vectors := loadTestVectors(t, f)
 
 		t.Run(f, func(t *testing.T) {
 			t.Parallel()
 
-			for k, v := range vs {
-				f := f
-
+			for k, vector := range vectors {
 				t.Run(k, func(t *testing.T) {
-					t.Parallel()
+					// round-trip pubkey-->did-->pubkey, verified against the test vectors.
 
-					exp := vectorPubKey(t, v)
+					exp := vectorPubKey(t, vector)
 
 					id, err := did.FromPubKey(exp)
 					require.NoError(t, err, f, k)

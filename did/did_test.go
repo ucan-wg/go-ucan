@@ -25,10 +25,6 @@ func TestMustParseDIDKey(t *testing.T) {
 	})
 }
 
-func TestRoundTrip(t *testing.T) {
-	// TODO: round-trip pubkey-->did-->pubkey for all supported types
-}
-
 func TestEquivalence(t *testing.T) {
 	undef0 := DID{}
 	undef1 := Undef
