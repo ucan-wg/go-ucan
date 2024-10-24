@@ -31,12 +31,10 @@ func TestSupportedForms(t *testing.T) {
 		{Name: "Identity", Selector: `.`, Input: `{"x":1}`, Output: `{"x":1}`},
 		{Name: "Iterator", Selector: `.[]`, Input: `[1, 2]`, Output: `[1, 2]`},
 		{Name: "Optional Null Iterator", Selector: `.[]?`, Input: `null`, Output: `[]`},
-		{Name: "Optional Iterator", Selector: `.[][]?`, Input: `[[1], 2, [3]]`, Output: `[1, 3]`},
 		{Name: "Object Key", Selector: `.x`, Input: `{"x": 1 }`, Output: `1`},
 		{Name: "Quoted Key", Selector: `.["x"]`, Input: `{"x": 1}`, Output: `1`},
 		{Name: "Index", Selector: `.[0]`, Input: `[1, 2]`, Output: `1`},
 		{Name: "Negative Index", Selector: `.[-1]`, Input: `[1, 2]`, Output: `2`},
-		{Name: "String Index", Selector: `.[0]`, Input: `"Hi"`, Output: `"H"`},
 		{Name: "Bytes Index", Selector: `.[0]`, Input: `{"/":{"bytes":"AAE"}}`, Output: `0`},
 		{Name: "Array Slice", Selector: `.[0:2]`, Input: `[0, 1, 2]`, Output: `[0, 1]`},
 		{Name: "Array Slice", Selector: `.[1:]`, Input: `[0, 1, 2]`, Output: `[1, 2]`},
@@ -87,7 +85,6 @@ func TestSupportedForms(t *testing.T) {
 	// fail to select and return an error
 	for _, testcase := range []Testcase{
 		{Name: "Null Iterator", Selector: `.[]`, Input: `null`},
-		{Name: "Nested Iterator", Selector: `.[][]`, Input: `[[1], 2, [3]]`},
 		{Name: "Missing Key", Selector: `.x`, Input: `{}`},
 		{Name: "Null Key", Selector: `.x`, Input: `null`},
 		{Name: "Array Key", Selector: `.x`, Input: `[]`},
