@@ -193,14 +193,12 @@ func FromIPLD(node datamodel.Node) (*Token, error) {
 }
 
 func (t *Token) toIPLD(privKey crypto.PrivKey) (datamodel.Node, error) {
-	var sub *string
+	var aud *string
 
-	if t.subject != did.Undef {
-		s := t.subject.String()
-		sub = &s
+	if t.audience != did.Undef {
+		a := t.audience.String()
+		aud = &a
 	}
-
-	// TODO
 
 	var exp *int64
 	if t.expiration != nil {
@@ -208,14 +206,45 @@ func (t *Token) toIPLD(privKey crypto.PrivKey) (datamodel.Node, error) {
 		exp = &u
 	}
 
+	var iat *int64
+	if t.invokedAt != nil {
+		i := t.invokedAt.Unix()
+		iat = &i
+	}
+
+	argsKey := make([]string, len(t.arguments))
+	i := 0
+
+	for k := range t.arguments {
+		argsKey[i] = k
+		i++
+	}
+
+	args := struct {
+		Keys   []string
+		Values map[string]datamodel.Node
+	}{
+		Keys:   argsKey,
+		Values: t.arguments,
+	}
+
+	prf := make([]cid.Cid, len(t.proof))
+	for i, c := range t.proof {
+		prf[i] = c
+	}
+
 	model := &tokenPayloadModel{
 		Iss:   t.issuer.String(),
-		Aud:   t.audience.String(),
-		Sub:   sub,
+		Aud:   aud,
+		Sub:   t.subject.String(),
 		Cmd:   t.command.String(),
+		Args:  args,
+		Prf:   prf,
+		Meta:  t.meta,
 		Nonce: t.nonce,
-		Meta:  *t.meta,
 		Exp:   exp,
+		Iat:   iat,
+		Cause: t.cause,
 	}
 
 	return envelope.ToIPLD(privKey, model)

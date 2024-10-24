@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime"
+	"github.com/ipld/go-ipld-prime/datamodel"
 	"github.com/ipld/go-ipld-prime/node/bindnode"
 	"github.com/ipld/go-ipld-prime/schema"
 
@@ -46,26 +48,36 @@ var _ envelope.Tokener = (*tokenPayloadModel)(nil)
 
 // TODO
 type tokenPayloadModel struct {
-	// Issuer DID (sender)
+	// The DID of the Invoker
 	Iss string
-	// Audience DID (receiver)
-	Aud string
-	// Principal that the chain is about (the Subject)
-	// optional: can be nil
-	Sub *string
+	// The DID of Subject being invoked
+	Sub string
+	// The DID of the intended Executor if different from the Subject
+	Aud *string
 
-	// The Command to eventually invoke
+	// The Command
 	Cmd string
+	// The Command's Arguments
+	Args struct {
+		Keys   []string
+		Values map[string]datamodel.Node
+	}
+	// Delegations that prove the chain of authority
+	Prf []cid.Cid
+
+	// Arbitrary Metadata
+	Meta *meta.Meta
 
 	// A unique, random nonce
 	Nonce []byte
-
-	// Arbitrary Metadata
-	Meta meta.Meta
-
 	// The timestamp at which the Invocation becomes invalid
 	// optional: can be nil
 	Exp *int64
+	// The timestamp at which the Invocation was created
+	Iat *int64
+
+	// An optional CID of the Receipt that enqueued the Task
+	Cause *cid.Cid
 }
 
 func (e *tokenPayloadModel) Prototype() schema.TypedPrototype {
