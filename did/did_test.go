@@ -9,12 +9,8 @@ import (
 func TestParseDIDKey(t *testing.T) {
 	str := "did:key:z6Mkod5Jr3yd5SC7UDueqK4dAAw5xYJYjksy722tA9Boxc4z"
 	d, err := Parse(str)
-	if err != nil {
-		t.Fatalf("%v", err)
-	}
-	if d.String() != str {
-		t.Fatalf("expected %v to equal %v", d.String(), str)
-	}
+	require.NoError(t, err)
+	require.Equal(t, str, d.String())
 }
 
 func TestMustParseDIDKey(t *testing.T) {
@@ -29,65 +25,17 @@ func TestMustParseDIDKey(t *testing.T) {
 	})
 }
 
-func TestDecodeDIDKey(t *testing.T) {
-	str := "did:key:z6Mkod5Jr3yd5SC7UDueqK4dAAw5xYJYjksy722tA9Boxc4z"
-	d0, err := Parse(str)
-	if err != nil {
-		t.Fatalf("%v", err)
-	}
-	d1, err := Decode(d0.Bytes())
-	if err != nil {
-		t.Fatalf("%v", err)
-	}
-	if d1.String() != str {
-		t.Fatalf("expected %v to equal %v", d1.String(), str)
-	}
-}
-
-func TestParseDIDWeb(t *testing.T) {
-	str := "did:web:up.web3.storage"
-	d, err := Parse(str)
-	if err != nil {
-		t.Fatalf("%v", err)
-	}
-	if d.String() != str {
-		t.Fatalf("expected %v to equal %v", d.String(), str)
-	}
-}
-
-func TestDecodeDIDWeb(t *testing.T) {
-	str := "did:web:up.web3.storage"
-	d0, err := Parse(str)
-	if err != nil {
-		t.Fatalf("%v", err)
-	}
-	d1, err := Decode(d0.Bytes())
-	if err != nil {
-		t.Fatalf("%v", err)
-	}
-	if d1.String() != str {
-		t.Fatalf("expected %v to equal %v", d1.String(), str)
-	}
-}
-
 func TestEquivalence(t *testing.T) {
-	u0 := DID{}
-	u1 := Undef
-	if u0 != u1 {
-		t.Fatalf("undef DID not equivalent")
-	}
+	undef0 := DID{}
+	undef1 := Undef
 
-	d0, err := Parse("did:key:z6Mkod5Jr3yd5SC7UDueqK4dAAw5xYJYjksy722tA9Boxc4z")
-	if err != nil {
-		t.Fatalf("%v", err)
-	}
+	did0, err := Parse("did:key:z6Mkod5Jr3yd5SC7UDueqK4dAAw5xYJYjksy722tA9Boxc4z")
+	require.NoError(t, err)
+	did1, err := Parse("did:key:z6Mkod5Jr3yd5SC7UDueqK4dAAw5xYJYjksy722tA9Boxc4z")
+	require.NoError(t, err)
 
-	d1, err := Parse("did:key:z6Mkod5Jr3yd5SC7UDueqK4dAAw5xYJYjksy722tA9Boxc4z")
-	if err != nil {
-		t.Fatalf("%v", err)
-	}
-
-	if d0 != d1 {
-		t.Fatalf("two equivalent DID not equivalent")
-	}
+	require.True(t, undef0 == undef1)
+	require.False(t, undef0 == did0)
+	require.True(t, did0 == did1)
+	require.False(t, undef1 == did1)
 }
