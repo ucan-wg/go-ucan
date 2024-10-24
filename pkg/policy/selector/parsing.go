@@ -9,7 +9,6 @@ import (
 )
 
 var (
-	identity   = Selector{segment{str: ".", identity: true}}
 	indexRegex = regexp.MustCompile(`^-?\d+$`)
 	sliceRegex = regexp.MustCompile(`^((\-?\d+:\-?\d*)|(\-?\d*:\-?\d+))$`)
 	fieldRegex = regexp.MustCompile(`^\.[a-zA-Z_]*?$`)
@@ -23,7 +22,7 @@ func Parse(str string) (Selector, error) {
 		return nil, newParseError("selector must start with identity segment '.'", str, 0, string(str[0]))
 	}
 	if str == "." {
-		return identity, nil
+		return Selector{segment{str: ".", identity: true}}, nil
 	}
 	if str == ".?" {
 		return Selector{segment{str: ".?", identity: true, optional: true}}, nil

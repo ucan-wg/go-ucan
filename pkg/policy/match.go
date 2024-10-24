@@ -12,141 +12,215 @@ import (
 // Match determines if the IPLD node satisfies the policy.
 func (p Policy) Match(node datamodel.Node) bool {
 	for _, stmt := range p {
-		ok := matchStatement(stmt, node)
-		if !ok {
+		res, _ := matchStatement(stmt, node)
+		switch res {
+		case matchResultNoData, matchResultFalse:
 			return false
+		case matchResultTrue:
+			// continue
 		}
 	}
 	return true
 }
 
-func matchStatement(statement Statement, node ipld.Node) bool {
-	switch statement.Kind() {
+// PartialMatch returns false IIF one of the Statement has the corresponding data and doesn't match.
+// If the data is missing or the Statement is matching, true is returned.
+//
+// This allows performing the policy checking in multiple steps, and find immediately if a Statement already failed.
+// A final call to Match is necessary to make sure that the policy is fully matched, with no missing data
+// (apart from optional values).
+//
+// The first Statement failing to match is returned as well.
+func (p Policy) PartialMatch(node datamodel.Node) (bool, Statement) {
+	for _, stmt := range p {
+		res, leaf := matchStatement(stmt, node)
+		switch res {
+		case matchResultFalse:
+			return false, leaf
+		case matchResultNoData, matchResultTrue:
+			// continue
+		}
+	}
+	return true, nil
+}
+
+type matchResult int8
+
+const (
+	matchResultTrue matchResult = iota
+	matchResultFalse
+	matchResultNoData
+)
+
+// matchStatement evaluate the policy against the given ipld.Node and returns:
+// - matchResultTrue: if the selector matched and the statement evaluated to true.
+// - matchResultFalse: if the selector matched and the statement evaluated to false.
+// - matchResultNoData: if the selector didn't match the expected data.
+// For matchResultTrue and matchResultNoData, the leaf-most (innermost) statement failing to be true is returned,
+// as well as the corresponding root-most encompassing statement.
+func matchStatement(cur Statement, node ipld.Node) (_ matchResult, leafMost Statement) {
+	var boolToRes = func(v bool) (matchResult, Statement) {
+		if v {
+			return matchResultTrue, nil
+		} else {
+			return matchResultFalse, cur
+		}
+	}
+
+	switch cur.Kind() {
 	case KindEqual:
-		if s, ok := statement.(equality); ok {
+		if s, ok := cur.(equality); ok {
 			res, err := s.selector.Select(node)
-			if err != nil {
-				return false
+			if err != nil || res == nil {
+				return matchResultNoData, cur
 			}
-			return datamodel.DeepEqual(s.value, res)
+			return boolToRes(datamodel.DeepEqual(s.value, res))
 		}
 	case KindGreaterThan:
-		if s, ok := statement.(equality); ok {
+		if s, ok := cur.(equality); ok {
 			res, err := s.selector.Select(node)
-			if err != nil {
-				return false
+			if err != nil || res == nil {
+				return matchResultNoData, cur
 			}
-			return isOrdered(s.value, res, gt)
+			return boolToRes(isOrdered(s.value, res, gt))
 		}
 	case KindGreaterThanOrEqual:
-		if s, ok := statement.(equality); ok {
+		if s, ok := cur.(equality); ok {
 			res, err := s.selector.Select(node)
-			if err != nil {
-				return false
+			if err != nil || res == nil {
+				return matchResultNoData, cur
 			}
-			return isOrdered(s.value, res, gte)
+			return boolToRes(isOrdered(s.value, res, gte))
 		}
 	case KindLessThan:
-		if s, ok := statement.(equality); ok {
+		if s, ok := cur.(equality); ok {
 			res, err := s.selector.Select(node)
-			if err != nil {
-				return false
+			if err != nil || res == nil {
+				return matchResultNoData, cur
 			}
-			return isOrdered(s.value, res, lt)
+			return boolToRes(isOrdered(s.value, res, lt))
 		}
 	case KindLessThanOrEqual:
-		if s, ok := statement.(equality); ok {
+		if s, ok := cur.(equality); ok {
 			res, err := s.selector.Select(node)
-			if err != nil {
-				return false
+			if err != nil || res == nil {
+				return matchResultNoData, cur
 			}
-			return isOrdered(s.value, res, lte)
+			return boolToRes(isOrdered(s.value, res, lte))
 		}
 	case KindNot:
-		if s, ok := statement.(negation); ok {
-			return !matchStatement(s.statement, node)
+		if s, ok := cur.(negation); ok {
+			res, leaf := matchStatement(s.statement, node)
+			switch res {
+			case matchResultNoData:
+				return matchResultNoData, leaf
+			case matchResultTrue:
+				return matchResultFalse, leaf
+			case matchResultFalse:
+				return matchResultTrue, leaf
+			}
 		}
 	case KindAnd:
-		if s, ok := statement.(connective); ok {
+		if s, ok := cur.(connective); ok {
 			for _, cs := range s.statements {
-				r := matchStatement(cs, node)
-				if !r {
-					return false
+				res, leaf := matchStatement(cs, node)
+				switch res {
+				case matchResultNoData:
+					return matchResultNoData, leaf
+				case matchResultTrue:
+					// continue
+				case matchResultFalse:
+					return matchResultFalse, leaf
 				}
 			}
-			return true
+			return matchResultTrue, nil
 		}
 	case KindOr:
-		if s, ok := statement.(connective); ok {
+		if s, ok := cur.(connective); ok {
 			if len(s.statements) == 0 {
-				return true
+				return matchResultTrue, nil
 			}
 			for _, cs := range s.statements {
-				r := matchStatement(cs, node)
-				if r {
-					return true
+				res, leaf := matchStatement(cs, node)
+				switch res {
+				case matchResultNoData:
+					return matchResultNoData, leaf
+				case matchResultTrue:
+					return matchResultTrue, leaf
+				case matchResultFalse:
+					// continue
 				}
 			}
-			return false
+			return matchResultFalse, cur
 		}
 	case KindLike:
-		if s, ok := statement.(wildcard); ok {
+		if s, ok := cur.(wildcard); ok {
 			res, err := s.selector.Select(node)
-			if err != nil {
-				return false
+			if err != nil || res == nil {
+				return matchResultNoData, cur
 			}
 			v, err := res.AsString()
 			if err != nil {
-				return false // not a string
+				return matchResultFalse, cur // not a string
 			}
-			return s.pattern.Match(v)
+			return boolToRes(s.pattern.Match(v))
 		}
 	case KindAll:
-		if s, ok := statement.(quantifier); ok {
+		if s, ok := cur.(quantifier); ok {
 			res, err := s.selector.Select(node)
-			if err != nil {
-				return false
+			if err != nil || res == nil {
+				return matchResultNoData, cur
 			}
 			it := res.ListIterator()
 			if it == nil {
-				return false // not a list
+				return matchResultFalse, cur // not a list
 			}
 			for !it.Done() {
 				_, v, err := it.Next()
 				if err != nil {
-					return false
+					panic("should never happen")
 				}
-				ok := matchStatement(s.statement, v)
-				if !ok {
-					return false
+				matchRes, leaf := matchStatement(s.statement, v)
+				switch matchRes {
+				case matchResultNoData:
+					return matchResultNoData, leaf
+				case matchResultTrue:
+					// continue
+				case matchResultFalse:
+					return matchResultFalse, leaf
 				}
 			}
-			return true
+			return matchResultTrue, nil
 		}
 	case KindAny:
-		if s, ok := statement.(quantifier); ok {
+		if s, ok := cur.(quantifier); ok {
 			res, err := s.selector.Select(node)
-			if err != nil {
-				return false
+			if err != nil || res == nil {
+				return matchResultNoData, cur
 			}
 			it := res.ListIterator()
 			if it == nil {
-				return false // not a list
+				return matchResultFalse, cur // not a list
 			}
 			for !it.Done() {
 				_, v, err := it.Next()
 				if err != nil {
-					return false
+					panic("should never happen")
 				}
-				ok := matchStatement(s.statement, v)
-				if ok {
-					return true
+				matchRes, leaf := matchStatement(s.statement, v)
+				switch matchRes {
+				case matchResultNoData:
+					return matchResultNoData, leaf
+				case matchResultTrue:
+					return matchResultTrue, nil
+				case matchResultFalse:
+					// continue
 				}
 			}
-			return false
+			return matchResultFalse, cur
 		}
 	}
-	panic(fmt.Errorf("unimplemented statement kind: %s", statement.Kind()))
+	panic(fmt.Errorf("unimplemented statement kind: %s", cur.Kind()))
 }
 
 func isOrdered(expected ipld.Node, actual ipld.Node, satisfies func(order int) bool) bool {
