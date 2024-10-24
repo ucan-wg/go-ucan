@@ -5,7 +5,6 @@ import (
 
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime/datamodel"
-
 	"github.com/ucan-wg/go-ucan/did"
 )
 
