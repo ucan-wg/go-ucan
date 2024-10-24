@@ -13,6 +13,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/ipfs/go-cid"
+	"github.com/ipld/go-ipld-prime/datamodel"
 	"github.com/ucan-wg/go-ucan/did"
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/meta"
@@ -20,25 +22,70 @@ import (
 
 // Token is an immutable type that holds the fields of a UCAN invocation.
 type Token struct {
-	// Issuer DID (invoker)
+	// The DID of the Invoker
 	issuer did.DID
-	// Audience DID (receiver/executor)
-	audience did.DID
-	// Subject DID (subject being invoked)
+	// The DID of Subject being invoked
 	subject did.DID
-	// The Command to invoke
+	// The DID of the intended Executor if different from the Subject
+	audience did.DID
+
+	// The Command
 	command command.Command
-	// TODO: args
-	// TODO: prf
-	// A unique, random nonce
-	nonce []byte
+	// The Command's Arguments
+	arguments map[string]datamodel.Node
+	// Delegations that prove the chain of authority
+	proof []cid.Cid
+
 	// Arbitrary Metadata
 	meta *meta.Meta
+
+	// A unique, random nonce
+	nonce []byte
 	// The timestamp at which the Invocation becomes invalid
 	expiration *time.Time
 	// The timestamp at which the Invocation was created
 	invokedAt *time.Time
-	// TODO: cause
+
+	// An optional CID of the Receipt that enqueued the Task
+	cause *cid.Cid
+}
+
+// New creates an invocation Token with the provided options.
+//
+// If no nonce is provided, a random 12-byte nonce is generated. Use the
+// WithNonce or WithEmptyNonce options to specify provide your own nonce
+// or to leave the nonce empty respectively.
+//
+// If no invokedAt is provided, the current time is used. Use the
+// WithInvokedAt or WithInvokedAtIn options to specify a different time.
+//
+// With the exception of the WithMeta option, all other will overwrite
+// the previous contents of their target field.
+func New(iss, sub did.DID, cmd command.Command, prf []cid.Cid, opts ...Option) (*Token, error) {
+	nonce := make([]byte, 12)
+
+	if _, err := rand.Read(nonce); err != nil {
+		return nil, err
+	}
+
+	iat := time.Now()
+
+	tkn := Token{
+		issuer:    iss,
+		subject:   sub,
+		command:   cmd,
+		proof:     prf,
+		nonce:     nonce,
+		invokedAt: &iat,
+	}
+
+	for _, opt := range opts {
+		if err := opt(&tkn); err != nil {
+			return nil, err
+		}
+	}
+
+	return &tkn, nil
 }
 
 // Issuer returns the did.DID representing the Token's issuer.
@@ -46,18 +93,14 @@ func (t *Token) Issuer() did.DID {
 	return t.issuer
 }
 
+// Subject returns the did.DID representing the Token's subject.
+func (t *Token) Subject() did.DID {
+	return t.subject
+}
+
 // Audience returns the did.DID representing the Token's audience.
 func (t *Token) Audience() did.DID {
 	return t.audience
-}
-
-// Subject returns the did.DID representing the Token's subject.
-//
-// This field may be did.Undef for delegations that are [Powerlined] but
-// must be equal to the value returned by the Issuer method for root
-// tokens.
-func (t *Token) Subject() did.DID {
-	return t.subject
 }
 
 // Command returns the capability's command.Command.
@@ -65,9 +108,12 @@ func (t *Token) Command() command.Command {
 	return t.command
 }
 
-// Nonce returns the random Nonce encapsulated in this Token.
-func (t *Token) Nonce() []byte {
-	return t.nonce
+func (t *Token) Arguments() map[string]datamodel.Node {
+	return t.arguments
+}
+
+func (t *Token) Proof() []cid.Cid {
+	return t.proof
 }
 
 // Meta returns the Token's metadata.
@@ -75,9 +121,22 @@ func (t *Token) Meta() meta.ReadOnly {
 	return t.meta.ReadOnly()
 }
 
+// Nonce returns the random Nonce encapsulated in this Token.
+func (t *Token) Nonce() []byte {
+	return t.nonce
+}
+
 // Expiration returns the time at which the Token expires.
 func (t *Token) Expiration() *time.Time {
 	return t.expiration
+}
+
+func (t *Token) InvokedAt() *time.Time {
+	return t.invokedAt
+}
+
+func (t *Token) Cause() *cid.Cid {
+	return t.cause
 }
 
 func (t *Token) validate() error {
