@@ -79,6 +79,10 @@ func New(privKey crypto.PrivKey, aud did.DID, cmd command.Command, pol policy.Po
 		}
 	}
 
+	if len(tkn.meta.Keys) < 1 {
+		tkn.meta = nil
+	}
+
 	if err := tkn.validate(); err != nil {
 		return nil, err
 	}
@@ -213,7 +217,7 @@ func tokenFromModel(m tokenPayloadModel) (*Token, error) {
 	}
 	tkn.nonce = m.Nonce
 
-	tkn.meta = &m.Meta
+	tkn.meta = m.Meta
 
 	if m.Nbf != nil {
 		t := time.Unix(*m.Nbf, 0)

@@ -66,7 +66,7 @@ type tokenPayloadModel struct {
 	Nonce []byte
 
 	// Arbitrary Metadata
-	Meta meta.Meta
+	Meta *meta.Meta
 
 	// "Not before" UTC Unix Timestamp in seconds (valid from), 53-bits integer
 	// optional: can be nil

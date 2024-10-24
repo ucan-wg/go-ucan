@@ -224,7 +224,7 @@ func (t *Token) toIPLD(privKey crypto.PrivKey) (datamodel.Node, error) {
 		Cmd:   t.command.String(),
 		Pol:   pol,
 		Nonce: t.nonce,
-		Meta:  *t.meta,
+		Meta:  t.meta,
 		Nbf:   nbf,
 		Exp:   exp,
 	}
