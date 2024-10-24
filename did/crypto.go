@@ -200,6 +200,13 @@ func codeForCurve(pubKey crypto.PubKey) (multicodec.Code, error) {
 	}
 }
 
+// secp256k1.S256 is a valid ECDSA curve, but the go-libp2p/core/crypto
+// package treats it ask a different type and has a different format for
+// the raw bytes of the public key.
+//
+// If a valid ECDSA public key was created the secp256k1.S256 curve, this
+// function will "convert" it from a crypto.ECDSAPubKey to a
+// crypto.Secp256k1PublicKey.
 func coerceECDSAToSecp256k1(pubKey crypto.PubKey) (crypto.PubKey, error) {
 	stdPub, err := crypto.PubKeyToStdKey(pubKey)
 	if err != nil {
