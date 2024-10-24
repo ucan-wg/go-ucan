@@ -130,6 +130,15 @@ func WithoutInvokedAt() Option {
 	}
 }
 
+// WithoutInvokedAt clears the Token's invokedAt field.
+func WithoutInvokedAt() Option {
+	return func(t *Token) error {
+		t.invokedAt = nil
+
+		return nil
+	}
+}
+
 // WithCause sets the Token's cause field to the provided cid.Cid.
 func WithCause(cause *cid.Cid) Option {
 	return func(t *Token) error {

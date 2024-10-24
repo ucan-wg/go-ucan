@@ -65,14 +65,20 @@ type Token struct {
 // the previous contents of their target field.
 func New(iss, sub did.DID, cmd command.Command, prf []cid.Cid, opts ...Option) (*Token, error) {
 	iat := time.Now()
+	metadata := meta.NewMeta()
 
 	tkn := Token{
 		issuer:    iss,
 		subject:   sub,
 		command:   cmd,
 		proof:     prf,
+<<<<<<< HEAD
 		meta:      meta.NewMeta(),
 		nonce:     nil,
+=======
+		meta:      metadata,
+		nonce:     nonce,
+>>>>>>> f44cf8a (feat(invocation): produce example output similar to spec)
 		invokedAt: &iat,
 	}
 
@@ -82,6 +88,7 @@ func New(iss, sub did.DID, cmd command.Command, prf []cid.Cid, opts ...Option) (
 		}
 	}
 
+<<<<<<< HEAD
 	if len(tkn.nonce) == 0 {
 		tkn.nonce, err = generateNonce()
 		if err != nil {
@@ -91,6 +98,10 @@ func New(iss, sub did.DID, cmd command.Command, prf []cid.Cid, opts ...Option) (
 
 	if err := tkn.validate(); err != nil {
 		return nil, err
+=======
+	if len(tkn.meta.Keys) == 0 {
+		tkn.meta = nil
+>>>>>>> f44cf8a (feat(invocation): produce example output similar to spec)
 	}
 
 	return &tkn, nil
