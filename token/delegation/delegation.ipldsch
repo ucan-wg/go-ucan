@@ -20,7 +20,7 @@ type Payload struct {
     nonce Bytes
 
     # Arbitrary Metadata
-    meta {String : Any}
+    meta optional {String : Any}
 
     # "Not before" UTC Unix Timestamp in seconds (valid from), 53-bits integer
     nbf optional Int
