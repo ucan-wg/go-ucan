@@ -27,12 +27,6 @@ func (s Selector) Select(subject ipld.Node) (ipld.Node, error) {
 	return resolve(s, subject, nil)
 }
 
-// // MatchPath tells if the selector operates on the given (string only) path segments.
-// // It returns the segments that didn't get consumed by the matching.
-// func (s Selector) MatchPath(pathSegment ...string) (bool, []string) {
-// 	return matchPath(s, pathSegment)
-// }
-
 func (s Selector) String() string {
 	var res strings.Builder
 	for _, seg := range s {
@@ -229,19 +223,6 @@ func resolve(sel Selector, subject ipld.Node, at []string) (ipld.Node, error) {
 				}
 				cur, _ = cur.LookupByIndex(int64(idx))
 
-			//	TODO: not supported yet
-			//case datamodel.Kind_String:
-			//	str, _ := cur.AsString()
-			//	runes := []rune(str)
-			//	if idx < 0 {
-			//		idx = len(runes) + idx
-			//	}
-			//	if idx < 0 || idx >= len(runes) {
-			//		err := newResolutionError(fmt.Sprintf("index out of bounds: %d", seg.Index()), at)
-			//		return nil, errIfNotOptional(seg, err)
-			//	}
-			//	cur = basicnode.NewString(string(runes[idx]))
-
 			case datamodel.Kind_Bytes:
 				b, _ := cur.AsBytes()
 				if idx < 0 {
@@ -262,39 +243,6 @@ func resolve(sel Selector, subject ipld.Node, at []string) (ipld.Node, error) {
 	// segment exhausted, we return where we are
 	return cur, nil
 }
-
-// func matchPath(sel Selector, path []string) (bool, []string) {
-// 	for _, seg := range sel {
-// 		if len(path) == 0 {
-// 			return true, path
-// 		}
-// 		switch {
-// 		case seg.Identity():
-// 			continue
-//
-// 		case seg.Iterator():
-// 			// we have reached a [] iterator, it should have matched earlier
-// 			return false, nil
-//
-// 		case seg.Field() != "":
-// 			// if exact match on the segment, we continue
-// 			if path[0] == seg.Field() {
-// 				path = path[1:]
-// 				continue
-// 			}
-// 			return false, nil
-//
-// 		case seg.Slice() != nil:
-// 			// we have reached a [<int>:<int>] slicing, it should have matched earlier
-// 			return false, nil
-//
-// 		default: // Index()
-// 			// we have reached a [<int>] indexing, it should have matched earlier
-// 			return false, nil
-// 		}
-// 	}
-// 	return true, path
-// }
 
 // resolveSliceIndices resolves the start and end indices for slicing a list or byte array.
 //
