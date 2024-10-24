@@ -3,7 +3,6 @@ package selector
 import (
 	"errors"
 	"fmt"
-	"math"
 	"strconv"
 	"strings"
 
@@ -229,7 +228,7 @@ func resolve(sel Selector, subject ipld.Node, at []string) (ipld.Node, error) {
 					idx = len(b) + idx
 				}
 				if idx < 0 || idx >= len(b) {
-					err := newResolutionError(fmt.Sprintf("index out of bounds: %d", seg.Index()), at)
+					err := newResolutionError(fmt.Sprintf("index %d out of bounds for bytes of length %d", seg.Index(), len(b)), at)
 					return nil, errIfNotOptional(seg, err)
 				}
 				cur = basicnode.NewInt(int64(b[idx]))
@@ -263,30 +262,31 @@ func resolveSliceIndices(slice []int64, length int64) (start int64, end int64) {
 
 	start, end = slice[0], slice[1]
 
-	// adjust boundaries
-	switch {
-	case slice[0] == math.MinInt:
-		start = 0
-	case slice[0] < 0:
-		start = length + slice[0]
+	// clamp start index
+	if start < 0 {
+		start = length + start
+		if start < 0 {
+			start = 0
+		}
 	}
-	switch {
-	case slice[1] == math.MaxInt:
-		end = length
-	case slice[1] < 0:
-		end = length + slice[1]
+	if start > length {
+		start = length
 	}
 
-	// backward iteration is not allowed, shortcut to an empty result
-	if start >= end {
-		start, end = 0, 0
-	}
-	// clamp out of bound
-	if start < 0 {
-		start = 0
+	// clamp end index
+	if end < 0 {
+		end = length + end
+		if end < 0 {
+			end = 0
+		}
 	}
 	if end > length {
 		end = length
+	}
+
+	// handle backward slicing
+	if start > end {
+		start, end = 0, 0
 	}
 
 	return start, end

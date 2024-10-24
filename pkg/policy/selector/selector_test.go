@@ -246,6 +246,58 @@ func TestSelect(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, 2, int(must.Int(val))) // Assert sliced value at index 1
 	})
+
+	t.Run("slice on bytes", func(t *testing.T) {
+		sel, err := Parse(`.[1:3]`)
+		require.NoError(t, err)
+
+		node := basicnode.NewBytes([]byte{0x01, 0x02, 0x03, 0x04, 0x05})
+		res, err := sel.Select(node)
+		require.NoError(t, err)
+		require.NotEmpty(t, res)
+
+		bytes, err := res.AsBytes()
+		require.NoError(t, err)
+		require.Equal(t, []byte{0x02, 0x03}, bytes) // assert sliced bytes
+	})
+
+	t.Run("index on bytes", func(t *testing.T) {
+		sel, err := Parse(`.[2]`)
+		require.NoError(t, err)
+
+		node := basicnode.NewBytes([]byte{0x01, 0x02, 0x03, 0x04, 0x05})
+		res, err := sel.Select(node)
+		require.NoError(t, err)
+		require.NotEmpty(t, res)
+
+		val, err := res.AsInt()
+		require.NoError(t, err)
+		require.Equal(t, int64(0x03), val) // assert indexed byte value
+	})
+
+	t.Run("out of bounds slicing on bytes", func(t *testing.T) {
+		sel, err := Parse(`.[10:20]`)
+		require.NoError(t, err)
+
+		node := basicnode.NewBytes([]byte{0x01, 0x02, 0x03})
+		res, err := sel.Select(node)
+		require.NoError(t, err)
+		require.NotNil(t, res)
+
+		bytes, err := res.AsBytes()
+		require.NoError(t, err)
+		require.Empty(t, bytes) // assert empty result for out of bounds slice
+	})
+
+	t.Run("out of bounds indexing on bytes", func(t *testing.T) {
+		sel, err := Parse(`.[10]`)
+		require.NoError(t, err)
+
+		node := basicnode.NewBytes([]byte{0x01, 0x02, 0x03})
+		_, err = sel.Select(node)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "can not resolve path: .10") // assert error for out of bounds index
+	})
 }
 
 func FuzzParse(f *testing.F) {
