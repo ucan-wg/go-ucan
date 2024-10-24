@@ -8,8 +8,6 @@ import (
 	"github.com/ipld/go-ipld-prime/node/basicnode"
 )
 
-// TODO: remove entirely?
-
 var Bool = basicnode.NewBool
 var Int = basicnode.NewInt
 var Float = basicnode.NewFloat
