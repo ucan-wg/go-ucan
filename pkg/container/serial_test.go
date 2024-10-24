@@ -130,12 +130,6 @@ func BenchmarkContainerSerialisation(b *testing.B) {
 	}
 }
 
-func randBytes(n int) []byte {
-	b := make([]byte, n)
-	_, _ = rand.Read(b)
-	return b
-}
-
 func randDID() (crypto.PrivKey, did.DID) {
 	privKey, _, err := crypto.GenerateEd25519Key(rand.Reader)
 	if err != nil {
@@ -150,7 +144,7 @@ func randDID() (crypto.PrivKey, did.DID) {
 
 func randomString(length int) string {
 	b := make([]byte, length/2+1)
-	rand.Read(b)
+	_, _ = rand.Read(b)
 	return fmt.Sprintf("%x", b)[0:length]
 }
 

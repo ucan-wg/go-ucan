@@ -1,6 +1,7 @@
 package selector
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -144,7 +145,6 @@ func TestSelect(t *testing.T) {
 		fmt.Println(err)
 
 		require.ErrorAs(t, err, &resolutionerr{}, "error should be a resolution error")
-		require.True(t, IsResolutionErr(err))
 	})
 
 	t.Run("optional not exists", func(t *testing.T) {
@@ -364,7 +364,7 @@ func FuzzParseAndSelect(f *testing.F) {
 
 		// look for panic()
 		_, err = sel.Select(node)
-		if err != nil && !IsResolutionErr(err) {
+		if err != nil && !errors.As(err, &resolutionerr{}) {
 			// not normal, we should only have resolution errors
 			t.Fatal(err)
 		}

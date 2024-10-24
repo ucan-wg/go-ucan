@@ -4,8 +4,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/ucan-wg/go-ucan/pkg/meta"
 	"gotest.tools/v3/assert"
+
+	"github.com/ucan-wg/go-ucan/pkg/meta"
 )
 
 func TestMeta_Add(t *testing.T) {
