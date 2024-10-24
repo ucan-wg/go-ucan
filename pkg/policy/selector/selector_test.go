@@ -7,245 +7,14 @@ import (
 
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/codec/dagjson"
+	"github.com/ipld/go-ipld-prime/datamodel"
+	"github.com/ipld/go-ipld-prime/fluent/qp"
 	"github.com/ipld/go-ipld-prime/must"
 	basicnode "github.com/ipld/go-ipld-prime/node/basic"
 	"github.com/ipld/go-ipld-prime/node/bindnode"
 	"github.com/ipld/go-ipld-prime/printer"
 	"github.com/stretchr/testify/require"
 )
-
-func TestParse(t *testing.T) {
-	t.Run("identity", func(t *testing.T) {
-		sel, err := Parse(".")
-		require.NoError(t, err)
-		require.Equal(t, 1, len(sel))
-		require.True(t, sel[0].Identity())
-		require.False(t, sel[0].Optional())
-		require.False(t, sel[0].Iterator())
-		require.Empty(t, sel[0].Slice())
-		require.Empty(t, sel[0].Field())
-		require.Empty(t, sel[0].Index())
-	})
-
-	t.Run("field", func(t *testing.T) {
-		sel, err := Parse(".foo")
-		require.NoError(t, err)
-		require.Equal(t, 1, len(sel))
-		require.False(t, sel[0].Identity())
-		require.False(t, sel[0].Optional())
-		require.False(t, sel[0].Iterator())
-		require.Empty(t, sel[0].Slice())
-		require.Equal(t, sel[0].Field(), "foo")
-		require.Empty(t, sel[0].Index())
-	})
-
-	t.Run("explicit field", func(t *testing.T) {
-		sel, err := Parse(`.["foo"]`)
-		require.NoError(t, err)
-		require.Equal(t, 2, len(sel))
-		require.True(t, sel[0].Identity())
-		require.False(t, sel[0].Optional())
-		require.False(t, sel[0].Iterator())
-		require.Empty(t, sel[0].Slice())
-		require.Empty(t, sel[0].Field())
-		require.Empty(t, sel[0].Index())
-		require.False(t, sel[1].Identity())
-		require.False(t, sel[1].Optional())
-		require.False(t, sel[1].Iterator())
-		require.Empty(t, sel[1].Slice())
-		require.Equal(t, sel[1].Field(), "foo")
-		require.Empty(t, sel[1].Index())
-	})
-
-	t.Run("index", func(t *testing.T) {
-		sel, err := Parse(".[138]")
-		require.NoError(t, err)
-		require.Equal(t, 2, len(sel))
-		require.True(t, sel[0].Identity())
-		require.False(t, sel[0].Optional())
-		require.False(t, sel[0].Iterator())
-		require.Empty(t, sel[0].Slice())
-		require.Empty(t, sel[0].Field())
-		require.Empty(t, sel[0].Index())
-		require.False(t, sel[1].Identity())
-		require.False(t, sel[1].Optional())
-		require.False(t, sel[1].Iterator())
-		require.Empty(t, sel[1].Slice())
-		require.Empty(t, sel[1].Field())
-		require.Equal(t, sel[1].Index(), 138)
-	})
-
-	t.Run("negative index", func(t *testing.T) {
-		sel, err := Parse(".[-138]")
-		require.NoError(t, err)
-		require.Equal(t, 2, len(sel))
-		require.True(t, sel[0].Identity())
-		require.False(t, sel[0].Optional())
-		require.False(t, sel[0].Iterator())
-		require.Empty(t, sel[0].Slice())
-		require.Empty(t, sel[0].Field())
-		require.Empty(t, sel[0].Index())
-		require.False(t, sel[1].Identity())
-		require.False(t, sel[1].Optional())
-		require.False(t, sel[1].Iterator())
-		require.Empty(t, sel[1].Slice())
-		require.Empty(t, sel[1].Field())
-		require.Equal(t, sel[1].Index(), -138)
-	})
-
-	t.Run("iterator", func(t *testing.T) {
-		sel, err := Parse(".[]")
-		require.NoError(t, err)
-		require.Equal(t, 2, len(sel))
-		require.True(t, sel[0].Identity())
-		require.False(t, sel[0].Optional())
-		require.False(t, sel[0].Iterator())
-		require.Empty(t, sel[0].Slice())
-		require.Empty(t, sel[0].Field())
-		require.Empty(t, sel[0].Index())
-		require.False(t, sel[1].Identity())
-		require.False(t, sel[1].Optional())
-		require.True(t, sel[1].Iterator())
-		require.Empty(t, sel[1].Slice())
-		require.Empty(t, sel[1].Field())
-		require.Empty(t, sel[1].Index())
-	})
-
-	t.Run("optional field", func(t *testing.T) {
-		sel, err := Parse(".foo?")
-		require.NoError(t, err)
-		require.Equal(t, 1, len(sel))
-		require.False(t, sel[0].Identity())
-		require.True(t, sel[0].Optional())
-		require.False(t, sel[0].Iterator())
-		require.Empty(t, sel[0].Slice())
-		require.Equal(t, sel[0].Field(), "foo")
-		require.Empty(t, sel[0].Index())
-	})
-
-	t.Run("optional explicit field", func(t *testing.T) {
-		sel, err := Parse(`.["foo"]?`)
-		require.NoError(t, err)
-		require.Equal(t, 2, len(sel))
-		require.True(t, sel[0].Identity())
-		require.False(t, sel[0].Optional())
-		require.False(t, sel[0].Iterator())
-		require.Empty(t, sel[0].Slice())
-		require.Empty(t, sel[0].Field())
-		require.Empty(t, sel[0].Index())
-		require.False(t, sel[1].Identity())
-		require.True(t, sel[1].Optional())
-		require.False(t, sel[1].Iterator())
-		require.Empty(t, sel[1].Slice())
-		require.Equal(t, sel[1].Field(), "foo")
-		require.Empty(t, sel[1].Index())
-	})
-
-	t.Run("optional index", func(t *testing.T) {
-		sel, err := Parse(".[138]?")
-		require.NoError(t, err)
-		require.Equal(t, 2, len(sel))
-		require.True(t, sel[0].Identity())
-		require.False(t, sel[0].Optional())
-		require.False(t, sel[0].Iterator())
-		require.Empty(t, sel[0].Slice())
-		require.Empty(t, sel[0].Field())
-		require.Empty(t, sel[0].Index())
-		require.False(t, sel[1].Identity())
-		require.True(t, sel[1].Optional())
-		require.False(t, sel[1].Iterator())
-		require.Empty(t, sel[1].Slice())
-		require.Empty(t, sel[1].Field())
-		require.Equal(t, sel[1].Index(), 138)
-	})
-
-	t.Run("optional iterator", func(t *testing.T) {
-		sel, err := Parse(".[]?")
-		require.NoError(t, err)
-		require.Equal(t, 2, len(sel))
-		require.True(t, sel[0].Identity())
-		require.False(t, sel[0].Optional())
-		require.False(t, sel[0].Iterator())
-		require.Empty(t, sel[0].Slice())
-		require.Empty(t, sel[0].Field())
-		require.Empty(t, sel[0].Index())
-		require.False(t, sel[1].Identity())
-		require.True(t, sel[1].Optional())
-		require.True(t, sel[1].Iterator())
-		require.Empty(t, sel[1].Slice())
-		require.Empty(t, sel[1].Field())
-		require.Empty(t, sel[1].Index())
-	})
-
-	t.Run("nesting", func(t *testing.T) {
-		str := `.foo.["bar"].[138]?.baz[1:]`
-		sel, err := Parse(str)
-		require.NoError(t, err)
-		printSegments(sel)
-		require.Equal(t, str, sel.String())
-		require.Equal(t, 7, len(sel))
-		require.False(t, sel[0].Identity())
-		require.False(t, sel[0].Optional())
-		require.False(t, sel[0].Iterator())
-		require.Empty(t, sel[0].Slice())
-		require.Equal(t, sel[0].Field(), "foo")
-		require.Empty(t, sel[0].Index())
-		require.True(t, sel[1].Identity())
-		require.False(t, sel[1].Optional())
-		require.False(t, sel[1].Iterator())
-		require.Empty(t, sel[1].Slice())
-		require.Empty(t, sel[1].Field())
-		require.Empty(t, sel[1].Index())
-		require.False(t, sel[2].Identity())
-		require.False(t, sel[2].Optional())
-		require.False(t, sel[2].Iterator())
-		require.Empty(t, sel[2].Slice())
-		require.Equal(t, sel[2].Field(), "bar")
-		require.Empty(t, sel[2].Index())
-		require.True(t, sel[3].Identity())
-		require.False(t, sel[3].Optional())
-		require.False(t, sel[3].Iterator())
-		require.Empty(t, sel[3].Slice())
-		require.Empty(t, sel[3].Field())
-		require.Empty(t, sel[3].Index())
-		require.False(t, sel[4].Identity())
-		require.True(t, sel[4].Optional())
-		require.False(t, sel[4].Iterator())
-		require.Empty(t, sel[4].Slice())
-		require.Empty(t, sel[4].Field())
-		require.Equal(t, sel[4].Index(), 138)
-		require.False(t, sel[5].Identity())
-		require.False(t, sel[5].Optional())
-		require.False(t, sel[5].Iterator())
-		require.Empty(t, sel[5].Slice())
-		require.Equal(t, sel[5].Field(), "baz")
-		require.Empty(t, sel[5].Index())
-		require.False(t, sel[6].Identity())
-		require.False(t, sel[6].Optional())
-		require.False(t, sel[6].Iterator())
-		require.Equal(t, sel[6].Slice(), []int{1})
-		require.Empty(t, sel[6].Field())
-		require.Empty(t, sel[6].Index())
-	})
-
-	t.Run("non dotted", func(t *testing.T) {
-		_, err := Parse("foo")
-		require.NotNil(t, err)
-		fmt.Println(err)
-	})
-
-	t.Run("non quoted", func(t *testing.T) {
-		_, err := Parse(".[foo]")
-		require.NotNil(t, err)
-		fmt.Println(err)
-	})
-}
-
-func printSegments(s Selector) {
-	for i, seg := range s {
-		fmt.Printf("%d: %s\n", i, seg.String())
-	}
-}
 
 func TestSelect(t *testing.T) {
 	type name struct {
@@ -313,14 +82,13 @@ func TestSelect(t *testing.T) {
 		sel, err := Parse(".")
 		require.NoError(t, err)
 
-		one, many, err := sel.Select(anode)
+		res, err := sel.Select(anode)
 		require.NoError(t, err)
-		require.NotEmpty(t, one)
-		require.Empty(t, many)
+		require.NotEmpty(t, res)
 
-		fmt.Println(printer.Sprint(one))
+		fmt.Println(printer.Sprint(res))
 
-		age := must.Int(must.Node(one.LookupByString("age")))
+		age := must.Int(must.Node(res.LookupByString("age")))
 		require.Equal(t, int64(alice.Age), age)
 	})
 
@@ -328,24 +96,22 @@ func TestSelect(t *testing.T) {
 		sel, err := Parse(".name.first")
 		require.NoError(t, err)
 
-		one, many, err := sel.Select(anode)
+		res, err := sel.Select(anode)
 		require.NoError(t, err)
-		require.NotEmpty(t, one)
-		require.Empty(t, many)
+		require.NotEmpty(t, res)
 
-		fmt.Println(printer.Sprint(one))
+		fmt.Println(printer.Sprint(res))
 
-		name := must.String(one)
+		name := must.String(res)
 		require.Equal(t, alice.Name.First, name)
 
-		one, many, err = sel.Select(bnode)
+		res, err = sel.Select(bnode)
 		require.NoError(t, err)
-		require.NotEmpty(t, one)
-		require.Empty(t, many)
+		require.NotEmpty(t, res)
 
-		fmt.Println(printer.Sprint(one))
+		fmt.Println(printer.Sprint(res))
 
-		name = must.String(one)
+		name = must.String(res)
 		require.Equal(t, bob.Name.First, name)
 	})
 
@@ -353,108 +119,185 @@ func TestSelect(t *testing.T) {
 		sel, err := Parse(".name.middle?")
 		require.NoError(t, err)
 
-		one, many, err := sel.Select(anode)
+		res, err := sel.Select(anode)
 		require.NoError(t, err)
-		require.NotEmpty(t, one)
-		require.Empty(t, many)
+		require.NotEmpty(t, res)
 
-		fmt.Println(printer.Sprint(one))
+		fmt.Println(printer.Sprint(res))
 
-		name := must.String(one)
+		name := must.String(res)
 		require.Equal(t, *alice.Name.Middle, name)
 
-		one, many, err = sel.Select(bnode)
+		res, err = sel.Select(bnode)
 		require.NoError(t, err)
-		require.Empty(t, one)
-		require.Empty(t, many)
+		require.Empty(t, res)
 	})
 
 	t.Run("not exists", func(t *testing.T) {
 		sel, err := Parse(".name.foo")
 		require.NoError(t, err)
 
-		one, many, err := sel.Select(anode)
+		res, err := sel.Select(anode)
 		require.Error(t, err)
-		require.Empty(t, one)
-		require.Empty(t, many)
+		require.Empty(t, res)
 
 		fmt.Println(err)
 
-		require.ErrorAs(t, err, &resolutionerr{}, "error was not a resolution error")
+		require.ErrorAs(t, err, &resolutionerr{}, "error should be a resolution error")
+		require.True(t, IsResolutionErr(err))
 	})
 
 	t.Run("optional not exists", func(t *testing.T) {
 		sel, err := Parse(".name.foo?")
 		require.NoError(t, err)
 
-		one, many, err := sel.Select(anode)
+		one, err := sel.Select(anode)
 		require.NoError(t, err)
 		require.Empty(t, one)
-		require.Empty(t, many)
 	})
 
 	t.Run("iterator", func(t *testing.T) {
 		sel, err := Parse(".interests[]")
 		require.NoError(t, err)
 
-		one, many, err := sel.Select(anode)
+		res, err := sel.Select(anode)
 		require.NoError(t, err)
-		require.Empty(t, one)
-		require.NotEmpty(t, many)
+		require.NotEmpty(t, res)
 
-		for _, n := range many {
-			fmt.Println(printer.Sprint(n))
-		}
+		fmt.Println(printer.Sprint(res))
 
-		iname := must.String(must.Node(many[0].LookupByString("name")))
+		iname := must.String(must.Node(must.Node(res.LookupByIndex(0)).LookupByString("name")))
 		require.Equal(t, alice.Interests[0].Name, iname)
 
-		iname = must.String(must.Node(many[1].LookupByString("name")))
+		iname = must.String(must.Node(must.Node(res.LookupByIndex(1)).LookupByString("name")))
 		require.Equal(t, alice.Interests[1].Name, iname)
 	})
 
-	t.Run("map iterator", func(t *testing.T) {
-		sel, err := Parse(".interests[0][]")
+	t.Run("slice on string", func(t *testing.T) {
+		sel, err := Parse(`.[1:3]`)
 		require.NoError(t, err)
 
-		one, many, err := sel.Select(anode)
+		node := basicnode.NewString("hello")
+		res, err := sel.Select(node)
 		require.NoError(t, err)
-		require.Empty(t, one)
-		require.NotEmpty(t, many)
+		require.NotEmpty(t, res)
 
-		for _, n := range many {
-			fmt.Println(printer.Sprint(n))
-		}
-
-		require.Equal(t, alice.Interests[0].Name, must.String(many[0]))
-		require.Equal(t, alice.Interests[0].Experience, int(must.Int(many[2])))
+		str, err := res.AsString()
+		require.NoError(t, err)
+		require.Equal(t, "el", str) // assert sliced substring
 	})
-}
 
-func TestMatch(t *testing.T) {
-	for _, tc := range []struct {
-		sel       string
-		path      []string
-		want      bool
-		remaining []string
-	}{
-		{sel: ".foo.bar", path: []string{"foo", "bar"}, want: true, remaining: []string{}},
-		{sel: ".foo.bar", path: []string{"foo"}, want: true, remaining: []string{}},
-		{sel: ".foo.bar", path: []string{"foo", "bar", "baz"}, want: true, remaining: []string{"baz"}},
-		{sel: ".foo.bar", path: []string{"foo", "faa"}, want: false},
-		{sel: ".foo.[]", path: []string{"foo", "faa"}, want: false},
-		{sel: ".foo.[]", path: []string{"foo"}, want: true, remaining: []string{}},
-		{sel: ".foo.bar?", path: []string{"foo"}, want: true, remaining: []string{}},
-		{sel: ".foo.bar?", path: []string{"foo", "bar"}, want: true, remaining: []string{}},
-		{sel: ".foo.bar?", path: []string{"foo", "baz"}, want: false},
-	} {
-		t.Run(tc.sel, func(t *testing.T) {
-			sel := MustParse(tc.sel)
-			res, remain := sel.MatchPath(tc.path...)
-			require.Equal(t, tc.want, res)
-			require.EqualValues(t, tc.remaining, remain)
+	t.Run("out of bounds slicing", func(t *testing.T) {
+		node, err := qp.BuildList(basicnode.Prototype.Any, 3, func(la datamodel.ListAssembler) {
+			qp.ListEntry(la, qp.Int(1))
+			qp.ListEntry(la, qp.Int(2))
+			qp.ListEntry(la, qp.Int(3))
 		})
-	}
+		require.NoError(t, err)
+
+		sel, err := Parse(`.[10:20]`)
+		require.NoError(t, err)
+
+		res, err := sel.Select(node)
+		require.NoError(t, err)
+		require.NotEmpty(t, res)
+		require.Equal(t, int64(0), res.Length())
+
+		_, err = res.LookupByIndex(0)
+		require.ErrorIs(t, err, datamodel.ErrNotExists{}) // assert empty result for out of bounds slice
+	})
+
+	t.Run("backward slicing", func(t *testing.T) {
+		node, err := qp.BuildList(basicnode.Prototype.Any, 3, func(la datamodel.ListAssembler) {
+			qp.ListEntry(la, qp.Int(1))
+			qp.ListEntry(la, qp.Int(2))
+			qp.ListEntry(la, qp.Int(3))
+		})
+		require.NoError(t, err)
+
+		sel, err := Parse(`.[5:2]`)
+		require.NoError(t, err)
+
+		res, err := sel.Select(node)
+		require.NoError(t, err)
+		require.NotEmpty(t, res)
+		require.Equal(t, int64(0), res.Length())
+
+		_, err = res.LookupByIndex(0)
+		require.ErrorIs(t, err, datamodel.ErrNotExists{}) // assert empty result for backward slice
+	})
+
+	t.Run("slice with negative index", func(t *testing.T) {
+		node, err := qp.BuildList(basicnode.Prototype.Any, 3, func(la datamodel.ListAssembler) {
+			qp.ListEntry(la, qp.Int(1))
+			qp.ListEntry(la, qp.Int(2))
+			qp.ListEntry(la, qp.Int(3))
+		})
+		require.NoError(t, err)
+
+		sel, err := Parse(`.[0:-1]`)
+		require.NoError(t, err)
+
+		res, err := sel.Select(node)
+		require.NoError(t, err)
+		require.NotEmpty(t, res)
+
+		val, err := res.LookupByIndex(1)
+		require.NoError(t, err)
+		require.Equal(t, 2, int(must.Int(val))) // Assert sliced value at index 1
+	})
+
+	t.Run("slice on bytes", func(t *testing.T) {
+		sel, err := Parse(`.[1:3]`)
+		require.NoError(t, err)
+
+		node := basicnode.NewBytes([]byte{0x01, 0x02, 0x03, 0x04, 0x05})
+		res, err := sel.Select(node)
+		require.NoError(t, err)
+		require.NotEmpty(t, res)
+
+		bytes, err := res.AsBytes()
+		require.NoError(t, err)
+		require.Equal(t, []byte{0x02, 0x03}, bytes) // assert sliced bytes
+	})
+
+	t.Run("index on bytes", func(t *testing.T) {
+		sel, err := Parse(`.[2]`)
+		require.NoError(t, err)
+
+		node := basicnode.NewBytes([]byte{0x01, 0x02, 0x03, 0x04, 0x05})
+		res, err := sel.Select(node)
+		require.NoError(t, err)
+		require.NotEmpty(t, res)
+
+		val, err := res.AsInt()
+		require.NoError(t, err)
+		require.Equal(t, int64(0x03), val) // assert indexed byte value
+	})
+
+	t.Run("out of bounds slicing on bytes", func(t *testing.T) {
+		sel, err := Parse(`.[10:20]`)
+		require.NoError(t, err)
+
+		node := basicnode.NewBytes([]byte{0x01, 0x02, 0x03})
+		res, err := sel.Select(node)
+		require.NoError(t, err)
+		require.NotNil(t, res)
+
+		bytes, err := res.AsBytes()
+		require.NoError(t, err)
+		require.Empty(t, bytes) // assert empty result for out of bounds slice
+	})
+
+	t.Run("out of bounds indexing on bytes", func(t *testing.T) {
+		sel, err := Parse(`.[10]`)
+		require.NoError(t, err)
+
+		node := basicnode.NewBytes([]byte{0x01, 0x02, 0x03})
+		_, err = sel.Select(node)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "can not resolve path: .10") // assert error for out of bounds index
+	})
 }
 
 func FuzzParse(f *testing.F) {
@@ -520,6 +363,10 @@ func FuzzParseAndSelect(f *testing.F) {
 		}
 
 		// look for panic()
-		_, _, _ = sel.Select(node)
+		_, err = sel.Select(node)
+		if err != nil && !IsResolutionErr(err) {
+			// not normal, we should only have resolution errors
+			t.Fatal(err)
+		}
 	})
 }

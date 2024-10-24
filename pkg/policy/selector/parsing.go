@@ -2,6 +2,7 @@ package selector
 
 import (
 	"fmt"
+	"math"
 	"regexp"
 	"strconv"
 	"strings"
@@ -24,6 +25,9 @@ func Parse(str string) (Selector, error) {
 	if str == "." {
 		return identity, nil
 	}
+	if str == ".?" {
+		return Selector{segment{str: ".?", identity: true, optional: true}}, nil
+	}
 
 	col := 0
 	var sel Selector
@@ -31,56 +35,70 @@ func Parse(str string) (Selector, error) {
 		seg := tok
 		opt := strings.HasSuffix(tok, "?")
 		if opt {
-			seg = tok[0 : len(tok)-1]
+			seg = strings.TrimRight(tok, "?")
 		}
-		switch seg {
-		case ".":
+		switch {
+		case seg == ".":
 			if len(sel) > 0 && sel[len(sel)-1].Identity() {
 				return nil, newParseError("selector contains unsupported recursive descent segment: '..'", str, col, tok)
 			}
 			sel = append(sel, segment{str: ".", identity: true})
-		case "[]":
-			sel = append(sel, segment{str: tok, optional: opt, iterator: true})
-		default:
-			if strings.HasPrefix(seg, "[") && strings.HasSuffix(seg, "]") {
-				lookup := seg[1 : len(seg)-1]
 
-				if indexRegex.MatchString(lookup) { // index
-					idx, err := strconv.Atoi(lookup)
-					if err != nil {
-						return nil, newParseError("invalid index", str, col, tok)
-					}
-					sel = append(sel, segment{str: tok, optional: opt, index: idx})
-				} else if strings.HasPrefix(lookup, "\"") && strings.HasSuffix(lookup, "\"") { // explicit field
-					sel = append(sel, segment{str: tok, optional: opt, field: lookup[1 : len(lookup)-1]})
-				} else if sliceRegex.MatchString(lookup) { // slice [3:5] or [:5] or [3:]
-					var rng []int
-					splt := strings.Split(lookup, ":")
-					if splt[0] == "" {
-						rng = append(rng, 0)
-					} else {
-						i, err := strconv.Atoi(splt[0])
-						if err != nil {
-							return nil, newParseError("invalid slice index", str, col, tok)
-						}
-						rng = append(rng, i)
-					}
-					if splt[1] != "" {
-						i, err := strconv.Atoi(splt[1])
-						if err != nil {
-							return nil, newParseError("invalid slice index", str, col, tok)
-						}
-						rng = append(rng, i)
-					}
-					sel = append(sel, segment{str: tok, optional: opt, slice: rng})
-				} else {
+		case seg == "[]":
+			sel = append(sel, segment{str: tok, optional: opt, iterator: true})
+
+		case strings.HasPrefix(seg, "[") && strings.HasSuffix(seg, "]"):
+			lookup := seg[1 : len(seg)-1]
+
+			switch {
+			// index, [123]
+			case indexRegex.MatchString(lookup):
+				idx, err := strconv.Atoi(lookup)
+				if err != nil {
+					return nil, newParseError("invalid index", str, col, tok)
+				}
+				sel = append(sel, segment{str: tok, optional: opt, index: idx})
+
+			// explicit field, ["abcd"]
+			case strings.HasPrefix(lookup, "\"") && strings.HasSuffix(lookup, "\""):
+				fieldName := lookup[1 : len(lookup)-1]
+				if strings.Contains(fieldName, ":") {
 					return nil, newParseError(fmt.Sprintf("invalid segment: %s", seg), str, col, tok)
 				}
-			} else if fieldRegex.MatchString(seg) {
-				sel = append(sel, segment{str: tok, optional: opt, field: seg[1:]})
-			} else {
+				sel = append(sel, segment{str: tok, optional: opt, field: fieldName})
+
+			// slice [3:5] or [:5] or [3:], also negative numbers
+			case sliceRegex.MatchString(lookup):
+				var rng [2]int64
+				splt := strings.Split(lookup, ":")
+				if splt[0] == "" {
+					rng[0] = math.MinInt
+				} else {
+					i, err := strconv.ParseInt(splt[0], 10, 0)
+					if err != nil {
+						return nil, newParseError("invalid slice index", str, col, tok)
+					}
+					rng[0] = i
+				}
+				if splt[1] == "" {
+					rng[1] = math.MaxInt
+				} else {
+					i, err := strconv.ParseInt(splt[1], 10, 0)
+					if err != nil {
+						return nil, newParseError("invalid slice index", str, col, tok)
+					}
+					rng[1] = i
+				}
+				sel = append(sel, segment{str: tok, optional: opt, slice: rng[:]})
+
+			default:
 				return nil, newParseError(fmt.Sprintf("invalid segment: %s", seg), str, col, tok)
 			}
+
+		case fieldRegex.MatchString(seg):
+			sel = append(sel, segment{str: tok, optional: opt, field: seg[1:]})
+		default:
+			return nil, newParseError(fmt.Sprintf("invalid segment: %s", seg), str, col, tok)
 		}
 		col += len(tok)
 	}

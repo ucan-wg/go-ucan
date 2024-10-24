@@ -20,72 +20,47 @@ func (p Policy) Match(node datamodel.Node) bool {
 	return true
 }
 
-// Filter performs a recursive filtering of the Statement, and prunes what doesn't match the given path
-func (p Policy) Filter(path ...string) Policy {
-	var filtered Policy
-
-	for _, stmt := range p {
-		newChild, remain := filter(stmt, path)
-		if newChild != nil && len(remain) == 0 {
-			filtered = append(filtered, newChild)
-		}
-	}
-
-	return filtered
-}
-
 func matchStatement(statement Statement, node ipld.Node) bool {
 	switch statement.Kind() {
 	case KindEqual:
 		if s, ok := statement.(equality); ok {
-			one, many, err := s.selector.Select(node)
+			res, err := s.selector.Select(node)
 			if err != nil {
 				return false
 			}
-			if one != nil {
-				return datamodel.DeepEqual(s.value, one)
-			}
-			if many != nil {
-				for _, n := range many {
-					if eq := datamodel.DeepEqual(s.value, n); eq {
-						return true
-					}
-				}
-			}
-
-			return false
+			return datamodel.DeepEqual(s.value, res)
 		}
 	case KindGreaterThan:
 		if s, ok := statement.(equality); ok {
-			one, _, err := s.selector.Select(node)
-			if err != nil || one == nil {
+			res, err := s.selector.Select(node)
+			if err != nil {
 				return false
 			}
-			return isOrdered(s.value, one, gt)
+			return isOrdered(s.value, res, gt)
 		}
 	case KindGreaterThanOrEqual:
 		if s, ok := statement.(equality); ok {
-			one, _, err := s.selector.Select(node)
-			if err != nil || one == nil {
+			res, err := s.selector.Select(node)
+			if err != nil {
 				return false
 			}
-			return isOrdered(s.value, one, gte)
+			return isOrdered(s.value, res, gte)
 		}
 	case KindLessThan:
 		if s, ok := statement.(equality); ok {
-			one, _, err := s.selector.Select(node)
-			if err != nil || one == nil {
+			res, err := s.selector.Select(node)
+			if err != nil {
 				return false
 			}
-			return isOrdered(s.value, one, lt)
+			return isOrdered(s.value, res, lt)
 		}
 	case KindLessThanOrEqual:
 		if s, ok := statement.(equality); ok {
-			one, _, err := s.selector.Select(node)
-			if err != nil || one == nil {
+			res, err := s.selector.Select(node)
+			if err != nil {
 				return false
 			}
-			return isOrdered(s.value, one, lte)
+			return isOrdered(s.value, res, lte)
 		}
 	case KindNot:
 		if s, ok := statement.(negation); ok {
@@ -116,24 +91,32 @@ func matchStatement(statement Statement, node ipld.Node) bool {
 		}
 	case KindLike:
 		if s, ok := statement.(wildcard); ok {
-			one, _, err := s.selector.Select(node)
-			if err != nil || one == nil {
-				return false
-			}
-			v, err := one.AsString()
+			res, err := s.selector.Select(node)
 			if err != nil {
 				return false
+			}
+			v, err := res.AsString()
+			if err != nil {
+				return false // not a string
 			}
 			return s.pattern.Match(v)
 		}
 	case KindAll:
 		if s, ok := statement.(quantifier); ok {
-			_, many, err := s.selector.Select(node)
-			if err != nil || many == nil {
+			res, err := s.selector.Select(node)
+			if err != nil {
 				return false
 			}
-			for _, n := range many {
-				ok := matchStatement(s.statement, n)
+			it := res.ListIterator()
+			if it == nil {
+				return false // not a list
+			}
+			for !it.Done() {
+				_, v, err := it.Next()
+				if err != nil {
+					return false
+				}
+				ok := matchStatement(s.statement, v)
 				if !ok {
 					return false
 				}
@@ -142,93 +125,28 @@ func matchStatement(statement Statement, node ipld.Node) bool {
 		}
 	case KindAny:
 		if s, ok := statement.(quantifier); ok {
-			one, many, err := s.selector.Select(node)
+			res, err := s.selector.Select(node)
 			if err != nil {
 				return false
 			}
-			if one != nil {
-				ok := matchStatement(s.statement, one)
+			it := res.ListIterator()
+			if it == nil {
+				return false // not a list
+			}
+			for !it.Done() {
+				_, v, err := it.Next()
+				if err != nil {
+					return false
+				}
+				ok := matchStatement(s.statement, v)
 				if ok {
 					return true
 				}
 			}
-			if many != nil {
-				for _, n := range many {
-					ok := matchStatement(s.statement, n)
-					if ok {
-						return true
-					}
-				}
-			}
-
 			return false
 		}
 	}
 	panic(fmt.Errorf("unimplemented statement kind: %s", statement.Kind()))
-}
-
-// filter performs a recursive filtering of the Statement, and prunes what doesn't match the given path
-func filter(stmt Statement, path []string) (Statement, []string) {
-	// For each kind, we do some of the following if it applies:
-	// - test the path against the selector, consuming segments
-	// - for terminal statements (equality, wildcard), require all the segments to have been consumed
-	// - recursively filter child (negation, quantifier) or children (connective) statements with the remaining path
-	switch stmt.(type) {
-	case equality:
-		match, remain := stmt.(equality).selector.MatchPath(path...)
-		if match && len(remain) == 0 {
-			return stmt, remain
-		}
-		return nil, nil
-	case negation:
-		newChild, remain := filter(stmt.(negation).statement, path)
-		if newChild != nil && len(remain) == 0 {
-			return negation{
-				statement: newChild,
-			}, nil
-		}
-		return nil, nil
-	case connective:
-		var newChildren []Statement
-		for _, child := range stmt.(connective).statements {
-			newChild, remain := filter(child, path)
-			if newChild != nil && len(remain) == 0 {
-				newChildren = append(newChildren, newChild)
-			}
-		}
-		if len(newChildren) == 0 {
-			return nil, nil
-		}
-		return connective{
-			kind:       stmt.(connective).kind,
-			statements: newChildren,
-		}, nil
-	case wildcard:
-		match, remain := stmt.(wildcard).selector.MatchPath(path...)
-		if match && len(remain) == 0 {
-			return stmt, remain
-		}
-		return nil, nil
-	case quantifier:
-		match, remain := stmt.(quantifier).selector.MatchPath(path...)
-		if match && len(remain) == 0 {
-			return stmt, remain
-		}
-		if !match {
-			return nil, nil
-		}
-		newChild, remain := filter(stmt.(quantifier).statement, remain)
-		if newChild != nil && len(remain) == 0 {
-			return quantifier{
-				kind:      stmt.(quantifier).kind,
-				selector:  stmt.(quantifier).selector,
-				statement: newChild,
-			}, nil
-		}
-		return nil, nil
-	default:
-		panic(fmt.Errorf("unimplemented statement kind: %s", stmt.Kind()))
-	}
 }
 
 func isOrdered(expected ipld.Node, actual ipld.Node, satisfies func(order int) bool) bool {

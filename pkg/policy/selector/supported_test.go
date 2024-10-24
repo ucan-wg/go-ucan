@@ -26,17 +26,15 @@ func TestSupportedForms(t *testing.T) {
 		Output   string
 	}
 
-	// Pass
+	// Pass and return a node
 	for _, testcase := range []Testcase{
 		{Name: "Identity", Selector: `.`, Input: `{"x":1}`, Output: `{"x":1}`},
 		{Name: "Iterator", Selector: `.[]`, Input: `[1, 2]`, Output: `[1, 2]`},
 		{Name: "Optional Null Iterator", Selector: `.[]?`, Input: `null`, Output: `[]`},
-		{Name: "Optional Iterator", Selector: `.[][]?`, Input: `[[1], 2, [3]]`, Output: `[1, 3]`},
 		{Name: "Object Key", Selector: `.x`, Input: `{"x": 1 }`, Output: `1`},
 		{Name: "Quoted Key", Selector: `.["x"]`, Input: `{"x": 1}`, Output: `1`},
 		{Name: "Index", Selector: `.[0]`, Input: `[1, 2]`, Output: `1`},
 		{Name: "Negative Index", Selector: `.[-1]`, Input: `[1, 2]`, Output: `2`},
-		{Name: "String Index", Selector: `.[0]`, Input: `"Hi"`, Output: `"H"`},
 		{Name: "Bytes Index", Selector: `.[0]`, Input: `{"/":{"bytes":"AAE"}}`, Output: `0`},
 		{Name: "Array Slice", Selector: `.[0:2]`, Input: `[0, 1, 2]`, Output: `[0, 1]`},
 		{Name: "Array Slice", Selector: `.[1:]`, Input: `[0, 1, 2]`, Output: `[1, 2]`},
@@ -52,35 +50,16 @@ func TestSupportedForms(t *testing.T) {
 			require.NoError(t, err)
 
 			// attempt to select
-			node, nodes, err := sel.Select(makeNode(t, tc.Input))
+			res, err := sel.Select(makeNode(t, tc.Input))
 			require.NoError(t, err)
-			require.NotEqual(t, node != nil, len(nodes) > 0) // XOR (only one of node or nodes should be set)
-
-			// make an IPLD List node from a []datamodel.Node
-			if node == nil {
-				nb := basicnode.Prototype.List.NewBuilder()
-				la, err := nb.BeginList(int64(len(nodes)))
-				require.NoError(t, err)
-
-				for _, n := range nodes {
-					// TODO: This code is probably not needed if the Select operation properly prunes nil values - e.g.: Optional Iterator
-					if n == nil {
-						n = datamodel.Null
-					}
-
-					require.NoError(t, la.AssembleValue().AssignNode(n))
-				}
-				require.NoError(t, la.Finish())
-
-				node = nb.Build()
-			}
+			require.NotNil(t, res)
 
 			exp := makeNode(t, tc.Output)
-			equalIPLD(t, exp, node)
+			equalIPLD(t, exp, res)
 		})
 	}
 
-	// null
+	// No error and return null, as optional
 	for _, testcase := range []Testcase{
 		{Name: "Optional Missing Key", Selector: `.x?`, Input: `{}`},
 		{Name: "Optional Null Key", Selector: `.x?`, Input: `null`},
@@ -97,19 +76,15 @@ func TestSupportedForms(t *testing.T) {
 			require.NoError(t, err)
 
 			// attempt to select
-			node, nodes, err := sel.Select(makeNode(t, tc.Input))
+			res, err := sel.Select(makeNode(t, tc.Input))
 			require.NoError(t, err)
-			// TODO: should Select return a single node which is sometimes a list or null?
-			// require.Equal(t, datamodel.Null, node)
-			assert.Nil(t, node)
-			assert.Empty(t, nodes)
+			require.Nil(t, res)
 		})
 	}
 
-	// error
+	// fail to select and return an error
 	for _, testcase := range []Testcase{
 		{Name: "Null Iterator", Selector: `.[]`, Input: `null`},
-		{Name: "Nested Iterator", Selector: `.[][]`, Input: `[[1], 2, [3]]`},
 		{Name: "Missing Key", Selector: `.x`, Input: `{}`},
 		{Name: "Null Key", Selector: `.x`, Input: `null`},
 		{Name: "Array Key", Selector: `.x`, Input: `[]`},
@@ -124,10 +99,10 @@ func TestSupportedForms(t *testing.T) {
 			require.NoError(t, err)
 
 			// attempt to select
-			node, nodes, err := sel.Select(makeNode(t, tc.Input))
+			res, err := sel.Select(makeNode(t, tc.Input))
 			require.Error(t, err)
-			assert.Nil(t, node)
-			assert.Empty(t, nodes)
+			require.True(t, selector.IsResolutionErr(err))
+			require.Nil(t, res)
 		})
 	}
 }
