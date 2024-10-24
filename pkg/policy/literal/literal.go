@@ -8,41 +8,14 @@ import (
 	"github.com/ipld/go-ipld-prime/node/basicnode"
 )
 
-func Bool(val bool) ipld.Node {
-	nb := basicnode.Prototype.Bool.NewBuilder()
-	nb.AssignBool(val)
-	return nb.Build()
-}
+// TODO: remove entirely?
 
-func Int(val int64) ipld.Node {
-	nb := basicnode.Prototype.Int.NewBuilder()
-	nb.AssignInt(val)
-	return nb.Build()
-}
-
-func Float(val float64) ipld.Node {
-	nb := basicnode.Prototype.Float.NewBuilder()
-	nb.AssignFloat(val)
-	return nb.Build()
-}
-
-func String(val string) ipld.Node {
-	nb := basicnode.Prototype.String.NewBuilder()
-	nb.AssignString(val)
-	return nb.Build()
-}
-
-func Bytes(val []byte) ipld.Node {
-	nb := basicnode.Prototype.Bytes.NewBuilder()
-	nb.AssignBytes(val)
-	return nb.Build()
-}
-
-func Link(link ipld.Link) ipld.Node {
-	nb := basicnode.Prototype.Link.NewBuilder()
-	nb.AssignLink(link)
-	return nb.Build()
-}
+var Bool = basicnode.NewBool
+var Int = basicnode.NewInt
+var Float = basicnode.NewFloat
+var String = basicnode.NewString
+var Bytes = basicnode.NewBytes
+var Link = basicnode.NewLink
 
 func LinkCid(cid cid.Cid) ipld.Node {
 	return Link(cidlink.Link{Cid: cid})
