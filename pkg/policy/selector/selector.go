@@ -3,6 +3,7 @@ package selector
 import (
 	"errors"
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 
@@ -262,31 +263,33 @@ func resolveSliceIndices(slice []int64, length int64) (start int64, end int64) {
 
 	start, end = slice[0], slice[1]
 
-	// clamp start index
+	// adjust boundaries
+	switch {
+	case slice[0] == math.MinInt:
+		start = 0
+	case slice[0] < 0:
+		start = length + slice[0]
+	}
+	switch {
+	case slice[1] == math.MaxInt:
+		end = length
+	case slice[1] < 0:
+		end = length + slice[1]
+	}
+
+	// backward iteration is not allowed, shortcut to an empty result
+	if start >= end {
+		start, end = 0, 0
+	}
+	// clamp out of bound
 	if start < 0 {
-		start = length + start
-		if start < 0 {
-			start = 0
-		}
+		start = 0
 	}
 	if start > length {
 		start = length
 	}
-
-	// clamp end index
-	if end < 0 {
-		end = length + end
-		if end < 0 {
-			end = 0
-		}
-	}
 	if end > length {
 		end = length
-	}
-
-	// handle backward slicing
-	if start > end {
-		start, end = 0, 0
 	}
 
 	return start, end
