@@ -1,7 +1,6 @@
 package selector
 
 import (
-	"errors"
 	"fmt"
 	"math"
 	"strconv"
@@ -11,7 +10,6 @@ import (
 	"github.com/ipld/go-ipld-prime/datamodel"
 	"github.com/ipld/go-ipld-prime/fluent/qp"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
-	"github.com/ipld/go-ipld-prime/schema"
 )
 
 // Selector describes a UCAN policy selector, as specified here:
@@ -300,23 +298,6 @@ func kindString(n datamodel.Node) string {
 		return "null"
 	}
 	return n.Kind().String()
-}
-
-func isMissing(err error) bool {
-	if _, ok := err.(datamodel.ErrNotExists); ok {
-		return true
-	}
-	if _, ok := err.(schema.ErrNoSuchField); ok {
-		return true
-	}
-	if _, ok := err.(schema.ErrInvalidKey); ok {
-		return true
-	}
-	return false
-}
-
-func IsResolutionErr(err error) bool {
-	return errors.As(err, &resolutionerr{})
 }
 
 type resolutionerr struct {

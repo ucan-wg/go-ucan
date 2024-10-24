@@ -7,7 +7,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ "ubuntu" ]
-        go: [ "1.21.x", "1.22.x", "1.23.x", ]
+        go: [ "1.22.x", "1.23.x", ]
     env:
       COVERAGES: ""
     runs-on: ${{ matrix.os }}-latest
@@ -22,6 +22,6 @@ jobs:
           go version
           go env
       - name: Run tests
-        run: go test -v ./...
+        run: go test -v ./... -tags jwx_es256k
       - name: Check formatted
         run: gofmt -l .

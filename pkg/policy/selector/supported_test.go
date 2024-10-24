@@ -101,7 +101,6 @@ func TestSupportedForms(t *testing.T) {
 			// attempt to select
 			res, err := sel.Select(makeNode(t, tc.Input))
 			require.Error(t, err)
-			require.True(t, selector.IsResolutionErr(err))
 			require.Nil(t, res)
 		})
 	}
