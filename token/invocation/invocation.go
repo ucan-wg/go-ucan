@@ -69,12 +69,14 @@ func New(iss, sub did.DID, cmd command.Command, prf []cid.Cid, opts ...Option) (
 	}
 
 	iat := time.Now()
+	metadata := meta.NewMeta()
 
 	tkn := Token{
 		issuer:    iss,
 		subject:   sub,
 		command:   cmd,
 		proof:     prf,
+		meta:      metadata,
 		nonce:     nonce,
 		invokedAt: &iat,
 	}
@@ -83,6 +85,10 @@ func New(iss, sub did.DID, cmd command.Command, prf []cid.Cid, opts ...Option) (
 		if err := opt(&tkn); err != nil {
 			return nil, err
 		}
+	}
+
+	if len(tkn.meta.Keys) == 0 {
+		tkn.meta = nil
 	}
 
 	return &tkn, nil
