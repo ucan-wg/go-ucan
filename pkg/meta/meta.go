@@ -10,11 +10,13 @@ import (
 	"github.com/ipld/go-ipld-prime/datamodel"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
 	"github.com/ipld/go-ipld-prime/printer"
+
+	"github.com/ucan-wg/go-ucan/pkg/crypto"
 )
 
 var ErrUnsupported = errors.New("failure adding unsupported type to meta")
-
 var ErrNotFound = errors.New("key-value not found in meta")
+var ErrNotEncryptable = errors.New("value of this type cannot be encrypted")
 
 // Meta is a container for meta key-value pairs in a UCAN token.
 // This also serves as a way to construct the underlying IPLD data with minimum allocations and transformations,
@@ -51,6 +53,21 @@ func (m *Meta) GetString(key string) (string, error) {
 	return v.AsString()
 }
 
+// GetEncryptedString decorates GetString and decrypt its output with the given symmetric encryption key.
+func (m *Meta) GetEncryptedString(key string, encryptionKey []byte) (string, error) {
+	v, err := m.GetString(key)
+	if err != nil {
+		return "", err
+	}
+
+	decrypted, err := crypto.DecryptStringWithAESKey([]byte(v), encryptionKey)
+	if err != nil {
+		return "", err
+	}
+
+	return string(decrypted), nil
+}
+
 // GetInt64 retrieves a value as an int64.
 // Returns ErrNotFound if the given key is missing.
 // Returns datamodel.ErrWrongKind if the value has the wrong type.
@@ -82,6 +99,21 @@ func (m *Meta) GetBytes(key string) ([]byte, error) {
 		return nil, ErrNotFound
 	}
 	return v.AsBytes()
+}
+
+// GetEncryptedBytes decorates GetBytes and decrypt its output with the given symmetric encryption key.
+func (m *Meta) GetEncryptedBytes(key string, encryptionKey []byte) ([]byte, error) {
+	v, err := m.GetBytes(key)
+	if err != nil {
+		return nil, err
+	}
+
+	decrypted, err := crypto.DecryptStringWithAESKey(v, encryptionKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return decrypted, nil
 }
 
 // GetNode retrieves a value as a raw IPLD node.
@@ -123,6 +155,31 @@ func (m *Meta) Add(key string, val any) error {
 	}
 	m.Keys = append(m.Keys, key)
 	return nil
+}
+
+// AddEncrypted adds a key/value pair in the meta set.
+// The value is encrypted with the given encryptionKey.
+// Accepted types for the value are: string, []byte.
+func (m *Meta) AddEncrypted(key string, val any, encryptionKey []byte) error {
+	var encrypted []byte
+	var err error
+
+	switch val := val.(type) {
+	case string:
+		encrypted, err = crypto.EncryptWithAESKey([]byte(val), encryptionKey)
+		if err != nil {
+			return err
+		}
+		return m.Add(key, string(encrypted))
+	case []byte:
+		encrypted, err = crypto.EncryptWithAESKey(val, encryptionKey)
+		if err != nil {
+			return err
+		}
+		return m.Add(key, encrypted)
+	default:
+		return ErrNotEncryptable
+	}
 }
 
 // Equals tells if two Meta hold the same key/values.
