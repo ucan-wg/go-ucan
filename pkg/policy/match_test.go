@@ -458,7 +458,7 @@ func TestPolicyExamples(t *testing.T) {
 		require.False(t, evaluate(`["all", ".a", [">", ".b", 0]]`, data))
 	})
 
-	t.Run("Map", func(t *testing.T) {
+	t.Run("Any", func(t *testing.T) {
 		data := makeNode(`{"a": [{"b": 1}, {"b": 2}, {"z": [7, 8, 9]}]}`)
 
 		require.True(t, evaluate(`["any", ".a", ["==", ".b", 2]]`, data))
