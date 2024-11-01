@@ -72,6 +72,9 @@ func matchStatement(cur Statement, node ipld.Node) (_ matchResult, leafMost Stat
 		if s, ok := cur.(equality); ok {
 			res, err := s.selector.Select(node)
 			if err != nil || res == nil {
+				if s.selector.IsOptional() {
+					return matchResultTrue, nil
+				}
 				return matchResultNoData, cur
 			}
 			return boolToRes(datamodel.DeepEqual(s.value, res))
@@ -80,6 +83,9 @@ func matchStatement(cur Statement, node ipld.Node) (_ matchResult, leafMost Stat
 		if s, ok := cur.(equality); ok {
 			res, err := s.selector.Select(node)
 			if err != nil || res == nil {
+				if s.selector.IsOptional() {
+					return matchResultTrue, nil
+				}
 				return matchResultNoData, cur
 			}
 			return boolToRes(isOrdered(s.value, res, gt))
@@ -88,6 +94,9 @@ func matchStatement(cur Statement, node ipld.Node) (_ matchResult, leafMost Stat
 		if s, ok := cur.(equality); ok {
 			res, err := s.selector.Select(node)
 			if err != nil || res == nil {
+				if s.selector.IsOptional() {
+					return matchResultTrue, nil
+				}
 				return matchResultNoData, cur
 			}
 			return boolToRes(isOrdered(s.value, res, gte))
@@ -96,6 +105,9 @@ func matchStatement(cur Statement, node ipld.Node) (_ matchResult, leafMost Stat
 		if s, ok := cur.(equality); ok {
 			res, err := s.selector.Select(node)
 			if err != nil || res == nil {
+				if s.selector.IsOptional() {
+					return matchResultTrue, nil
+				}
 				return matchResultNoData, cur
 			}
 			return boolToRes(isOrdered(s.value, res, lt))
@@ -104,6 +116,9 @@ func matchStatement(cur Statement, node ipld.Node) (_ matchResult, leafMost Stat
 		if s, ok := cur.(equality); ok {
 			res, err := s.selector.Select(node)
 			if err != nil || res == nil {
+				if s.selector.IsOptional() {
+					return matchResultTrue, nil
+				}
 				return matchResultNoData, cur
 			}
 			return boolToRes(isOrdered(s.value, res, lte))

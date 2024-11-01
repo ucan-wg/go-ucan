@@ -33,6 +33,14 @@ func (s Selector) String() string {
 	return res.String()
 }
 
+func (s Selector) IsOptional() bool {
+	if len(s) == 0 {
+		return false
+	}
+
+	return s[len(s)-1].optional
+}
+
 type segment struct {
 	str      string
 	identity bool

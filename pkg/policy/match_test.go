@@ -9,6 +9,7 @@ import (
 	"github.com/ipld/go-ipld-prime/codec/dagjson"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/ucan-wg/go-ucan/pkg/policy/literal"
@@ -457,7 +458,7 @@ func TestPolicyExamples(t *testing.T) {
 		require.False(t, evaluate(`["all", ".a", [">", ".b", 0]]`, data))
 	})
 
-	t.Run("Any", func(t *testing.T) {
+	t.Run("Map", func(t *testing.T) {
 		data := makeNode(`{"a": [{"b": 1}, {"b": 2}, {"z": [7, 8, 9]}]}`)
 
 		require.True(t, evaluate(`["any", ".a", ["==", ".b", 2]]`, data))
@@ -511,4 +512,81 @@ func FuzzMatch(f *testing.F) {
 
 		policy.Match(dataNode)
 	})
+}
+
+func TestOptionalSelectors(t *testing.T) {
+	tests := []struct {
+		name     string
+		policy   Policy
+		data     interface{}
+		expected bool
+	}{
+		{
+			name:     "missing optional field returns true",
+			policy:   MustConstruct(Equal(".field?", literal.String("value"))),
+			data:     map[string]interface{}{},
+			expected: true,
+		},
+		{
+			name:     "present optional field with matching value returns true",
+			policy:   MustConstruct(Equal(".field?", literal.String("value"))),
+			data:     map[string]interface{}{"field": "value"},
+			expected: true,
+		},
+		{
+			name:     "present optional field with non-matching value returns false",
+			policy:   MustConstruct(Equal(".field?", literal.String("value"))),
+			data:     map[string]interface{}{"field": "other"},
+			expected: false,
+		},
+		{
+			name:     "missing non-optional field returns false",
+			policy:   MustConstruct(Equal(".field", literal.String("value"))),
+			data:     map[string]interface{}{},
+			expected: false,
+		},
+		{
+			name:     "nested missing non-optional field returns false",
+			policy:   MustConstruct(Equal(".outer?.inner", literal.String("value"))),
+			data:     map[string]interface{}{"outer": map[string]interface{}{}},
+			expected: false,
+		},
+		{
+			name:     "completely missing nested optional path returns true",
+			policy:   MustConstruct(Equal(".outer?.inner?", literal.String("value"))),
+			data:     map[string]interface{}{},
+			expected: true,
+		},
+		{
+			name:     "partially present nested optional path with missing end returns true",
+			policy:   MustConstruct(Equal(".outer?.inner?", literal.String("value"))),
+			data:     map[string]interface{}{"outer": map[string]interface{}{}},
+			expected: true,
+		},
+		{
+			name:     "optional array index returns true when array is empty",
+			policy:   MustConstruct(Equal(".array[0]?", literal.String("value"))),
+			data:     map[string]interface{}{"array": []interface{}{}},
+			expected: true,
+		},
+		{
+			name:     "non-optional array index returns false when array is empty",
+			policy:   MustConstruct(Equal(".array[0]", literal.String("value"))),
+			data:     map[string]interface{}{"array": []interface{}{}},
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			nb := basicnode.Prototype.Map.NewBuilder()
+			n, err := literal.Map(tt.data)
+			assert.NoError(t, err)
+			err = nb.AssignNode(n)
+			assert.NoError(t, err)
+
+			result := tt.policy.Match(nb.Build())
+			assert.Equal(t, tt.expected, result)
+		})
+	}
 }
