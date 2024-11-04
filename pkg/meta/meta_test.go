@@ -73,11 +73,8 @@ func TestMeta_Add(t *testing.T) {
 
 		t.Run("error on nil key", func(t *testing.T) {
 			err := m.AddEncrypted("invalid", "test", nil)
-			require.NoError(t, err)
-			// with nil key, value should be stored unencrypted
-			val, err := m.GetString("invalid")
-			require.NoError(t, err)
-			require.Equal(t, "test", val)
+			require.Error(t, err)
+			require.Contains(t, err.Error(), "encryption key is required")
 		})
 	})
 }
