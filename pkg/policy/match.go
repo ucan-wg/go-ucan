@@ -71,55 +71,55 @@ func matchStatement(cur Statement, node ipld.Node) (_ matchResult, leafMost Stat
 	case KindEqual:
 		if s, ok := cur.(equality); ok {
 			res, err := s.selector.Select(node)
-			if err != nil || res == nil {
-				if s.selector.IsOptional() {
-					return matchResultTrue, nil
-				}
+			if err != nil {
 				return matchResultNoData, cur
+			}
+			if res == nil { // Optional selector that didn't match
+				return matchResultTrue, nil
 			}
 			return boolToRes(datamodel.DeepEqual(s.value, res))
 		}
 	case KindGreaterThan:
 		if s, ok := cur.(equality); ok {
 			res, err := s.selector.Select(node)
-			if err != nil || res == nil {
-				if s.selector.IsOptional() {
-					return matchResultTrue, nil
-				}
+			if err != nil {
 				return matchResultNoData, cur
+			}
+			if res == nil {
+				return matchResultTrue, nil
 			}
 			return boolToRes(isOrdered(s.value, res, gt))
 		}
 	case KindGreaterThanOrEqual:
 		if s, ok := cur.(equality); ok {
 			res, err := s.selector.Select(node)
-			if err != nil || res == nil {
-				if s.selector.IsOptional() {
-					return matchResultTrue, nil
-				}
+			if err != nil {
 				return matchResultNoData, cur
+			}
+			if res == nil {
+				return matchResultTrue, nil
 			}
 			return boolToRes(isOrdered(s.value, res, gte))
 		}
 	case KindLessThan:
 		if s, ok := cur.(equality); ok {
 			res, err := s.selector.Select(node)
-			if err != nil || res == nil {
-				if s.selector.IsOptional() {
-					return matchResultTrue, nil
-				}
+			if err != nil {
 				return matchResultNoData, cur
+			}
+			if res == nil {
+				return matchResultTrue, nil
 			}
 			return boolToRes(isOrdered(s.value, res, lt))
 		}
 	case KindLessThanOrEqual:
 		if s, ok := cur.(equality); ok {
 			res, err := s.selector.Select(node)
-			if err != nil || res == nil {
-				if s.selector.IsOptional() {
-					return matchResultTrue, nil
-				}
+			if err != nil {
 				return matchResultNoData, cur
+			}
+			if res == nil {
+				return matchResultTrue, nil
 			}
 			return boolToRes(isOrdered(s.value, res, lte))
 		}
@@ -171,8 +171,11 @@ func matchStatement(cur Statement, node ipld.Node) (_ matchResult, leafMost Stat
 	case KindLike:
 		if s, ok := cur.(wildcard); ok {
 			res, err := s.selector.Select(node)
-			if err != nil || res == nil {
+			if err != nil {
 				return matchResultNoData, cur
+			}
+			if res == nil {
+				return matchResultTrue, nil
 			}
 			v, err := res.AsString()
 			if err != nil {
@@ -183,8 +186,11 @@ func matchStatement(cur Statement, node ipld.Node) (_ matchResult, leafMost Stat
 	case KindAll:
 		if s, ok := cur.(quantifier); ok {
 			res, err := s.selector.Select(node)
-			if err != nil || res == nil {
+			if err != nil {
 				return matchResultNoData, cur
+			}
+			if res == nil {
+				return matchResultTrue, nil
 			}
 			it := res.ListIterator()
 			if it == nil {
@@ -210,8 +216,11 @@ func matchStatement(cur Statement, node ipld.Node) (_ matchResult, leafMost Stat
 	case KindAny:
 		if s, ok := cur.(quantifier); ok {
 			res, err := s.selector.Select(node)
-			if err != nil || res == nil {
+			if err != nil {
 				return matchResultNoData, cur
+			}
+			if res == nil {
+				return matchResultTrue, nil
 			}
 			it := res.ListIterator()
 			if it == nil {
