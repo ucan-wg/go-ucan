@@ -86,6 +86,7 @@ func WithEmptyNonce() Option {
 // value of the provided time.Time.
 func WithExpiration(exp time.Time) Option {
 	return func(t *Token) error {
+		exp = exp.Round(time.Second)
 		t.expiration = &exp
 
 		return nil
@@ -96,7 +97,7 @@ func WithExpiration(exp time.Time) Option {
 // Now() plus the given duration.
 func WithExpirationIn(exp time.Duration) Option {
 	return func(t *Token) error {
-		expTime := time.Now().Add(exp)
+		expTime := time.Now().Add(exp).Round(time.Minute)
 		t.expiration = &expTime
 
 		return nil

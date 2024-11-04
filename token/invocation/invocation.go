@@ -62,9 +62,8 @@ type Token struct {
 // With the exception of the WithMeta option, all other will overwrite
 // the previous contents of their target field.
 func New(iss, sub did.DID, cmd command.Command, prf []cid.Cid, opts ...Option) (*Token, error) {
-	nonce := make([]byte, 12)
-
-	if _, err := rand.Read(nonce); err != nil {
+	nonce, err := generateNonce()
+	if err != nil {
 		return nil, err
 	}
 
@@ -141,6 +140,7 @@ func (t *Token) InvokedAt() *time.Time {
 	return t.invokedAt
 }
 
+// Cause returns the (optional)
 func (t *Token) Cause() *cid.Cid {
 	return t.cause
 }
@@ -170,9 +170,41 @@ func (t *Token) validate() error {
 func tokenFromModel(m tokenPayloadModel) (*Token, error) {
 	var (
 		tkn Token
+		err error
 	)
 
-	// TODO
+	if tkn.issuer, err = did.Parse(m.Iss); err != nil {
+		return nil, err
+	}
+
+	if tkn.subject, err = did.Parse(m.Sub); err != nil {
+		return nil, err
+	}
+
+	if tkn.audience, err = parseOptionalDID(m.Aud); err != nil {
+		return nil, err
+	}
+
+	if tkn.command, err = command.Parse(m.Cmd); err != nil {
+		return nil, err
+	}
+
+	tkn.arguments = m.Args.Values
+	tkn.proof = m.Prf
+	tkn.meta = m.Meta
+	tkn.nonce = m.Nonce
+
+	if tkn.expiration, err = parseOptionalTimestamp(m.Exp); err != nil {
+		return nil, err
+	}
+
+	if tkn.invokedAt, err = parseOptionalTimestamp(m.Iat); err != nil {
+		return nil, err
+	}
+
+	if tkn.cause, err = parseOptionalCID(m.Cause); err != nil {
+		return nil, err
+	}
 
 	return &tkn, nil
 }
@@ -186,4 +218,30 @@ func generateNonce() ([]byte, error) {
 		return nil, err
 	}
 	return res, nil
+}
+
+func parseOptionalCID(c *cid.Cid) (*cid.Cid, error) {
+	if c == nil {
+		return nil, nil
+	}
+
+	return c, nil
+}
+
+func parseOptionalDID(s *string) (did.DID, error) {
+	if s == nil {
+		return did.Undef, nil
+	}
+
+	return did.Parse(*s)
+}
+
+func parseOptionalTimestamp(sec *int64) (*time.Time, error) {
+	if sec == nil {
+		return nil, nil
+	}
+
+	t := time.Unix(*sec, 0)
+
+	return &t, nil
 }

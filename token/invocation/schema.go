@@ -7,7 +7,6 @@ import (
 
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime"
-	"github.com/ipld/go-ipld-prime/datamodel"
 	"github.com/ipld/go-ipld-prime/node/bindnode"
 	"github.com/ipld/go-ipld-prime/schema"
 
@@ -46,7 +45,6 @@ func payloadType() schema.Type {
 
 var _ envelope.Tokener = (*tokenPayloadModel)(nil)
 
-// TODO
 type tokenPayloadModel struct {
 	// The DID of the Invoker
 	Iss string
@@ -58,10 +56,7 @@ type tokenPayloadModel struct {
 	// The Command
 	Cmd string
 	// The Command's Arguments
-	Args struct {
-		Keys   []string
-		Values map[string]datamodel.Node
-	}
+	Args stringAny
 	// Delegations that prove the chain of authority
 	Prf []cid.Cid
 
