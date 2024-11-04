@@ -653,15 +653,6 @@ func TestPartialMatch(t *testing.T) {
 
 		// Optional fields
 		{
-			name: "returns true for missing optional field",
-			policy: MustConstruct(
-				Equal(".field?", literal.String("value")),
-			),
-			data:          map[string]interface{}{},
-			expectedMatch: true,
-			expectedStmt:  nil,
-		},
-		{
 			name: "returns false when optional field present but wrong",
 			policy: MustConstruct(
 				Equal(".field?", literal.String("value")),
@@ -728,6 +719,81 @@ func TestPartialMatch(t *testing.T) {
 						"id":   "ID456",
 					},
 				},
+			},
+			expectedMatch: true,
+			expectedStmt:  nil,
+		},
+
+		// missing optional values for all the operators
+		{
+			name: "returns true for missing optional equal",
+			policy: MustConstruct(
+				Equal(".field?", literal.String("value")),
+			),
+			data:          map[string]interface{}{},
+			expectedMatch: true,
+			expectedStmt:  nil,
+		},
+		{
+			name: "returns true for missing optional like pattern",
+			policy: MustConstruct(
+				Like(".pattern?", "test*"),
+			),
+			data:          map[string]interface{}{},
+			expectedMatch: true,
+			expectedStmt:  nil,
+		},
+		{
+			name: "returns true for missing optional greater than",
+			policy: MustConstruct(
+				GreaterThan(".number?", literal.Int(5)),
+			),
+			data:          map[string]interface{}{},
+			expectedMatch: true,
+			expectedStmt:  nil,
+		},
+		{
+			name: "returns true for missing optional less than",
+			policy: MustConstruct(
+				LessThan(".number?", literal.Int(5)),
+			),
+			data:          map[string]interface{}{},
+			expectedMatch: true,
+			expectedStmt:  nil,
+		},
+		{
+			name: "returns true for missing optional array with all",
+			policy: MustConstruct(
+				All(".numbers?", Equal(".", literal.Int(1))),
+			),
+			data:          map[string]interface{}{},
+			expectedMatch: true,
+			expectedStmt:  nil,
+		},
+		{
+			name: "returns true for missing optional array with any",
+			policy: MustConstruct(
+				Any(".numbers?", Equal(".", literal.Int(1))),
+			),
+			data:          map[string]interface{}{},
+			expectedMatch: true,
+			expectedStmt:  nil,
+		},
+		{
+			name: "returns true for complex nested optional paths",
+			policy: MustConstruct(
+				And(
+					Equal(".required", literal.String("present")),
+					Any(".optional_array?",
+						And(
+							Equal(".name?", literal.String("test")),
+							Like(".id?", "ID*"),
+						),
+					),
+				),
+			),
+			data: map[string]interface{}{
+				"required": "present",
 			},
 			expectedMatch: true,
 			expectedStmt:  nil,
