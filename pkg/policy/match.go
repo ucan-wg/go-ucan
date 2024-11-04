@@ -16,15 +16,15 @@ func (p Policy) Match(node datamodel.Node) bool {
 		switch res {
 		case matchResultNoData, matchResultFalse:
 			return false
-		case matchResultTrue:
+		case matchResultOptionalNoData, matchResultTrue:
 			// continue
 		}
 	}
 	return true
 }
 
-// PartialMatch returns false IIF one of the Statement has the corresponding data and doesn't match.
-// If the data is missing or the Statement is matching, true is returned.
+// PartialMatch returns false IIF one non-optional Statement has the corresponding data and doesn't match.
+// If the data is missing or the non-optional Statement is matching, true is returned.
 //
 // This allows performing the policy checking in multiple steps, and find immediately if a Statement already failed.
 // A final call to Match is necessary to make sure that the policy is fully matched, with no missing data
@@ -37,7 +37,7 @@ func (p Policy) PartialMatch(node datamodel.Node) (bool, Statement) {
 		switch res {
 		case matchResultFalse:
 			return false, leaf
-		case matchResultNoData, matchResultTrue:
+		case matchResultNoData, matchResultOptionalNoData, matchResultTrue:
 			// continue
 		}
 	}
@@ -47,9 +47,10 @@ func (p Policy) PartialMatch(node datamodel.Node) (bool, Statement) {
 type matchResult int8
 
 const (
-	matchResultTrue matchResult = iota
-	matchResultFalse
-	matchResultNoData
+	matchResultTrue           matchResult = iota // statement has data and resolve to true
+	matchResultFalse                             // statement has data and resolve to false
+	matchResultNoData                            // statement has no data
+	matchResultOptionalNoData                    // statement has no data and is optional
 )
 
 // matchStatement evaluate the policy against the given ipld.Node and returns:
@@ -74,8 +75,8 @@ func matchStatement(cur Statement, node ipld.Node) (_ matchResult, leafMost Stat
 			if err != nil {
 				return matchResultNoData, cur
 			}
-			if res == nil { // Optional selector that didn't match
-				return matchResultTrue, nil
+			if res == nil { // optional selector didn't match
+				return matchResultOptionalNoData, nil
 			}
 			return boolToRes(datamodel.DeepEqual(s.value, res))
 		}
@@ -85,8 +86,8 @@ func matchStatement(cur Statement, node ipld.Node) (_ matchResult, leafMost Stat
 			if err != nil {
 				return matchResultNoData, cur
 			}
-			if res == nil {
-				return matchResultTrue, nil
+			if res == nil { // optional selector didn't match
+				return matchResultOptionalNoData, nil
 			}
 			return boolToRes(isOrdered(s.value, res, gt))
 		}
@@ -96,8 +97,8 @@ func matchStatement(cur Statement, node ipld.Node) (_ matchResult, leafMost Stat
 			if err != nil {
 				return matchResultNoData, cur
 			}
-			if res == nil {
-				return matchResultTrue, nil
+			if res == nil { // optional selector didn't match
+				return matchResultOptionalNoData, nil
 			}
 			return boolToRes(isOrdered(s.value, res, gte))
 		}
@@ -107,8 +108,8 @@ func matchStatement(cur Statement, node ipld.Node) (_ matchResult, leafMost Stat
 			if err != nil {
 				return matchResultNoData, cur
 			}
-			if res == nil {
-				return matchResultTrue, nil
+			if res == nil { // optional selector didn't match
+				return matchResultOptionalNoData, nil
 			}
 			return boolToRes(isOrdered(s.value, res, lt))
 		}
@@ -118,8 +119,8 @@ func matchStatement(cur Statement, node ipld.Node) (_ matchResult, leafMost Stat
 			if err != nil {
 				return matchResultNoData, cur
 			}
-			if res == nil {
-				return matchResultTrue, nil
+			if res == nil { // optional selector didn't match
+				return matchResultOptionalNoData, nil
 			}
 			return boolToRes(isOrdered(s.value, res, lte))
 		}
@@ -127,8 +128,8 @@ func matchStatement(cur Statement, node ipld.Node) (_ matchResult, leafMost Stat
 		if s, ok := cur.(negation); ok {
 			res, leaf := matchStatement(s.statement, node)
 			switch res {
-			case matchResultNoData:
-				return matchResultNoData, leaf
+			case matchResultNoData, matchResultOptionalNoData:
+				return res, leaf
 			case matchResultTrue:
 				return matchResultFalse, leaf
 			case matchResultFalse:
@@ -140,8 +141,8 @@ func matchStatement(cur Statement, node ipld.Node) (_ matchResult, leafMost Stat
 			for _, cs := range s.statements {
 				res, leaf := matchStatement(cs, node)
 				switch res {
-				case matchResultNoData:
-					return matchResultNoData, leaf
+				case matchResultNoData, matchResultOptionalNoData:
+					return res, leaf
 				case matchResultTrue:
 					// continue
 				case matchResultFalse:
@@ -158,8 +159,8 @@ func matchStatement(cur Statement, node ipld.Node) (_ matchResult, leafMost Stat
 			for _, cs := range s.statements {
 				res, leaf := matchStatement(cs, node)
 				switch res {
-				case matchResultNoData:
-					return matchResultNoData, leaf
+				case matchResultNoData, matchResultOptionalNoData:
+					return res, leaf
 				case matchResultTrue:
 					return matchResultTrue, leaf
 				case matchResultFalse:
@@ -174,8 +175,8 @@ func matchStatement(cur Statement, node ipld.Node) (_ matchResult, leafMost Stat
 			if err != nil {
 				return matchResultNoData, cur
 			}
-			if res == nil {
-				return matchResultTrue, nil
+			if res == nil { // optional selector didn't match
+				return matchResultOptionalNoData, nil
 			}
 			v, err := res.AsString()
 			if err != nil {
@@ -190,7 +191,7 @@ func matchStatement(cur Statement, node ipld.Node) (_ matchResult, leafMost Stat
 				return matchResultNoData, cur
 			}
 			if res == nil {
-				return matchResultTrue, nil
+				return matchResultOptionalNoData, nil
 			}
 			it := res.ListIterator()
 			if it == nil {
@@ -203,8 +204,8 @@ func matchStatement(cur Statement, node ipld.Node) (_ matchResult, leafMost Stat
 				}
 				matchRes, leaf := matchStatement(s.statement, v)
 				switch matchRes {
-				case matchResultNoData:
-					return matchResultNoData, leaf
+				case matchResultNoData, matchResultOptionalNoData:
+					return matchRes, leaf
 				case matchResultTrue:
 					// continue
 				case matchResultFalse:
@@ -220,7 +221,7 @@ func matchStatement(cur Statement, node ipld.Node) (_ matchResult, leafMost Stat
 				return matchResultNoData, cur
 			}
 			if res == nil {
-				return matchResultTrue, nil
+				return matchResultOptionalNoData, nil
 			}
 			it := res.ListIterator()
 			if it == nil {
@@ -233,8 +234,8 @@ func matchStatement(cur Statement, node ipld.Node) (_ matchResult, leafMost Stat
 				}
 				matchRes, leaf := matchStatement(s.statement, v)
 				switch matchRes {
-				case matchResultNoData:
-					return matchResultNoData, leaf
+				case matchResultNoData, matchResultOptionalNoData:
+					return matchRes, leaf
 				case matchResultTrue:
 					return matchResultTrue, nil
 				case matchResultFalse:
