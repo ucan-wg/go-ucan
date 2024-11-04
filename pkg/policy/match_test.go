@@ -650,6 +650,88 @@ func TestPartialMatch(t *testing.T) {
 				Equal(".present", literal.String("wrong")),
 			)[0],
 		},
+
+		// Optional fields
+		{
+			name: "returns true for missing optional field",
+			policy: MustConstruct(
+				Equal(".field?", literal.String("value")),
+			),
+			data:          map[string]interface{}{},
+			expectedMatch: true,
+			expectedStmt:  nil,
+		},
+		{
+			name: "returns false when optional field present but wrong",
+			policy: MustConstruct(
+				Equal(".field?", literal.String("value")),
+			),
+			data: map[string]interface{}{
+				"field": "wrong",
+			},
+			expectedMatch: false,
+			expectedStmt: MustConstruct(
+				Equal(".field?", literal.String("value")),
+			)[0],
+		},
+
+		// Like pattern matching
+		{
+			name: "returns true for matching like pattern",
+			policy: MustConstruct(
+				Like(".pattern", "test*"),
+			),
+			data: map[string]interface{}{
+				"pattern": "testing123",
+			},
+			expectedMatch: true,
+			expectedStmt:  nil,
+		},
+		{
+			name: "returns false for non-matching like pattern",
+			policy: MustConstruct(
+				Like(".pattern", "test*"),
+			),
+			data: map[string]interface{}{
+				"pattern": "wrong123",
+			},
+			expectedMatch: false,
+			expectedStmt: MustConstruct(
+				Like(".pattern", "test*"),
+			)[0],
+		},
+
+		// Complex nested case
+		{
+			name: "complex nested policy",
+			policy: MustConstruct(
+				And(
+					Equal(".required", literal.String("present")),
+					Equal(".optional?", literal.String("value")),
+					Any(".items",
+						And(
+							Equal(".name", literal.String("test")),
+							Like(".id", "ID*"),
+						),
+					),
+				),
+			),
+			data: map[string]interface{}{
+				"required": "present",
+				"items": []interface{}{
+					map[string]interface{}{
+						"name": "wrong",
+						"id":   "ID123",
+					},
+					map[string]interface{}{
+						"name": "test",
+						"id":   "ID456",
+					},
+				},
+			},
+			expectedMatch: true,
+			expectedStmt:  nil,
+		},
 	}
 
 	for _, tt := range tests {
