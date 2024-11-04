@@ -548,7 +548,7 @@ func TestOptionalSelectors(t *testing.T) {
 		{
 			name:     "nested missing non-optional field returns false",
 			policy:   MustConstruct(Equal(".outer?.inner", literal.String("value"))),
-			data:     map[string]any{"outer": map[string]interface{}{}},
+			data:     map[string]any{"outer": map[string]any{}},
 			expected: false,
 		},
 		{
@@ -560,19 +560,19 @@ func TestOptionalSelectors(t *testing.T) {
 		{
 			name:     "partially present nested optional path with missing end returns true",
 			policy:   MustConstruct(Equal(".outer?.inner?", literal.String("value"))),
-			data:     map[string]any{"outer": map[string]interface{}{}},
+			data:     map[string]any{"outer": map[string]any{}},
 			expected: true,
 		},
 		{
 			name:     "optional array index returns true when array is empty",
 			policy:   MustConstruct(Equal(".array[0]?", literal.String("value"))),
-			data:     map[string]any{"array": []interface{}{}},
+			data:     map[string]any{"array": []any{}},
 			expected: true,
 		},
 		{
 			name:     "non-optional array index returns false when array is empty",
 			policy:   MustConstruct(Equal(".array[0]", literal.String("value"))),
-			data:     map[string]any{"array": []interface{}{}},
+			data:     map[string]any{"array": []any{}},
 			expected: false,
 		},
 	}
@@ -657,7 +657,7 @@ func TestPartialMatch(t *testing.T) {
 			policy: MustConstruct(
 				Equal(".field?", literal.String("value")),
 			),
-			data: map[string]interface{}{
+			data: map[string]any{
 				"field": "wrong",
 			},
 			expectedMatch: false,
@@ -672,7 +672,7 @@ func TestPartialMatch(t *testing.T) {
 			policy: MustConstruct(
 				Like(".pattern", "test*"),
 			),
-			data: map[string]interface{}{
+			data: map[string]any{
 				"pattern": "testing123",
 			},
 			expectedMatch: true,
@@ -683,7 +683,7 @@ func TestPartialMatch(t *testing.T) {
 			policy: MustConstruct(
 				Like(".pattern", "test*"),
 			),
-			data: map[string]interface{}{
+			data: map[string]any{
 				"pattern": "wrong123",
 			},
 			expectedMatch: false,
@@ -707,14 +707,14 @@ func TestPartialMatch(t *testing.T) {
 					),
 				),
 			),
-			data: map[string]interface{}{
+			data: map[string]any{
 				"required": "present",
-				"items": []interface{}{
-					map[string]interface{}{
+				"items": []any{
+					map[string]any{
 						"name": "wrong",
 						"id":   "ID123",
 					},
-					map[string]interface{}{
+					map[string]any{
 						"name": "test",
 						"id":   "ID456",
 					},
@@ -730,7 +730,7 @@ func TestPartialMatch(t *testing.T) {
 			policy: MustConstruct(
 				Equal(".field?", literal.String("value")),
 			),
-			data:          map[string]interface{}{},
+			data:          map[string]any{},
 			expectedMatch: true,
 			expectedStmt:  nil,
 		},
@@ -739,7 +739,7 @@ func TestPartialMatch(t *testing.T) {
 			policy: MustConstruct(
 				Like(".pattern?", "test*"),
 			),
-			data:          map[string]interface{}{},
+			data:          map[string]any{},
 			expectedMatch: true,
 			expectedStmt:  nil,
 		},
@@ -748,7 +748,7 @@ func TestPartialMatch(t *testing.T) {
 			policy: MustConstruct(
 				GreaterThan(".number?", literal.Int(5)),
 			),
-			data:          map[string]interface{}{},
+			data:          map[string]any{},
 			expectedMatch: true,
 			expectedStmt:  nil,
 		},
@@ -757,7 +757,7 @@ func TestPartialMatch(t *testing.T) {
 			policy: MustConstruct(
 				LessThan(".number?", literal.Int(5)),
 			),
-			data:          map[string]interface{}{},
+			data:          map[string]any{},
 			expectedMatch: true,
 			expectedStmt:  nil,
 		},
@@ -766,7 +766,7 @@ func TestPartialMatch(t *testing.T) {
 			policy: MustConstruct(
 				All(".numbers?", Equal(".", literal.Int(1))),
 			),
-			data:          map[string]interface{}{},
+			data:          map[string]any{},
 			expectedMatch: true,
 			expectedStmt:  nil,
 		},
@@ -775,7 +775,7 @@ func TestPartialMatch(t *testing.T) {
 			policy: MustConstruct(
 				Any(".numbers?", Equal(".", literal.Int(1))),
 			),
-			data:          map[string]interface{}{},
+			data:          map[string]any{},
 			expectedMatch: true,
 			expectedStmt:  nil,
 		},
@@ -792,7 +792,7 @@ func TestPartialMatch(t *testing.T) {
 					),
 				),
 			),
-			data: map[string]interface{}{
+			data: map[string]any{
 				"required": "present",
 			},
 			expectedMatch: true,
@@ -811,10 +811,10 @@ func TestPartialMatch(t *testing.T) {
 					),
 				),
 			),
-			data: map[string]interface{}{
+			data: map[string]any{
 				"required": "present",
-				"items": []interface{}{
-					map[string]interface{}{
+				"items": []any{
+					map[string]any{
 						"name": "test",
 						// optional_id is missing
 					},
