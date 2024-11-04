@@ -242,9 +242,7 @@ func matchStatement(cur Statement, node ipld.Node) (_ matchResult, leafMost Stat
 					// continue
 				}
 			}
-
-			// when no elements match, return the leaf statement instead of 'cur'
-			return matchResultFalse, s.statement
+			return matchResultFalse, cur
 		}
 	}
 	panic(fmt.Errorf("unimplemented statement kind: %s", cur.Kind()))

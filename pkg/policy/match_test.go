@@ -9,7 +9,6 @@ import (
 	"github.com/ipld/go-ipld-prime/codec/dagjson"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/ucan-wg/go-ucan/pkg/policy/literal"
@@ -581,12 +580,12 @@ func TestOptionalSelectors(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			nb := basicnode.Prototype.Map.NewBuilder()
 			n, err := literal.Map(tt.data)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			err = nb.AssignNode(n)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 
 			result := tt.policy.Match(nb.Build())
-			assert.Equal(t, tt.expected, result)
+			require.Equal(t, tt.expected, result)
 		})
 	}
 }
@@ -738,7 +737,7 @@ func TestPartialMatch(t *testing.T) {
 			},
 			expectedMatch: false,
 			expectedStmt: MustConstruct(
-				Equal(".", literal.Int(4)),
+				Any(".numbers", Equal(".", literal.Int(4))),
 			)[0],
 		},
 
@@ -878,14 +877,14 @@ func TestPartialMatch(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			node, err := literal.Map(tt.data)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 
 			match, stmt := tt.policy.PartialMatch(node)
-			assert.Equal(t, tt.expectedMatch, match)
+			require.Equal(t, tt.expectedMatch, match)
 			if tt.expectedStmt == nil {
-				assert.Nil(t, stmt)
+				require.Nil(t, stmt)
 			} else {
-				assert.Equal(t, tt.expectedStmt.Kind(), stmt.Kind())
+				require.Equal(t, tt.expectedStmt, stmt)
 			}
 		})
 	}
