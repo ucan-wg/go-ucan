@@ -518,61 +518,61 @@ func TestOptionalSelectors(t *testing.T) {
 	tests := []struct {
 		name     string
 		policy   Policy
-		data     interface{}
+		data     map[string]any
 		expected bool
 	}{
 		{
 			name:     "missing optional field returns true",
 			policy:   MustConstruct(Equal(".field?", literal.String("value"))),
-			data:     map[string]interface{}{},
+			data:     map[string]any{},
 			expected: true,
 		},
 		{
 			name:     "present optional field with matching value returns true",
 			policy:   MustConstruct(Equal(".field?", literal.String("value"))),
-			data:     map[string]interface{}{"field": "value"},
+			data:     map[string]any{"field": "value"},
 			expected: true,
 		},
 		{
 			name:     "present optional field with non-matching value returns false",
 			policy:   MustConstruct(Equal(".field?", literal.String("value"))),
-			data:     map[string]interface{}{"field": "other"},
+			data:     map[string]any{"field": "other"},
 			expected: false,
 		},
 		{
 			name:     "missing non-optional field returns false",
 			policy:   MustConstruct(Equal(".field", literal.String("value"))),
-			data:     map[string]interface{}{},
+			data:     map[string]any{},
 			expected: false,
 		},
 		{
 			name:     "nested missing non-optional field returns false",
 			policy:   MustConstruct(Equal(".outer?.inner", literal.String("value"))),
-			data:     map[string]interface{}{"outer": map[string]interface{}{}},
+			data:     map[string]any{"outer": map[string]interface{}{}},
 			expected: false,
 		},
 		{
 			name:     "completely missing nested optional path returns true",
 			policy:   MustConstruct(Equal(".outer?.inner?", literal.String("value"))),
-			data:     map[string]interface{}{},
+			data:     map[string]any{},
 			expected: true,
 		},
 		{
 			name:     "partially present nested optional path with missing end returns true",
 			policy:   MustConstruct(Equal(".outer?.inner?", literal.String("value"))),
-			data:     map[string]interface{}{"outer": map[string]interface{}{}},
+			data:     map[string]any{"outer": map[string]interface{}{}},
 			expected: true,
 		},
 		{
 			name:     "optional array index returns true when array is empty",
 			policy:   MustConstruct(Equal(".array[0]?", literal.String("value"))),
-			data:     map[string]interface{}{"array": []interface{}{}},
+			data:     map[string]any{"array": []interface{}{}},
 			expected: true,
 		},
 		{
 			name:     "non-optional array index returns false when array is empty",
 			policy:   MustConstruct(Equal(".array[0]", literal.String("value"))),
-			data:     map[string]interface{}{"array": []interface{}{}},
+			data:     map[string]any{"array": []interface{}{}},
 			expected: false,
 		},
 	}
@@ -596,7 +596,7 @@ func TestPartialMatch(t *testing.T) {
 	tests := []struct {
 		name          string
 		policy        Policy
-		data          interface{}
+		data          map[string]any
 		expectedMatch bool
 		expectedStmt  Statement
 	}{
@@ -605,7 +605,7 @@ func TestPartialMatch(t *testing.T) {
 			policy: MustConstruct(
 				Equal(".field", literal.String("value")),
 			),
-			data:          map[string]interface{}{},
+			data:          map[string]any{},
 			expectedMatch: true,
 			expectedStmt:  nil,
 		},
@@ -615,7 +615,7 @@ func TestPartialMatch(t *testing.T) {
 				Equal(".foo", literal.String("correct")),
 				Equal(".missing", literal.String("whatever")),
 			),
-			data: map[string]interface{}{
+			data: map[string]any{
 				"foo": "correct",
 			},
 			expectedMatch: true,
@@ -627,7 +627,7 @@ func TestPartialMatch(t *testing.T) {
 				Equal(".foo", literal.String("value1")),
 				Equal(".bar", literal.String("value2")),
 			),
-			data: map[string]interface{}{
+			data: map[string]any{
 				"foo": "wrong",
 				"bar": "value2",
 			},
@@ -642,7 +642,7 @@ func TestPartialMatch(t *testing.T) {
 				Equal(".missing", literal.String("value")),
 				Equal(".present", literal.String("wrong")),
 			),
-			data: map[string]interface{}{
+			data: map[string]any{
 				"present": "actual",
 			},
 			expectedMatch: false,

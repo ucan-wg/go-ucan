@@ -27,13 +27,8 @@ func Null() ipld.Node {
 	return nb.Build()
 }
 
-// Map creates an IPLD node from a map[string]interface{}
-func Map(v interface{}) (ipld.Node, error) {
-	m, ok := v.(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("expected map[string]interface{}, got %T", v)
-	}
-
+// Map creates an IPLD node from a map[string]any
+func Map(m map[string]any) (ipld.Node, error) {
 	nb := basicnode.Prototype.Map.NewBuilder()
 	ma, err := nb.BeginMap(int64(len(m)))
 	if err != nil {
@@ -50,7 +45,7 @@ func Map(v interface{}) (ipld.Node, error) {
 			if err := ma.AssembleValue().AssignString(x); err != nil {
 				return nil, err
 			}
-		case []interface{}:
+		case []any:
 			lb := basicnode.Prototype.List.NewBuilder()
 			la, err := lb.BeginList(int64(len(x)))
 			if err != nil {
@@ -62,7 +57,7 @@ func Map(v interface{}) (ipld.Node, error) {
 			if err := ma.AssembleValue().AssignNode(lb.Build()); err != nil {
 				return nil, err
 			}
-		case map[string]interface{}:
+		case map[string]any:
 			nestedNode, err := Map(x) // recursive call for nested maps
 			if err != nil {
 				return nil, err
