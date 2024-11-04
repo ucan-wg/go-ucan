@@ -23,7 +23,7 @@ import (
 func ExampleNew() {
 	privKey, iss, sub, cmd, args, prf, meta, err := setupExampleNew()
 	if err != nil {
-		fmt.Errorf("failed to create setup: %w", err)
+		fmt.Println("failed to create setup:", err.Error())
 
 		return
 	}
@@ -39,21 +39,21 @@ func ExampleNew() {
 		invocation.WithExpirationIn(time.Minute),
 		invocation.WithoutInvokedAt())
 	if err != nil {
-		fmt.Errorf("failed to create invocation: %w", err)
+		fmt.Println("failed to create invocation:", err.Error())
 
 		return
 	}
 
 	data, cid, err := inv.ToSealed(privKey)
 	if err != nil {
-		fmt.Errorf("failed to seal invocation: %w", err)
+		fmt.Println("failed to seal invocation:", err.Error())
 
 		return
 	}
 
 	json, err := prettyDAGJSON(data)
 	if err != nil {
-		fmt.Errorf("failed to pretty DAG-JSON: %w", err)
+		fmt.Println("failed to pretty DAG-JSON:", err.Error())
 
 		return
 	}
@@ -139,6 +139,8 @@ func prettyDAGJSON(data []byte) (string, error) {
 		return "", err
 	}
 
+	fmt.Println(string(jsonData))
+
 	var out bytes.Buffer
 	if err := json.Indent(&out, jsonData, "", "  "); err != nil {
 		return "", err
@@ -171,14 +173,19 @@ func setupExampleNew() (privKey crypto.PrivKey, iss, sub did.DID, cmd command.Co
 	if err != nil {
 		errs = errors.Join(errs, fmt.Errorf("failed to build headers: %w", err))
 	}
+
+	// ***** WARNING - do not change the order of these elements.  DAG-CBOR
+	//                 will order them alphabetically and the unsealed
+	//                 result won't match if the input isn't also created in
+	//                 alphabetical order.
 	payload, err := qp.BuildMap(basicnode.Prototype.Any, 4, func(ma datamodel.MapAssembler) {
-		qp.MapEntry(ma, "title", qp.String("UCAN for Fun and Profit"))
 		qp.MapEntry(ma, "body", qp.String("UCAN is great"))
+		qp.MapEntry(ma, "draft", qp.Bool(true))
+		qp.MapEntry(ma, "title", qp.String("UCAN for Fun and Profit"))
 		qp.MapEntry(ma, "topics", qp.List(2, func(la datamodel.ListAssembler) {
 			qp.ListEntry(la, qp.String("authz"))
 			qp.ListEntry(la, qp.String("journal"))
 		}))
-		qp.MapEntry(ma, "draft", qp.Bool(true))
 	})
 	if err != nil {
 		errs = errors.Join(errs, fmt.Errorf("failed to build payload: %w", err))
@@ -202,6 +209,10 @@ func setupExampleNew() (privKey crypto.PrivKey, iss, sub did.DID, cmd command.Co
 		}
 	}
 
+	// ***** WARNING - do not change the order of these elements.  DAG-CBOR
+	//                 will order them alphabetically and the unsealed
+	//                 result won't match if the input isn't also created in
+	//                 alphabetical order.
 	tags, err := qp.BuildList(basicnode.Prototype.Any, 3, func(la datamodel.ListAssembler) {
 		qp.ListEntry(la, qp.String("blog"))
 		qp.ListEntry(la, qp.String("post"))

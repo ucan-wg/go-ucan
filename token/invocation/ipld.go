@@ -192,6 +192,11 @@ func FromIPLD(node datamodel.Node) (*Token, error) {
 	return tkn, err
 }
 
+type stringAny struct {
+	Keys   []string
+	Values map[string]datamodel.Node
+}
+
 func (t *Token) toIPLD(privKey crypto.PrivKey) (datamodel.Node, error) {
 	var aud *string
 
@@ -220,10 +225,7 @@ func (t *Token) toIPLD(privKey crypto.PrivKey) (datamodel.Node, error) {
 		i++
 	}
 
-	args := struct {
-		Keys   []string
-		Values map[string]datamodel.Node
-	}{
+	args := stringAny{
 		Keys:   argsKey,
 		Values: t.arguments,
 	}
