@@ -798,6 +798,31 @@ func TestPartialMatch(t *testing.T) {
 			expectedMatch: true,
 			expectedStmt:  nil,
 		},
+		{
+			name: "returns true for partially present nested optional paths",
+			policy: MustConstruct(
+				And(
+					Equal(".required", literal.String("present")),
+					Any(".items",
+						And(
+							Equal(".name", literal.String("test")),
+							Like(".optional_id?", "ID*"),
+						),
+					),
+				),
+			),
+			data: map[string]interface{}{
+				"required": "present",
+				"items": []interface{}{
+					map[string]interface{}{
+						"name": "test",
+						// optional_id is missing
+					},
+				},
+			},
+			expectedMatch: true,
+			expectedStmt:  nil,
+		},
 	}
 
 	for _, tt := range tests {

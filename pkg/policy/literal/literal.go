@@ -51,6 +51,24 @@ func Map(m map[string]any) (ipld.Node, error) {
 			if err != nil {
 				return nil, err
 			}
+			for _, elem := range x {
+				switch e := elem.(type) {
+				case string:
+					if err := la.AssembleValue().AssignString(e); err != nil {
+						return nil, err
+					}
+				case map[string]any:
+					nestedNode, err := Map(e)
+					if err != nil {
+						return nil, err
+					}
+					if err := la.AssembleValue().AssignNode(nestedNode); err != nil {
+						return nil, err
+					}
+				default:
+					return nil, fmt.Errorf("unsupported array element type: %T", elem)
+				}
+			}
 			if err := la.Finish(); err != nil {
 				return nil, err
 			}
