@@ -692,6 +692,56 @@ func TestPartialMatch(t *testing.T) {
 			)[0],
 		},
 
+		// Array quantifiers
+		{
+			name: "all matches when every element satisfies condition",
+			policy: MustConstruct(
+				All(".numbers", Equal(".", literal.Int(1))),
+			),
+			data: map[string]interface{}{
+				"numbers": []interface{}{1, 1, 1},
+			},
+			expectedMatch: true,
+			expectedStmt:  nil,
+		},
+		{
+			name: "all fails when any element doesn't satisfy",
+			policy: MustConstruct(
+				All(".numbers", Equal(".", literal.Int(1))),
+			),
+			data: map[string]interface{}{
+				"numbers": []interface{}{1, 2, 1},
+			},
+			expectedMatch: false,
+			expectedStmt: MustConstruct(
+				Equal(".", literal.Int(1)),
+			)[0],
+		},
+		{
+			name: "any succeeds when one element matches",
+			policy: MustConstruct(
+				Any(".numbers", Equal(".", literal.Int(2))),
+			),
+			data: map[string]interface{}{
+				"numbers": []interface{}{1, 2, 3},
+			},
+			expectedMatch: true,
+			expectedStmt:  nil,
+		},
+		{
+			name: "any fails when no elements match",
+			policy: MustConstruct(
+				Any(".numbers", Equal(".", literal.Int(4))),
+			),
+			data: map[string]interface{}{
+				"numbers": []interface{}{1, 2, 3},
+			},
+			expectedMatch: false,
+			expectedStmt: MustConstruct(
+				Equal(".", literal.Int(4)),
+			)[0],
+		},
+
 		// Complex nested case
 		{
 			name: "complex nested policy",
