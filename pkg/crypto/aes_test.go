@@ -3,6 +3,7 @@ package crypto
 import (
 	"bytes"
 	"crypto/rand"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -28,10 +29,10 @@ func TestAESEncryption(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name:    "nil key returns original data",
+			name:    "nil key returns error",
 			data:    []byte("hello world"),
 			key:     nil,
-			wantErr: false,
+			wantErr: true,
 		},
 		{
 			name:    "empty data",
@@ -58,6 +59,8 @@ func TestAESEncryption(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
+
+			fmt.Println(string(encrypted))
 
 			decrypted, err := DecryptStringWithAESKey(encrypted, tt.key)
 			require.NoError(t, err)
@@ -97,6 +100,12 @@ func TestDecryptionErrors(t *testing.T) {
 			data:   make([]byte, 16), // just nonce size
 			key:    key,
 			errMsg: "message authentication failed",
+		},
+		{
+			name:   "missing key",
+			data:   []byte("�`M���l\u001AIF�\u0012���=h�?�c� ��\u0012����\u001C�\u0018Ƽ(g"),
+			key:    nil,
+			errMsg: "encryption key is required",
 		},
 	}
 

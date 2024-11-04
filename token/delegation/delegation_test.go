@@ -210,15 +210,14 @@ func TestEncryptedMeta(t *testing.T) {
 			"secret2": "value2",
 			"secret3": "value3",
 		}
+		var opts []delegation.Option
+		for k, v := range values {
+			opts = append(opts, delegation.WithEncryptedMeta(k, v, encryptionKey))
+		}
 
 		// Create token with multiple encrypted values
-		tkn, err := delegation.New(privKey, aud, cmd, pol, delegation.WithMeta("foo", "bar"))
+		tkn, err := delegation.New(privKey, aud, cmd, pol, opts...)
 		require.NoError(t, err)
-
-		for k, v := range values {
-			err := tkn.Meta().AddEncrypted(k, v, encryptionKey)
-			require.NoError(t, err)
-		}
 
 		data, err := tkn.ToDagCbor(privKey)
 		require.NoError(t, err)

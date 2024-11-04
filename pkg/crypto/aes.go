@@ -9,10 +9,11 @@ import (
 )
 
 var ErrShortCipherText = errors.New("ciphertext too short")
+var ErrNoEncryptionKey = errors.New("encryption key is required")
 
 func EncryptWithAESKey(data, key []byte) ([]byte, error) {
 	if key == nil {
-		return data, nil
+		return data, ErrNoEncryptionKey
 	}
 
 	block, err := aes.NewCipher(key)
@@ -35,7 +36,7 @@ func EncryptWithAESKey(data, key []byte) ([]byte, error) {
 
 func DecryptStringWithAESKey(data, key []byte) ([]byte, error) {
 	if key == nil {
-		return data, nil
+		return data, ErrNoEncryptionKey
 	}
 
 	block, err := aes.NewCipher(key)
