@@ -5,11 +5,12 @@ import (
 
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime/datamodel"
+
 	"github.com/ucan-wg/go-ucan/did"
 )
 
 // Option is a type that allows optional fields to be set during the
-// creation of a invocation Token.
+// creation of an invocation Token.
 type Option func(*Token) error
 
 // WithArgument adds a key/value pair to the Token's Arguments field.

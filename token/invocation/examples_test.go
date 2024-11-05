@@ -15,6 +15,7 @@ import (
 	"github.com/ipld/go-ipld-prime/fluent/qp"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
 	"github.com/libp2p/go-libp2p/core/crypto"
+
 	"github.com/ucan-wg/go-ucan/did"
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/token/invocation"
@@ -28,11 +29,7 @@ func ExampleNew() {
 		return
 	}
 
-	inv, err := invocation.New(
-		iss,
-		sub,
-		cmd,
-		prf,
+	inv, err := invocation.New(iss, sub, cmd, prf,
 		invocation.WithArguments(args),
 		invocation.WithMeta("env", "development"),
 		invocation.WithMeta("tags", meta["tags"]),

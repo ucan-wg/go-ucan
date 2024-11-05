@@ -21,6 +21,7 @@ import (
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/meta"
 	"github.com/ucan-wg/go-ucan/pkg/policy"
+	"github.com/ucan-wg/go-ucan/token/internal/parse"
 )
 
 // Token is an immutable type that holds the fields of a UCAN delegation.
@@ -184,27 +185,19 @@ func tokenFromModel(m tokenPayloadModel) (*Token, error) {
 		return nil, fmt.Errorf("parse iss: %w", err)
 	}
 
-	tkn.audience, err = did.Parse(m.Aud)
-	if err != nil {
+	if tkn.audience, err = did.Parse(m.Aud); err != nil {
 		return nil, fmt.Errorf("parse audience: %w", err)
 	}
 
-	if m.Sub != nil {
-		tkn.subject, err = did.Parse(*m.Sub)
-		if err != nil {
-			return nil, fmt.Errorf("parse subject: %w", err)
-		}
-	} else {
-		tkn.subject = did.Undef
+	if tkn.subject, err = parse.OptionalDID(m.Sub); err != nil {
+		return nil, fmt.Errorf("parse subject: %w", err)
 	}
 
-	tkn.command, err = command.Parse(m.Cmd)
-	if err != nil {
+	if tkn.command, err = command.Parse(m.Cmd); err != nil {
 		return nil, fmt.Errorf("parse command: %w", err)
 	}
 
-	tkn.policy, err = policy.FromIPLD(m.Pol)
-	if err != nil {
+	if tkn.policy, err = policy.FromIPLD(m.Pol); err != nil {
 		return nil, fmt.Errorf("parse policy: %w", err)
 	}
 
@@ -215,15 +208,8 @@ func tokenFromModel(m tokenPayloadModel) (*Token, error) {
 
 	tkn.meta = &m.Meta
 
-	if m.Nbf != nil {
-		t := time.Unix(*m.Nbf, 0)
-		tkn.notBefore = &t
-	}
-
-	if m.Exp != nil {
-		t := time.Unix(*m.Exp, 0)
-		tkn.expiration = &t
-	}
+	tkn.notBefore = parse.OptionalTimestamp(m.Nbf)
+	tkn.expiration = parse.OptionalTimestamp(m.Exp)
 
 	if err := tkn.validate(); err != nil {
 		return nil, err

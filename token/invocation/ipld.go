@@ -218,8 +218,9 @@ func (t *Token) toIPLD(privKey crypto.PrivKey) (datamodel.Node, error) {
 	}
 
 	argsKey := make([]string, len(t.arguments))
-	i := 0
 
+	// TODO: make specialized type and builder?
+	i := 0
 	for k := range t.arguments {
 		argsKey[i] = k
 		i++
@@ -230,6 +231,7 @@ func (t *Token) toIPLD(privKey crypto.PrivKey) (datamodel.Node, error) {
 		Values: t.arguments,
 	}
 
+	// TODO: reuse instead of copy? it's immutable
 	prf := make([]cid.Cid, len(t.proof))
 	for i, c := range t.proof {
 		prf[i] = c
@@ -247,6 +249,11 @@ func (t *Token) toIPLD(privKey crypto.PrivKey) (datamodel.Node, error) {
 		Exp:   exp,
 		Iat:   iat,
 		Cause: t.cause,
+	}
+
+	// seems like it's a requirement to have a null meta if there are no values?
+	if len(model.Meta.Keys) == 0 {
+		model.Meta = nil
 	}
 
 	return envelope.ToIPLD(privKey, model)
