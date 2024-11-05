@@ -57,7 +57,8 @@ type Token struct {
 // or to leave the nonce empty respectively.
 //
 // If no invokedAt is provided, the current time is used. Use the
-// WithInvokedAt or WithInvokedAtIn options to specify a different time.
+// WithInvokedAt or WithInvokedAtIn Options to specify a different time
+// or the WithoutInvokedAt Option to clear the Token's invokedAt field.
 //
 // With the exception of the WithMeta option, all other will overwrite
 // the previous contents of their target field.
@@ -113,10 +114,14 @@ func (t *Token) Command() command.Command {
 	return t.command
 }
 
+// Arguments returns the arguments to be used when the command is
+// invoked.
 func (t *Token) Arguments() map[string]datamodel.Node {
 	return t.arguments
 }
 
+// Proof() returns the ordered list of cid.Cids which referenced the
+// delegation Tokens that authorize this invocation.
 func (t *Token) Proof() []cid.Cid {
 	return t.proof
 }
@@ -136,11 +141,14 @@ func (t *Token) Expiration() *time.Time {
 	return t.expiration
 }
 
+// InvokedAt returns the time.Time at which the invocation token was
+// created.
 func (t *Token) InvokedAt() *time.Time {
 	return t.invokedAt
 }
 
-// Cause returns the (optional)
+// Cause returns the Token's (optional) cause field which may specify
+// which describes the Receipt that requested the invocation.
 func (t *Token) Cause() *cid.Cid {
 	return t.cause
 }
