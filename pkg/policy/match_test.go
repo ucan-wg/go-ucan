@@ -512,3 +512,380 @@ func FuzzMatch(f *testing.F) {
 		policy.Match(dataNode)
 	})
 }
+
+func TestOptionalSelectors(t *testing.T) {
+	tests := []struct {
+		name     string
+		policy   Policy
+		data     map[string]any
+		expected bool
+	}{
+		{
+			name:     "missing optional field returns true",
+			policy:   MustConstruct(Equal(".field?", literal.String("value"))),
+			data:     map[string]any{},
+			expected: true,
+		},
+		{
+			name:     "present optional field with matching value returns true",
+			policy:   MustConstruct(Equal(".field?", literal.String("value"))),
+			data:     map[string]any{"field": "value"},
+			expected: true,
+		},
+		{
+			name:     "present optional field with non-matching value returns false",
+			policy:   MustConstruct(Equal(".field?", literal.String("value"))),
+			data:     map[string]any{"field": "other"},
+			expected: false,
+		},
+		{
+			name:     "missing non-optional field returns false",
+			policy:   MustConstruct(Equal(".field", literal.String("value"))),
+			data:     map[string]any{},
+			expected: false,
+		},
+		{
+			name:     "nested missing non-optional field returns false",
+			policy:   MustConstruct(Equal(".outer?.inner", literal.String("value"))),
+			data:     map[string]any{"outer": map[string]any{}},
+			expected: false,
+		},
+		{
+			name:     "completely missing nested optional path returns true",
+			policy:   MustConstruct(Equal(".outer?.inner?", literal.String("value"))),
+			data:     map[string]any{},
+			expected: true,
+		},
+		{
+			name:     "partially present nested optional path with missing end returns true",
+			policy:   MustConstruct(Equal(".outer?.inner?", literal.String("value"))),
+			data:     map[string]any{"outer": map[string]any{}},
+			expected: true,
+		},
+		{
+			name:     "optional array index returns true when array is empty",
+			policy:   MustConstruct(Equal(".array[0]?", literal.String("value"))),
+			data:     map[string]any{"array": []any{}},
+			expected: true,
+		},
+		{
+			name:     "non-optional array index returns false when array is empty",
+			policy:   MustConstruct(Equal(".array[0]", literal.String("value"))),
+			data:     map[string]any{"array": []any{}},
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			nb := basicnode.Prototype.Map.NewBuilder()
+			n, err := literal.Map(tt.data)
+			require.NoError(t, err)
+			err = nb.AssignNode(n)
+			require.NoError(t, err)
+
+			result := tt.policy.Match(nb.Build())
+			require.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+// The unique behaviour of PartialMatch is that it should return true for missing non-optional data (unlike Match).
+func TestPartialMatch(t *testing.T) {
+	tests := []struct {
+		name          string
+		policy        Policy
+		data          map[string]any
+		expectedMatch bool
+		expectedStmt  Statement
+	}{
+		{
+			name: "returns true for missing non-optional field",
+			policy: MustConstruct(
+				Equal(".field", literal.String("value")),
+			),
+			data:          map[string]any{},
+			expectedMatch: true,
+			expectedStmt:  nil,
+		},
+		{
+			name: "returns true when present data matches",
+			policy: MustConstruct(
+				Equal(".foo", literal.String("correct")),
+				Equal(".missing", literal.String("whatever")),
+			),
+			data: map[string]any{
+				"foo": "correct",
+			},
+			expectedMatch: true,
+			expectedStmt:  nil,
+		},
+		{
+			name: "returns false with failing statement for present but non-matching value",
+			policy: MustConstruct(
+				Equal(".foo", literal.String("value1")),
+				Equal(".bar", literal.String("value2")),
+			),
+			data: map[string]any{
+				"foo": "wrong",
+				"bar": "value2",
+			},
+			expectedMatch: false,
+			expectedStmt: MustConstruct(
+				Equal(".foo", literal.String("value1")),
+			)[0],
+		},
+		{
+			name: "continues past missing data until finding actual mismatch",
+			policy: MustConstruct(
+				Equal(".missing", literal.String("value")),
+				Equal(".present", literal.String("wrong")),
+			),
+			data: map[string]any{
+				"present": "actual",
+			},
+			expectedMatch: false,
+			expectedStmt: MustConstruct(
+				Equal(".present", literal.String("wrong")),
+			)[0],
+		},
+
+		// Optional fields
+		{
+			name: "returns false when optional field present but wrong",
+			policy: MustConstruct(
+				Equal(".field?", literal.String("value")),
+			),
+			data: map[string]any{
+				"field": "wrong",
+			},
+			expectedMatch: false,
+			expectedStmt: MustConstruct(
+				Equal(".field?", literal.String("value")),
+			)[0],
+		},
+
+		// Like pattern matching
+		{
+			name: "returns true for matching like pattern",
+			policy: MustConstruct(
+				Like(".pattern", "test*"),
+			),
+			data: map[string]any{
+				"pattern": "testing123",
+			},
+			expectedMatch: true,
+			expectedStmt:  nil,
+		},
+		{
+			name: "returns false for non-matching like pattern",
+			policy: MustConstruct(
+				Like(".pattern", "test*"),
+			),
+			data: map[string]any{
+				"pattern": "wrong123",
+			},
+			expectedMatch: false,
+			expectedStmt: MustConstruct(
+				Like(".pattern", "test*"),
+			)[0],
+		},
+
+		// Array quantifiers
+		{
+			name: "all matches when every element satisfies condition",
+			policy: MustConstruct(
+				All(".numbers", Equal(".", literal.Int(1))),
+			),
+			data: map[string]interface{}{
+				"numbers": []interface{}{1, 1, 1},
+			},
+			expectedMatch: true,
+			expectedStmt:  nil,
+		},
+		{
+			name: "all fails when any element doesn't satisfy",
+			policy: MustConstruct(
+				All(".numbers", Equal(".", literal.Int(1))),
+			),
+			data: map[string]interface{}{
+				"numbers": []interface{}{1, 2, 1},
+			},
+			expectedMatch: false,
+			expectedStmt: MustConstruct(
+				Equal(".", literal.Int(1)),
+			)[0],
+		},
+		{
+			name: "any succeeds when one element matches",
+			policy: MustConstruct(
+				Any(".numbers", Equal(".", literal.Int(2))),
+			),
+			data: map[string]interface{}{
+				"numbers": []interface{}{1, 2, 3},
+			},
+			expectedMatch: true,
+			expectedStmt:  nil,
+		},
+		{
+			name: "any fails when no elements match",
+			policy: MustConstruct(
+				Any(".numbers", Equal(".", literal.Int(4))),
+			),
+			data: map[string]interface{}{
+				"numbers": []interface{}{1, 2, 3},
+			},
+			expectedMatch: false,
+			expectedStmt: MustConstruct(
+				Any(".numbers", Equal(".", literal.Int(4))),
+			)[0],
+		},
+
+		// Complex nested case
+		{
+			name: "complex nested policy",
+			policy: MustConstruct(
+				And(
+					Equal(".required", literal.String("present")),
+					Equal(".optional?", literal.String("value")),
+					Any(".items",
+						And(
+							Equal(".name", literal.String("test")),
+							Like(".id", "ID*"),
+						),
+					),
+				),
+			),
+			data: map[string]any{
+				"required": "present",
+				"items": []any{
+					map[string]any{
+						"name": "wrong",
+						"id":   "ID123",
+					},
+					map[string]any{
+						"name": "test",
+						"id":   "ID456",
+					},
+				},
+			},
+			expectedMatch: true,
+			expectedStmt:  nil,
+		},
+
+		// missing optional values for all the operators
+		{
+			name: "returns true for missing optional equal",
+			policy: MustConstruct(
+				Equal(".field?", literal.String("value")),
+			),
+			data:          map[string]any{},
+			expectedMatch: true,
+			expectedStmt:  nil,
+		},
+		{
+			name: "returns true for missing optional like pattern",
+			policy: MustConstruct(
+				Like(".pattern?", "test*"),
+			),
+			data:          map[string]any{},
+			expectedMatch: true,
+			expectedStmt:  nil,
+		},
+		{
+			name: "returns true for missing optional greater than",
+			policy: MustConstruct(
+				GreaterThan(".number?", literal.Int(5)),
+			),
+			data:          map[string]any{},
+			expectedMatch: true,
+			expectedStmt:  nil,
+		},
+		{
+			name: "returns true for missing optional less than",
+			policy: MustConstruct(
+				LessThan(".number?", literal.Int(5)),
+			),
+			data:          map[string]any{},
+			expectedMatch: true,
+			expectedStmt:  nil,
+		},
+		{
+			name: "returns true for missing optional array with all",
+			policy: MustConstruct(
+				All(".numbers?", Equal(".", literal.Int(1))),
+			),
+			data:          map[string]any{},
+			expectedMatch: true,
+			expectedStmt:  nil,
+		},
+		{
+			name: "returns true for missing optional array with any",
+			policy: MustConstruct(
+				Any(".numbers?", Equal(".", literal.Int(1))),
+			),
+			data:          map[string]any{},
+			expectedMatch: true,
+			expectedStmt:  nil,
+		},
+		{
+			name: "returns true for complex nested optional paths",
+			policy: MustConstruct(
+				And(
+					Equal(".required", literal.String("present")),
+					Any(".optional_array?",
+						And(
+							Equal(".name?", literal.String("test")),
+							Like(".id?", "ID*"),
+						),
+					),
+				),
+			),
+			data: map[string]any{
+				"required": "present",
+			},
+			expectedMatch: true,
+			expectedStmt:  nil,
+		},
+		{
+			name: "returns true for partially present nested optional paths",
+			policy: MustConstruct(
+				And(
+					Equal(".required", literal.String("present")),
+					Any(".items",
+						And(
+							Equal(".name", literal.String("test")),
+							Like(".optional_id?", "ID*"),
+						),
+					),
+				),
+			),
+			data: map[string]any{
+				"required": "present",
+				"items": []any{
+					map[string]any{
+						"name": "test",
+						// optional_id is missing
+					},
+				},
+			},
+			expectedMatch: true,
+			expectedStmt:  nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			node, err := literal.Map(tt.data)
+			require.NoError(t, err)
+
+			match, stmt := tt.policy.PartialMatch(node)
+			require.Equal(t, tt.expectedMatch, match)
+			if tt.expectedStmt == nil {
+				require.Nil(t, stmt)
+			} else {
+				require.Equal(t, tt.expectedStmt, stmt)
+			}
+		})
+	}
+}

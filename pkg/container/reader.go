@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
+	"iter"
 
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime"
@@ -40,6 +41,19 @@ func (ctn Reader) GetDelegation(cid cid.Cid) (*delegation.Token, error) {
 		return tkn, nil
 	}
 	return nil, fmt.Errorf("not a delegation token")
+}
+
+// GetAllDelegations returns all the delegation.Token in the container.
+func (ctn Reader) GetAllDelegations() iter.Seq2[cid.Cid, *delegation.Token] {
+	return func(yield func(cid.Cid, *delegation.Token) bool) {
+		for c, t := range ctn {
+			if t, ok := t.(*delegation.Token); ok {
+				if !yield(c, t) {
+					return
+				}
+			}
+		}
+	}
 }
 
 // GetInvocation returns the first found invocation.Token.
