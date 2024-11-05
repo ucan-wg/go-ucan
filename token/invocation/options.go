@@ -9,7 +9,7 @@ import (
 )
 
 // Option is a type that allows optional fields to be set during the
-// creation of a Token.
+// creation of a invocation Token.
 type Option func(*Token) error
 
 // WithArgument adds a key/value pair to the Token's Arguments field.
@@ -62,7 +62,9 @@ func WithMeta(key string, val any) Option {
 // WithNonce sets the Token's nonce with the given value.
 //
 // If this option is not used, a random 12-byte nonce is generated for
-// this require.
+// this required field.  If you truly want to create an invocation Token
+// without a nonce, use the WithEmptyNonce Option which will set the
+// nonce to an empty byte array.
 func WithNonce(nonce []byte) Option {
 	return func(t *Token) error {
 		t.nonce = nonce
@@ -95,12 +97,16 @@ func WithExpiration(exp time.Time) Option {
 
 // WithExpirationIn set's the Token's optional "expiration" field to
 // Now() plus the given duration.
-func WithExpirationIn(exp time.Duration) Option {
-	return WithExpiration(time.Now().Add(exp))
+func WithExpirationIn(after time.Duration) Option {
+	return WithExpiration(time.Now().Add(after))
 }
 
 // WithInvokedAt sets the Token's invokedAt field to the provided
 // time.Time.
+//
+// If this Option is not provided, the invocation Token's iat field will
+// be set to the value of time.Now().  If you want to create an invocation
+// Token without this field being set, use the WithoutInvokedAt Option.
 func WithInvokedAt(iat time.Time) Option {
 	return func(t *Token) error {
 		t.invokedAt = &iat
