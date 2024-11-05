@@ -31,10 +31,19 @@ func Null() ipld.Node {
 }
 
 // Map creates an IPLD node from a map[string]any
-func Map(m map[string]any) (ipld.Node, error) {
+func Map[T any](m map[string]T) (ipld.Node, error) {
 	return qp.BuildMap(basicnode.Prototype.Any, int64(len(m)), func(ma datamodel.MapAssembler) {
 		for k, v := range m {
 			qp.MapEntry(ma, k, anyAssemble(v))
+		}
+	})
+}
+
+// List creates an IPLD node from a []any
+func List[T any](l []T) (ipld.Node, error) {
+	return qp.BuildList(basicnode.Prototype.Any, int64(len(l)), func(la datamodel.ListAssembler) {
+		for _, val := range l {
+			qp.ListEntry(la, anyAssemble(val))
 		}
 	})
 }
