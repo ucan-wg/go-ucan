@@ -15,9 +15,11 @@ import (
 
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime/datamodel"
+
 	"github.com/ucan-wg/go-ucan/did"
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/meta"
+	"github.com/ucan-wg/go-ucan/token/internal/parse"
 )
 
 // Token is an immutable type that holds the fields of a UCAN invocation.
@@ -60,24 +62,18 @@ type Token struct {
 // WithInvokedAt or WithInvokedAtIn Options to specify a different time
 // or the WithoutInvokedAt Option to clear the Token's invokedAt field.
 //
-// With the exception of the WithMeta option, all other will overwrite
+// With the exception of the WithMeta option, all others will overwrite
 // the previous contents of their target field.
 func New(iss, sub did.DID, cmd command.Command, prf []cid.Cid, opts ...Option) (*Token, error) {
-	nonce, err := generateNonce()
-	if err != nil {
-		return nil, err
-	}
-
 	iat := time.Now()
-	metadata := meta.NewMeta()
 
 	tkn := Token{
 		issuer:    iss,
 		subject:   sub,
 		command:   cmd,
 		proof:     prf,
-		meta:      metadata,
-		nonce:     nonce,
+		meta:      meta.NewMeta(),
+		nonce:     nil,
 		invokedAt: &iat,
 	}
 
@@ -87,8 +83,15 @@ func New(iss, sub did.DID, cmd command.Command, prf []cid.Cid, opts ...Option) (
 		}
 	}
 
-	if len(tkn.meta.Keys) == 0 {
-		tkn.meta = nil
+	if len(tkn.nonce) == 0 {
+		tkn.nonce, err = generateNonce()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if err := tkn.validate(); err != nil {
+		return nil, err
 	}
 
 	return &tkn, nil
@@ -120,7 +123,7 @@ func (t *Token) Arguments() map[string]datamodel.Node {
 	return t.arguments
 }
 
-// Proof() returns the ordered list of cid.Cids which referenced the
+// Proof() returns the ordered list of cid.Cid which reference the
 // delegation Tokens that authorize this invocation.
 func (t *Token) Proof() []cid.Cid {
 	return t.proof
@@ -163,8 +166,7 @@ func (t *Token) validate() error {
 	}
 
 	requiredDID(t.issuer, "Issuer")
-
-	// TODO
+	requiredDID(t.subject, "Subject")
 
 	if len(t.nonce) < 12 {
 		errs = errors.Join(errs, fmt.Errorf("token nonce too small"))
@@ -182,35 +184,36 @@ func tokenFromModel(m tokenPayloadModel) (*Token, error) {
 	)
 
 	if tkn.issuer, err = did.Parse(m.Iss); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("parse iss: %w", err)
 	}
 
 	if tkn.subject, err = did.Parse(m.Sub); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("parse subject: %w", err)
 	}
 
-	if tkn.audience, err = parseOptionalDID(m.Aud); err != nil {
-		return nil, err
+	if tkn.audience, err = parse.OptionalDID(m.Aud); err != nil {
+		return nil, fmt.Errorf("parse audience: %w", err)
 	}
 
 	if tkn.command, err = command.Parse(m.Cmd); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("parse command: %w", err)
 	}
+
+	if len(m.Nonce) == 0 {
+		return nil, fmt.Errorf("nonce is required")
+	}
+	tkn.nonce = m.Nonce
 
 	tkn.arguments = m.Args.Values
 	tkn.proof = m.Prf
 	tkn.meta = m.Meta
-	tkn.nonce = m.Nonce
 
-	if tkn.expiration, err = parseOptionalTimestamp(m.Exp); err != nil {
-		return nil, err
-	}
+	tkn.expiration = parse.OptionalTimestamp(m.Exp)
+	tkn.invokedAt = parse.OptionalTimestamp(m.Iat)
 
-	if tkn.invokedAt, err = parseOptionalTimestamp(m.Iat); err != nil {
-		return nil, err
-	}
+	tkn.cause = m.Cause
 
-	if tkn.cause, err = parseOptionalCID(m.Cause); err != nil {
+	if err := tkn.validate(); err != nil {
 		return nil, err
 	}
 
@@ -226,30 +229,4 @@ func generateNonce() ([]byte, error) {
 		return nil, err
 	}
 	return res, nil
-}
-
-func parseOptionalCID(c *cid.Cid) (*cid.Cid, error) {
-	if c == nil {
-		return nil, nil
-	}
-
-	return c, nil
-}
-
-func parseOptionalDID(s *string) (did.DID, error) {
-	if s == nil {
-		return did.Undef, nil
-	}
-
-	return did.Parse(*s)
-}
-
-func parseOptionalTimestamp(sec *int64) (*time.Time, error) {
-	if sec == nil {
-		return nil, nil
-	}
-
-	t := time.Unix(*sec, 0)
-
-	return &t, nil
 }
