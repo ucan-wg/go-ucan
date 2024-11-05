@@ -73,7 +73,7 @@ func WithNonce(nonce []byte) Option {
 
 // WithEmptyNonce sets the Token's nonce to an empty byte slice as
 // suggested by the UCAN spec for invocation tokens that represent
-// idem
+// idempotent operations.
 func WithEmptyNonce() Option {
 	return func(t *Token) error {
 		t.nonce = []byte{}
@@ -96,12 +96,7 @@ func WithExpiration(exp time.Time) Option {
 // WithExpirationIn set's the Token's optional "expiration" field to
 // Now() plus the given duration.
 func WithExpirationIn(exp time.Duration) Option {
-	return func(t *Token) error {
-		expTime := time.Now().Add(exp).Round(time.Minute)
-		t.expiration = &expTime
-
-		return nil
-	}
+	return WithExpiration(time.Now().Add(exp))
 }
 
 // WithInvokedAt sets the Token's invokedAt field to the provided
@@ -117,12 +112,7 @@ func WithInvokedAt(iat time.Time) Option {
 // WithInvokedAtIn sets the Token's invokedAt field to Now() plus the
 // given duration.
 func WithInvokedAtIn(after time.Duration) Option {
-	return func(t *Token) error {
-		iat := time.Now().Add(after)
-		t.invokedAt = &iat
-
-		return nil
-	}
+	return WithInvokedAt(time.Now().Add(after))
 }
 
 // WithoutInvokedAt clears the Token's invokedAt field.
