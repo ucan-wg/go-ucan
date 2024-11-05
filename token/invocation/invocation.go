@@ -15,6 +15,7 @@ import (
 
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime/datamodel"
+
 	"github.com/ucan-wg/go-ucan/did"
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/meta"
@@ -228,30 +229,4 @@ func generateNonce() ([]byte, error) {
 		return nil, err
 	}
 	return res, nil
-}
-
-func parseOptionalCID(c *cid.Cid) (*cid.Cid, error) {
-	if c == nil {
-		return nil, nil
-	}
-
-	return c, nil
-}
-
-func parseOptionalDID(s *string) (did.DID, error) {
-	if s == nil {
-		return did.Undef, nil
-	}
-
-	return did.Parse(*s)
-}
-
-func parseOptionalTimestamp(sec *int64) (*time.Time, error) {
-	if sec == nil {
-		return nil, nil
-	}
-
-	t := time.Unix(*sec, 0)
-
-	return &t, nil
 }

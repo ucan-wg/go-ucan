@@ -79,6 +79,7 @@ func TestSchemaRoundTrip(t *testing.T) {
 		assert.JSONEq(t, string(invocationJson), readJson.String())
 	})
 }
+
 func privKey(t require.TestingT, privKeyCfg string) crypto.PrivKey {
 	privKeyMar, err := crypto.ConfigDecodeKey(privKeyCfg)
 	require.NoError(t, err)
