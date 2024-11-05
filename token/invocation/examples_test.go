@@ -139,8 +139,6 @@ func prettyDAGJSON(data []byte) (string, error) {
 		return "", err
 	}
 
-	fmt.Println(string(jsonData))
-
 	var out bytes.Buffer
 	if err := json.Indent(&out, jsonData, "", "  "); err != nil {
 		return "", err
