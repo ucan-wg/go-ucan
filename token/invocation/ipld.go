@@ -231,19 +231,13 @@ func (t *Token) toIPLD(privKey crypto.PrivKey) (datamodel.Node, error) {
 		Values: t.arguments,
 	}
 
-	// TODO: reuse instead of copy? it's immutable
-	prf := make([]cid.Cid, len(t.proof))
-	for i, c := range t.proof {
-		prf[i] = c
-	}
-
 	model := &tokenPayloadModel{
 		Iss:   t.issuer.String(),
 		Aud:   aud,
 		Sub:   t.subject.String(),
 		Cmd:   t.command.String(),
 		Args:  args,
-		Prf:   prf,
+		Prf:   t.proof,
 		Meta:  t.meta,
 		Nonce: t.nonce,
 		Exp:   exp,
