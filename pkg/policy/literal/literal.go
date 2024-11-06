@@ -68,7 +68,19 @@ func anyAssemble(val any) qp.Assemble {
 	}
 
 	switch rt.Kind() {
-	case reflect.Array, reflect.Slice:
+	case reflect.Array:
+		if rt.Elem().Kind() == reflect.Uint8 {
+			panic("bytes array are not supported yet")
+		}
+		return qp.List(int64(rv.Len()), func(la datamodel.ListAssembler) {
+			for i := range rv.Len() {
+				qp.ListEntry(la, anyAssemble(rv.Index(i)))
+			}
+		})
+	case reflect.Slice:
+		if rt.Elem().Kind() == reflect.Uint8 {
+			return qp.Bytes(val.([]byte))
+		}
 		return qp.List(int64(rv.Len()), func(la datamodel.ListAssembler) {
 			for i := range rv.Len() {
 				qp.ListEntry(la, anyAssemble(rv.Index(i)))
