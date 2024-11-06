@@ -98,6 +98,9 @@ func (m *Meta) GetNode(key string) (ipld.Node, error) {
 // Accepted types for the value are: bool, string, int, int32, int64, []byte,
 // and ipld.Node.
 func (m *Meta) Add(key string, val any) error {
+	if _, ok := m.Values[key]; ok {
+		return fmt.Errorf("duplicate key %q", key)
+	}
 	switch val := val.(type) {
 	case bool:
 		m.Values[key] = basicnode.NewBool(val)
