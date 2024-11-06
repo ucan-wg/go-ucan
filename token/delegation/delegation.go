@@ -79,10 +79,6 @@ func New(privKey crypto.PrivKey, aud did.DID, cmd command.Command, pol policy.Po
 		}
 	}
 
-	if len(tkn.meta.Keys) < 1 {
-		tkn.meta = nil
-	}
-
 	if err := tkn.validate(); err != nil {
 		return nil, err
 	}

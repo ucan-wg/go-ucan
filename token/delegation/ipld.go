@@ -229,5 +229,10 @@ func (t *Token) toIPLD(privKey crypto.PrivKey) (datamodel.Node, error) {
 		Exp:   exp,
 	}
 
+	// seems like it's a requirement to have a null meta if there are no values?
+	if len(model.Meta.Keys) == 0 {
+		model.Meta = nil
+	}
+
 	return envelope.ToIPLD(privKey, model)
 }
