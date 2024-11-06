@@ -1,7 +1,6 @@
 package meta
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -12,9 +11,9 @@ import (
 	"github.com/ipld/go-ipld-prime/printer"
 )
 
-var ErrUnsupported = errors.New("failure adding unsupported type to meta")
+var ErrUnsupported = fmt.Errorf("failure adding unsupported type to meta")
 
-var ErrNotFound = errors.New("key-value not found in meta")
+var ErrNotFound = fmt.Errorf("key-value not found in meta")
 
 // Meta is a container for meta key-value pairs in a UCAN token.
 // This also serves as a way to construct the underlying IPLD data with minimum allocations and transformations,
@@ -158,6 +157,11 @@ func (m *Meta) String() string {
 
 	buf.WriteString("}")
 	return buf.String()
+}
+
+// ReadOnly returns a read-only version of Meta.
+func (m *Meta) ReadOnly() ReadOnly {
+	return ReadOnly{m: m}
 }
 
 func fqtn(val any) string {

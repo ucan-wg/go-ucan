@@ -142,8 +142,8 @@ func (t *Token) Nonce() []byte {
 }
 
 // Meta returns the Token's metadata.
-func (t *Token) Meta() *meta.Meta {
-	return t.meta
+func (t *Token) Meta() meta.ReadOnly {
+	return t.meta.ReadOnly()
 }
 
 // NotBefore returns the time at which the Token becomes "active".
