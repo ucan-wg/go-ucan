@@ -10,17 +10,18 @@ import (
 )
 
 // Match determines if the IPLD node satisfies the policy.
-func (p Policy) Match(node datamodel.Node) bool {
+// The first Statement failing to match is returned as well.
+func (p Policy) Match(node datamodel.Node) (bool, Statement) {
 	for _, stmt := range p {
-		res, _ := matchStatement(stmt, node)
+		res, leaf := matchStatement(stmt, node)
 		switch res {
 		case matchResultNoData, matchResultFalse:
-			return false
+			return false, leaf
 		case matchResultOptionalNoData, matchResultTrue:
 			// continue
 		}
 	}
-	return true
+	return true, nil
 }
 
 // PartialMatch returns false IIF one non-optional Statement has the corresponding data and doesn't match.
@@ -131,9 +132,9 @@ func matchStatement(cur Statement, node ipld.Node) (_ matchResult, leafMost Stat
 			case matchResultNoData, matchResultOptionalNoData:
 				return res, leaf
 			case matchResultTrue:
-				return matchResultFalse, leaf
+				return matchResultFalse, cur
 			case matchResultFalse:
-				return matchResultTrue, leaf
+				return matchResultTrue, nil
 			}
 		}
 	case KindAnd:

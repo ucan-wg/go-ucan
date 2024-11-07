@@ -1,15 +1,12 @@
 package selector_test
 
 import (
-	"bytes"
 	"strings"
 	"testing"
 
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/codec/dagjson"
-	"github.com/ipld/go-ipld-prime/datamodel"
 	basicnode "github.com/ipld/go-ipld-prime/node/basic"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/ucan-wg/go-ucan/pkg/policy/selector"
@@ -55,7 +52,7 @@ func TestSupportedForms(t *testing.T) {
 			require.NotNil(t, res)
 
 			exp := makeNode(t, tc.Output)
-			equalIPLD(t, exp, res)
+			require.True(t, ipld.DeepEqual(exp, res))
 		})
 	}
 
@@ -104,23 +101,6 @@ func TestSupportedForms(t *testing.T) {
 			require.Nil(t, res)
 		})
 	}
-}
-
-func equalIPLD(t *testing.T, expected datamodel.Node, actual datamodel.Node) bool {
-	t.Helper()
-
-	exp, act := &bytes.Buffer{}, &bytes.Buffer{}
-	if err := dagjson.Encode(expected, exp); err != nil {
-		return assert.Fail(t, "Failed to encode json for expected IPLD node")
-	}
-
-	if err := dagjson.Encode(actual, act); err != nil {
-		return assert.Fail(t, "Failed to encode JSON for actual IPLD node")
-	}
-
-	require.JSONEq(t, exp.String(), act.String())
-
-	return true
 }
 
 func makeNode(t *testing.T, dagJsonInput string) ipld.Node {

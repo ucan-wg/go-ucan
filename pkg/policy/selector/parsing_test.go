@@ -1,7 +1,6 @@
 package selector
 
 import (
-	"fmt"
 	"math"
 	"testing"
 
@@ -354,7 +353,6 @@ func TestParse(t *testing.T) {
 		str := `.foo.["bar"].[138]?.baz[1:]`
 		sel, err := Parse(str)
 		require.NoError(t, err)
-		printSegments(sel)
 		require.Equal(t, str, sel.String())
 		require.Equal(t, 7, len(sel))
 		require.False(t, sel[0].Identity())
@@ -404,13 +402,11 @@ func TestParse(t *testing.T) {
 	t.Run("non dotted", func(t *testing.T) {
 		_, err := Parse("foo")
 		require.NotNil(t, err)
-		fmt.Println(err)
 	})
 
 	t.Run("non quoted", func(t *testing.T) {
 		_, err := Parse(".[foo]")
 		require.NotNil(t, err)
-		fmt.Println(err)
 	})
 
 	t.Run("slice with negative start and positive end", func(t *testing.T) {
@@ -553,10 +549,4 @@ func TestParse(t *testing.T) {
 		_, err := Parse(".[foo]")
 		require.Error(t, err)
 	})
-}
-
-func printSegments(s Selector) {
-	for i, seg := range s {
-		fmt.Printf("%d: %s\n", i, seg.String())
-	}
 }
