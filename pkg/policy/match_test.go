@@ -932,7 +932,9 @@ func TestInvocationValidationSpecExamples(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		assert.True(t, pol.Match(argsNode))
+		exec, stmt := pol.Match(argsNode)
+		assert.True(t, exec)
+		assert.Nil(t, stmt)
 	})
 
 	t.Run("fails on recipients (second statement)", func(t *testing.T) {
@@ -949,6 +951,8 @@ func TestInvocationValidationSpecExamples(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		assert.False(t, pol.Match(argsNode))
+		exec, stmt := pol.Match(argsNode)
+		assert.False(t, exec)
+		assert.NotNil(t, stmt)
 	})
 }
