@@ -30,7 +30,9 @@ func ExampleNew() {
 	}
 
 	inv, err := invocation.New(iss, sub, cmd, prf,
-		invocation.WithArguments(args),
+		invocation.WithArgument("uri", args["uri"]),
+		invocation.WithArgument("headers", args["headers"]),
+		invocation.WithArgument("payload", args["payload"]),
 		invocation.WithMeta("env", "development"),
 		invocation.WithMeta("tags", meta["tags"]),
 		invocation.WithExpirationIn(time.Minute),

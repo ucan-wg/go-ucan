@@ -10,6 +10,7 @@ import (
 	"github.com/ipld/go-ipld-prime/node/bindnode"
 	"github.com/ipld/go-ipld-prime/schema"
 
+	"github.com/ucan-wg/go-ucan/pkg/args"
 	"github.com/ucan-wg/go-ucan/pkg/meta"
 	"github.com/ucan-wg/go-ucan/token/internal/envelope"
 )
@@ -56,7 +57,7 @@ type tokenPayloadModel struct {
 	// The Command
 	Cmd string
 	// The Command's Arguments
-	Args stringAny
+	Args *args.Args
 	// Delegations that prove the chain of authority
 	Prf []cid.Cid
 

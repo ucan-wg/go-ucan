@@ -14,9 +14,9 @@ import (
 	"time"
 
 	"github.com/ipfs/go-cid"
-	"github.com/ipld/go-ipld-prime/datamodel"
 
 	"github.com/ucan-wg/go-ucan/did"
+	"github.com/ucan-wg/go-ucan/pkg/args"
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/meta"
 	"github.com/ucan-wg/go-ucan/token/internal/parse"
@@ -34,7 +34,7 @@ type Token struct {
 	// The Command
 	command command.Command
 	// The Command's Arguments
-	arguments map[string]datamodel.Node
+	arguments *args.Args
 	// Delegations that prove the chain of authority
 	proof []cid.Cid
 
@@ -71,6 +71,7 @@ func New(iss, sub did.DID, cmd command.Command, prf []cid.Cid, opts ...Option) (
 		issuer:    iss,
 		subject:   sub,
 		command:   cmd,
+		arguments: args.New(),
 		proof:     prf,
 		meta:      meta.NewMeta(),
 		nonce:     nil,
@@ -119,7 +120,7 @@ func (t *Token) Command() command.Command {
 
 // Arguments returns the arguments to be used when the command is
 // invoked.
-func (t *Token) Arguments() map[string]datamodel.Node {
+func (t *Token) Arguments() *args.Args {
 	return t.arguments
 }
 
@@ -204,7 +205,7 @@ func tokenFromModel(m tokenPayloadModel) (*Token, error) {
 	}
 	tkn.nonce = m.Nonce
 
-	tkn.arguments = m.Args.Values
+	tkn.arguments = m.Args
 	tkn.proof = m.Prf
 	tkn.meta = m.Meta
 

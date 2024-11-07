@@ -192,11 +192,6 @@ func FromIPLD(node datamodel.Node) (*Token, error) {
 	return tkn, err
 }
 
-type stringAny struct {
-	Keys   []string
-	Values map[string]datamodel.Node
-}
-
 func (t *Token) toIPLD(privKey crypto.PrivKey) (datamodel.Node, error) {
 	var aud *string
 
@@ -217,26 +212,12 @@ func (t *Token) toIPLD(privKey crypto.PrivKey) (datamodel.Node, error) {
 		iat = &i
 	}
 
-	argsKey := make([]string, len(t.arguments))
-
-	// TODO: make specialized type and builder?
-	i := 0
-	for k := range t.arguments {
-		argsKey[i] = k
-		i++
-	}
-
-	args := stringAny{
-		Keys:   argsKey,
-		Values: t.arguments,
-	}
-
 	model := &tokenPayloadModel{
 		Iss:   t.issuer.String(),
 		Aud:   aud,
 		Sub:   t.subject.String(),
 		Cmd:   t.command.String(),
-		Args:  args,
+		Args:  t.arguments,
 		Prf:   t.proof,
 		Meta:  t.meta,
 		Nonce: t.nonce,

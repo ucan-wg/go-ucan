@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/ipfs/go-cid"
-	"github.com/ipld/go-ipld-prime/datamodel"
 
 	"github.com/ucan-wg/go-ucan/did"
 )
@@ -14,24 +13,9 @@ import (
 type Option func(*Token) error
 
 // WithArgument adds a key/value pair to the Token's Arguments field.
-func WithArgument(key string, val datamodel.Node) Option {
+func WithArgument(key string, val any) Option {
 	return func(t *Token) error {
-		t.arguments[key] = val
-
-		return nil
-	}
-}
-
-// WithArguments sets the Token's Arguments field to the provided map.
-//
-// Note that this will overwrite any existing Arguments whether provided
-// by a previous call to this function or by one or more calls to
-// WithArgument.
-func WithArguments(args map[string]datamodel.Node) Option {
-	return func(t *Token) error {
-		t.arguments = args
-
-		return nil
+		return t.arguments.Add(key, val)
 	}
 }
 
