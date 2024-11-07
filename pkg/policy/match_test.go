@@ -17,228 +17,252 @@ import (
 func TestMatch(t *testing.T) {
 	t.Run("equality", func(t *testing.T) {
 		t.Run("string", func(t *testing.T) {
-			np := basicnode.Prototype.String
-			nb := np.NewBuilder()
-			nb.AssignString("test")
-			nd := nb.Build()
+			nd := literal.String("test")
 
 			pol := MustConstruct(Equal(".", literal.String("test")))
-			ok := pol.Match(nd)
+			ok, leaf := pol.Match(nd)
 			require.True(t, ok)
+			require.Nil(t, leaf)
 
 			pol = MustConstruct(Equal(".", literal.String("test2")))
-			ok = pol.Match(nd)
+			ok, leaf = pol.Match(nd)
 			require.False(t, ok)
+			require.Equal(t, pol[0], leaf)
 
 			pol = MustConstruct(Equal(".", literal.Int(138)))
-			ok = pol.Match(nd)
+			ok, leaf = pol.Match(nd)
 			require.False(t, ok)
+			require.Equal(t, pol[0], leaf)
 		})
 
 		t.Run("int", func(t *testing.T) {
-			np := basicnode.Prototype.Int
-			nb := np.NewBuilder()
-			nb.AssignInt(138)
-			nd := nb.Build()
+			nd := literal.Int(138)
 
 			pol := MustConstruct(Equal(".", literal.Int(138)))
-			ok := pol.Match(nd)
+			ok, leaf := pol.Match(nd)
 			require.True(t, ok)
+			require.Nil(t, leaf)
 
 			pol = MustConstruct(Equal(".", literal.Int(1138)))
-			ok = pol.Match(nd)
+			ok, leaf = pol.Match(nd)
 			require.False(t, ok)
+			require.Equal(t, pol[0], leaf)
 
 			pol = MustConstruct(Equal(".", literal.String("138")))
-			ok = pol.Match(nd)
+			ok, leaf = pol.Match(nd)
 			require.False(t, ok)
+			require.Equal(t, pol[0], leaf)
 		})
 
 		t.Run("float", func(t *testing.T) {
-			np := basicnode.Prototype.Float
-			nb := np.NewBuilder()
-			nb.AssignFloat(1.138)
-			nd := nb.Build()
+			nd := literal.Float(1.138)
 
 			pol := MustConstruct(Equal(".", literal.Float(1.138)))
-			ok := pol.Match(nd)
+			ok, leaf := pol.Match(nd)
 			require.True(t, ok)
+			require.Nil(t, leaf)
 
 			pol = MustConstruct(Equal(".", literal.Float(11.38)))
-			ok = pol.Match(nd)
+			ok, leaf = pol.Match(nd)
 			require.False(t, ok)
+			require.Equal(t, pol[0], leaf)
 
 			pol = MustConstruct(Equal(".", literal.String("138")))
-			ok = pol.Match(nd)
+			ok, leaf = pol.Match(nd)
 			require.False(t, ok)
+			require.Equal(t, pol[0], leaf)
 		})
 
 		t.Run("IPLD Link", func(t *testing.T) {
 			l0 := cidlink.Link{Cid: cid.MustParse("bafybeif4owy5gno5lwnixqm52rwqfodklf76hsetxdhffuxnplvijskzqq")}
 			l1 := cidlink.Link{Cid: cid.MustParse("bafkreifau35r7vi37tvbvfy3hdwvgb4tlflqf7zcdzeujqcjk3rsphiwte")}
 
-			np := basicnode.Prototype.Link
-			nb := np.NewBuilder()
-			nb.AssignLink(l0)
-			nd := nb.Build()
+			nd := literal.Link(l0)
 
 			pol := MustConstruct(Equal(".", literal.Link(l0)))
-			ok := pol.Match(nd)
+			ok, leaf := pol.Match(nd)
 			require.True(t, ok)
+			require.Nil(t, leaf)
 
 			pol = MustConstruct(Equal(".", literal.Link(l1)))
-			ok = pol.Match(nd)
+			ok, leaf = pol.Match(nd)
 			require.False(t, ok)
+			require.Equal(t, pol[0], leaf)
 
 			pol = MustConstruct(Equal(".", literal.String("bafybeif4owy5gno5lwnixqm52rwqfodklf76hsetxdhffuxnplvijskzqq")))
-			ok = pol.Match(nd)
+			ok, leaf = pol.Match(nd)
 			require.False(t, ok)
+			require.Equal(t, pol[0], leaf)
 		})
 
 		t.Run("string in map", func(t *testing.T) {
-			np := basicnode.Prototype.Map
-			nb := np.NewBuilder()
-			ma, _ := nb.BeginMap(1)
-			ma.AssembleKey().AssignString("foo")
-			ma.AssembleValue().AssignString("bar")
-			ma.Finish()
-			nd := nb.Build()
+			nd, _ := literal.Map(map[string]any{
+				"foo": "bar",
+			})
 
 			pol := MustConstruct(Equal(".foo", literal.String("bar")))
-			ok := pol.Match(nd)
+			ok, leaf := pol.Match(nd)
 			require.True(t, ok)
+			require.Nil(t, leaf)
 
 			pol = MustConstruct(Equal(".[\"foo\"]", literal.String("bar")))
-			ok = pol.Match(nd)
+			ok, leaf = pol.Match(nd)
 			require.True(t, ok)
+			require.Nil(t, leaf)
 
 			pol = MustConstruct(Equal(".foo", literal.String("baz")))
-			ok = pol.Match(nd)
+			ok, leaf = pol.Match(nd)
 			require.False(t, ok)
+			require.Equal(t, pol[0], leaf)
 
 			pol = MustConstruct(Equal(".foobar", literal.String("bar")))
-			ok = pol.Match(nd)
+			ok, leaf = pol.Match(nd)
 			require.False(t, ok)
+			require.Equal(t, pol[0], leaf)
 		})
 
 		t.Run("string in list", func(t *testing.T) {
-			np := basicnode.Prototype.List
-			nb := np.NewBuilder()
-			la, _ := nb.BeginList(1)
-			la.AssembleValue().AssignString("foo")
-			la.Finish()
-			nd := nb.Build()
+			nd, _ := literal.List([]any{"foo"})
 
 			pol := MustConstruct(Equal(".[0]", literal.String("foo")))
-			ok := pol.Match(nd)
+			ok, leaf := pol.Match(nd)
 			require.True(t, ok)
+			require.Nil(t, leaf)
 
 			pol = MustConstruct(Equal(".[1]", literal.String("foo")))
-			ok = pol.Match(nd)
+			ok, leaf = pol.Match(nd)
 			require.False(t, ok)
+			require.Equal(t, pol[0], leaf)
 		})
 	})
 
 	t.Run("inequality", func(t *testing.T) {
 		t.Run("gt int", func(t *testing.T) {
-			np := basicnode.Prototype.Int
-			nb := np.NewBuilder()
-			nb.AssignInt(138)
-			nd := nb.Build()
+			nd := literal.Int(138)
 
 			pol := MustConstruct(GreaterThan(".", literal.Int(1)))
-			ok := pol.Match(nd)
+			ok, leaf := pol.Match(nd)
 			require.True(t, ok)
+			require.Nil(t, leaf)
+
+			pol = MustConstruct(GreaterThan(".", literal.Int(138)))
+			ok, leaf = pol.Match(nd)
+			require.False(t, ok)
+			require.Equal(t, pol[0], leaf)
+
+			pol = MustConstruct(GreaterThan(".", literal.Int(140)))
+			ok, leaf = pol.Match(nd)
+			require.False(t, ok)
+			require.Equal(t, pol[0], leaf)
 		})
 
 		t.Run("gte int", func(t *testing.T) {
-			np := basicnode.Prototype.Int
-			nb := np.NewBuilder()
-			nb.AssignInt(138)
-			nd := nb.Build()
+			nd := literal.Int(138)
 
 			pol := MustConstruct(GreaterThanOrEqual(".", literal.Int(1)))
-			ok := pol.Match(nd)
+			ok, leaf := pol.Match(nd)
 			require.True(t, ok)
+			require.Nil(t, leaf)
 
 			pol = MustConstruct(GreaterThanOrEqual(".", literal.Int(138)))
-			ok = pol.Match(nd)
+			ok, leaf = pol.Match(nd)
 			require.True(t, ok)
+			require.Nil(t, leaf)
+
+			pol = MustConstruct(GreaterThanOrEqual(".", literal.Int(140)))
+			ok, leaf = pol.Match(nd)
+			require.False(t, ok)
+			require.Equal(t, pol[0], leaf)
 		})
 
 		t.Run("gt float", func(t *testing.T) {
-			np := basicnode.Prototype.Float
-			nb := np.NewBuilder()
-			nb.AssignFloat(1.38)
-			nd := nb.Build()
+			nd := literal.Float(1.38)
 
 			pol := MustConstruct(GreaterThan(".", literal.Float(1)))
-			ok := pol.Match(nd)
+			ok, leaf := pol.Match(nd)
 			require.True(t, ok)
+			require.Nil(t, leaf)
+
+			pol = MustConstruct(GreaterThan(".", literal.Float(2)))
+			ok, leaf = pol.Match(nd)
+			require.False(t, ok)
+			require.Equal(t, pol[0], leaf)
 		})
 
 		t.Run("gte float", func(t *testing.T) {
-			np := basicnode.Prototype.Float
-			nb := np.NewBuilder()
-			nb.AssignFloat(1.38)
-			nd := nb.Build()
+			nd := literal.Float(1.38)
 
 			pol := MustConstruct(GreaterThanOrEqual(".", literal.Float(1)))
-			ok := pol.Match(nd)
+			ok, leaf := pol.Match(nd)
 			require.True(t, ok)
+			require.Nil(t, leaf)
 
 			pol = MustConstruct(GreaterThanOrEqual(".", literal.Float(1.38)))
-			ok = pol.Match(nd)
+			ok, leaf = pol.Match(nd)
 			require.True(t, ok)
+			require.Nil(t, leaf)
+
+			pol = MustConstruct(GreaterThanOrEqual(".", literal.Float(2)))
+			ok, leaf = pol.Match(nd)
+			require.False(t, ok)
+			require.Equal(t, pol[0], leaf)
 		})
 
 		t.Run("lt int", func(t *testing.T) {
-			np := basicnode.Prototype.Int
-			nb := np.NewBuilder()
-			nb.AssignInt(138)
-			nd := nb.Build()
+			nd := literal.Int(138)
 
 			pol := MustConstruct(LessThan(".", literal.Int(1138)))
-			ok := pol.Match(nd)
+			ok, leaf := pol.Match(nd)
 			require.True(t, ok)
+			require.Nil(t, leaf)
+
+			pol = MustConstruct(LessThan(".", literal.Int(138)))
+			ok, leaf = pol.Match(nd)
+			require.False(t, ok)
+			require.Equal(t, pol[0], leaf)
+
+			pol = MustConstruct(LessThan(".", literal.Int(100)))
+			ok, leaf = pol.Match(nd)
+			require.False(t, ok)
+			require.Equal(t, pol[0], leaf)
 		})
 
 		t.Run("lte int", func(t *testing.T) {
-			np := basicnode.Prototype.Int
-			nb := np.NewBuilder()
-			nb.AssignInt(138)
-			nd := nb.Build()
+			nd := literal.Int(138)
 
 			pol := MustConstruct(LessThanOrEqual(".", literal.Int(1138)))
-			ok := pol.Match(nd)
+			ok, leaf := pol.Match(nd)
 			require.True(t, ok)
+			require.Nil(t, leaf)
 
 			pol = MustConstruct(LessThanOrEqual(".", literal.Int(138)))
-			ok = pol.Match(nd)
+			ok, leaf = pol.Match(nd)
 			require.True(t, ok)
+			require.Nil(t, leaf)
+
+			pol = MustConstruct(LessThanOrEqual(".", literal.Int(100)))
+			ok, leaf = pol.Match(nd)
+			require.False(t, ok)
+			require.Equal(t, pol[0], leaf)
 		})
 	})
 
 	t.Run("negation", func(t *testing.T) {
-		np := basicnode.Prototype.Bool
-		nb := np.NewBuilder()
-		nb.AssignBool(false)
-		nd := nb.Build()
+		nd := literal.Bool(false)
 
 		pol := MustConstruct(Not(Equal(".", literal.Bool(true))))
-		ok := pol.Match(nd)
+		ok, leaf := pol.Match(nd)
 		require.True(t, ok)
+		require.Nil(t, leaf)
 
 		pol = MustConstruct(Not(Equal(".", literal.Bool(false))))
-		ok = pol.Match(nd)
+		ok, leaf = pol.Match(nd)
 		require.False(t, ok)
+		require.Equal(t, pol[0], leaf)
 	})
 
 	t.Run("conjunction", func(t *testing.T) {
-		np := basicnode.Prototype.Int
-		nb := np.NewBuilder()
-		nb.AssignInt(138)
-		nd := nb.Build()
+		nd := literal.Int(138)
 
 		pol := MustConstruct(
 			And(
@@ -246,8 +270,9 @@ func TestMatch(t *testing.T) {
 				LessThan(".", literal.Int(1138)),
 			),
 		)
-		ok := pol.Match(nd)
+		ok, leaf := pol.Match(nd)
 		require.True(t, ok)
+		require.Nil(t, leaf)
 
 		pol = MustConstruct(
 			And(
@@ -255,19 +280,18 @@ func TestMatch(t *testing.T) {
 				Equal(".", literal.Int(1138)),
 			),
 		)
-		ok = pol.Match(nd)
+		ok, leaf = pol.Match(nd)
 		require.False(t, ok)
+		require.Equal(t, MustConstruct(Equal(".", literal.Int(1138)))[0], leaf)
 
 		pol = MustConstruct(And())
-		ok = pol.Match(nd)
+		ok, leaf = pol.Match(nd)
 		require.True(t, ok)
+		require.Nil(t, leaf)
 	})
 
 	t.Run("disjunction", func(t *testing.T) {
-		np := basicnode.Prototype.Int
-		nb := np.NewBuilder()
-		nb.AssignInt(138)
-		nd := nb.Build()
+		nd := literal.Int(138)
 
 		pol := MustConstruct(
 			Or(
@@ -275,8 +299,9 @@ func TestMatch(t *testing.T) {
 				LessThan(".", literal.Int(1138)),
 			),
 		)
-		ok := pol.Match(nd)
+		ok, leaf := pol.Match(nd)
 		require.True(t, ok)
+		require.Nil(t, leaf)
 
 		pol = MustConstruct(
 			Or(
@@ -284,12 +309,14 @@ func TestMatch(t *testing.T) {
 				Equal(".", literal.Int(1138)),
 			),
 		)
-		ok = pol.Match(nd)
+		ok, leaf = pol.Match(nd)
 		require.False(t, ok)
+		require.Equal(t, pol[0], leaf)
 
 		pol = MustConstruct(Or())
-		ok = pol.Match(nd)
+		ok, leaf = pol.Match(nd)
 		require.True(t, ok)
+		require.Nil(t, leaf)
 	})
 
 	t.Run("wildcard", func(t *testing.T) {
@@ -303,14 +330,12 @@ func TestMatch(t *testing.T) {
 		} {
 			func(s string) {
 				t.Run(fmt.Sprintf("pass %s", s), func(t *testing.T) {
-					np := basicnode.Prototype.String
-					nb := np.NewBuilder()
-					nb.AssignString(s)
-					nd := nb.Build()
+					nd := literal.String(s)
 
 					pol := MustConstruct(Like(".", pattern))
-					ok := pol.Match(nd)
+					ok, leaf := pol.Match(nd)
 					require.True(t, ok)
+					require.Nil(t, leaf)
 				})
 			}(s)
 		}
@@ -324,70 +349,56 @@ func TestMatch(t *testing.T) {
 		} {
 			func(s string) {
 				t.Run(fmt.Sprintf("fail %s", s), func(t *testing.T) {
-					np := basicnode.Prototype.String
-					nb := np.NewBuilder()
-					nb.AssignString(s)
-					nd := nb.Build()
+					nd := literal.String(s)
 
 					pol := MustConstruct(Like(".", pattern))
-					ok := pol.Match(nd)
+					ok, leaf := pol.Match(nd)
 					require.False(t, ok)
+					require.Equal(t, pol[0], leaf)
 				})
 			}(s)
 		}
 	})
 
 	t.Run("quantification", func(t *testing.T) {
-		buildValueNode := func(v int64) ipld.Node {
-			np := basicnode.Prototype.Map
-			nb := np.NewBuilder()
-			ma, _ := nb.BeginMap(1)
-			ma.AssembleKey().AssignString("value")
-			ma.AssembleValue().AssignInt(v)
-			ma.Finish()
-			return nb.Build()
-		}
-
 		t.Run("all", func(t *testing.T) {
-			np := basicnode.Prototype.List
-			nb := np.NewBuilder()
-			la, _ := nb.BeginList(5)
-			la.AssembleValue().AssignNode(buildValueNode(5))
-			la.AssembleValue().AssignNode(buildValueNode(10))
-			la.AssembleValue().AssignNode(buildValueNode(20))
-			la.AssembleValue().AssignNode(buildValueNode(50))
-			la.AssembleValue().AssignNode(buildValueNode(100))
-			la.Finish()
-			nd := nb.Build()
+			nd, _ := literal.List([]any{
+				map[string]int{"value": 5},
+				map[string]int{"value": 10},
+				map[string]int{"value": 20},
+				map[string]int{"value": 50},
+				map[string]int{"value": 100},
+			})
 
 			pol := MustConstruct(All(".[]", GreaterThan(".value", literal.Int(2))))
-			ok := pol.Match(nd)
+			ok, leaf := pol.Match(nd)
 			require.True(t, ok)
+			require.Nil(t, leaf)
 
 			pol = MustConstruct(All(".[]", GreaterThan(".value", literal.Int(20))))
-			ok = pol.Match(nd)
+			ok, leaf = pol.Match(nd)
 			require.False(t, ok)
+			require.Equal(t, MustConstruct(GreaterThan(".value", literal.Int(20)))[0], leaf)
 		})
 
 		t.Run("any", func(t *testing.T) {
-			np := basicnode.Prototype.List
-			nb := np.NewBuilder()
-			la, _ := nb.BeginList(5)
-			la.AssembleValue().AssignNode(buildValueNode(5))
-			la.AssembleValue().AssignNode(buildValueNode(10))
-			la.AssembleValue().AssignNode(buildValueNode(20))
-			la.AssembleValue().AssignNode(buildValueNode(50))
-			la.AssembleValue().AssignNode(buildValueNode(100))
-			la.Finish()
-			nd := nb.Build()
+			nd, _ := literal.List([]any{
+				map[string]int{"value": 5},
+				map[string]int{"value": 10},
+				map[string]int{"value": 20},
+				map[string]int{"value": 50},
+				map[string]int{"value": 100},
+			})
 
 			pol := MustConstruct(Any(".[]", GreaterThan(".value", literal.Int(60))))
-			ok := pol.Match(nd)
+			ok, leaf := pol.Match(nd)
 			require.True(t, ok)
+			require.Nil(t, leaf)
 
 			pol = MustConstruct(Any(".[]", GreaterThan(".value", literal.Int(100))))
-			ok = pol.Match(nd)
+			ok, leaf = pol.Match(nd)
 			require.False(t, ok)
+			require.Equal(t, pol[0], leaf)
 		})
 	})
 }
@@ -405,7 +416,8 @@ func TestPolicyExamples(t *testing.T) {
 
 		pol, err := FromDagJson(policy)
 		require.NoError(t, err)
-		return pol.Match(data)
+		res, _ := pol.Match(data)
+		return res
 	}
 
 	t.Run("And", func(t *testing.T) {
@@ -509,7 +521,7 @@ func FuzzMatch(f *testing.F) {
 			t.Skip()
 		}
 
-		policy.Match(dataNode)
+		_, _ = policy.Match(dataNode)
 	})
 }
 
@@ -584,7 +596,7 @@ func TestOptionalSelectors(t *testing.T) {
 			err = nb.AssignNode(n)
 			require.NoError(t, err)
 
-			result := tt.policy.Match(nb.Build())
+			result, _ := tt.policy.Match(nb.Build())
 			require.Equal(t, tt.expected, result)
 		})
 	}
