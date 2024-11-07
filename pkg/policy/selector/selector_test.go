@@ -2,7 +2,6 @@ package selector
 
 import (
 	"errors"
-	"fmt"
 	"strings"
 	"testing"
 
@@ -13,7 +12,6 @@ import (
 	"github.com/ipld/go-ipld-prime/must"
 	basicnode "github.com/ipld/go-ipld-prime/node/basic"
 	"github.com/ipld/go-ipld-prime/node/bindnode"
-	"github.com/ipld/go-ipld-prime/printer"
 	"github.com/stretchr/testify/require"
 )
 
@@ -87,8 +85,6 @@ func TestSelect(t *testing.T) {
 		require.NoError(t, err)
 		require.NotEmpty(t, res)
 
-		fmt.Println(printer.Sprint(res))
-
 		age := must.Int(must.Node(res.LookupByString("age")))
 		require.Equal(t, int64(alice.Age), age)
 	})
@@ -101,16 +97,12 @@ func TestSelect(t *testing.T) {
 		require.NoError(t, err)
 		require.NotEmpty(t, res)
 
-		fmt.Println(printer.Sprint(res))
-
 		name := must.String(res)
 		require.Equal(t, alice.Name.First, name)
 
 		res, err = sel.Select(bnode)
 		require.NoError(t, err)
 		require.NotEmpty(t, res)
-
-		fmt.Println(printer.Sprint(res))
 
 		name = must.String(res)
 		require.Equal(t, bob.Name.First, name)
@@ -123,8 +115,6 @@ func TestSelect(t *testing.T) {
 		res, err := sel.Select(anode)
 		require.NoError(t, err)
 		require.NotEmpty(t, res)
-
-		fmt.Println(printer.Sprint(res))
 
 		name := must.String(res)
 		require.Equal(t, *alice.Name.Middle, name)
@@ -141,8 +131,6 @@ func TestSelect(t *testing.T) {
 		res, err := sel.Select(anode)
 		require.Error(t, err)
 		require.Empty(t, res)
-
-		fmt.Println(err)
 
 		require.ErrorAs(t, err, &resolutionerr{}, "error should be a resolution error")
 	})
@@ -163,8 +151,6 @@ func TestSelect(t *testing.T) {
 		res, err := sel.Select(anode)
 		require.NoError(t, err)
 		require.NotEmpty(t, res)
-
-		fmt.Println(printer.Sprint(res))
 
 		iname := must.String(must.Node(must.Node(res.LookupByIndex(0)).LookupByString("name")))
 		require.Equal(t, alice.Interests[0].Name, iname)

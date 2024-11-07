@@ -3,7 +3,6 @@ package delegation_test
 import (
 	"bytes"
 	_ "embed"
-	"fmt"
 	"testing"
 
 	"github.com/ipld/go-ipld-prime"
@@ -36,18 +35,13 @@ func TestSchemaRoundTrip(t *testing.T) {
 		cborBytes, id, err := p1.ToSealed(privKey)
 		require.NoError(t, err)
 		assert.Equal(t, newCID, envelope.CIDToBase58BTC(id))
-		fmt.Println("cborBytes length", len(cborBytes))
-		fmt.Println("cbor", string(cborBytes))
 
 		p2, c2, err := delegation.FromSealed(cborBytes)
 		require.NoError(t, err)
 		assert.Equal(t, id, c2)
-		fmt.Println("read Cbor", p2)
 
 		readJson, err := p2.ToDagJson(privKey)
 		require.NoError(t, err)
-		fmt.Println("readJson length", len(readJson))
-		fmt.Println("json: ", string(readJson))
 
 		assert.JSONEq(t, string(delegationJson), string(readJson))
 	})
@@ -65,7 +59,6 @@ func TestSchemaRoundTrip(t *testing.T) {
 
 		cborBytes := &bytes.Buffer{}
 		id, err := p1.ToSealedWriter(cborBytes, privKey)
-		t.Log(len(id.Bytes()), id.Bytes())
 		require.NoError(t, err)
 		assert.Equal(t, newCID, envelope.CIDToBase58BTC(id))
 
