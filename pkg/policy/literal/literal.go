@@ -4,6 +4,7 @@ package literal
 import (
 	"fmt"
 	"reflect"
+	"sort"
 
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime"
@@ -33,8 +34,14 @@ func Null() ipld.Node {
 // Map creates an IPLD node from a map[string]any
 func Map[T any](m map[string]T) (ipld.Node, error) {
 	return qp.BuildMap(basicnode.Prototype.Any, int64(len(m)), func(ma datamodel.MapAssembler) {
-		for k, v := range m {
-			qp.MapEntry(ma, k, anyAssemble(v))
+		// deterministic iteration
+		keys := make([]string, 0, len(m))
+		for key := range m {
+			keys = append(keys, key)
+		}
+		sort.Strings(keys)
+		for _, key := range keys {
+			qp.MapEntry(ma, key, anyAssemble(m[key]))
 		}
 	})
 }
@@ -90,10 +97,14 @@ func anyAssemble(val any) qp.Assemble {
 		if rt.Key().Kind() != reflect.String {
 			break
 		}
-		it := rv.MapRange()
+		// deterministic iteration
+		keys := rv.MapKeys()
+		sort.Slice(keys, func(i, j int) bool {
+			return keys[i].String() < keys[j].String()
+		})
 		return qp.Map(int64(rv.Len()), func(ma datamodel.MapAssembler) {
-			for it.Next() {
-				qp.MapEntry(ma, it.Key().String(), anyAssemble(it.Value()))
+			for _, key := range keys {
+				qp.MapEntry(ma, key.String(), anyAssemble(rv.MapIndex(key)))
 			}
 		})
 	case reflect.Bool:
