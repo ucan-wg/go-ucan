@@ -58,12 +58,12 @@ func (m *Meta) GetString(key string) (string, error) {
 
 // GetEncryptedString decorates GetString and decrypt its output with the given symmetric encryption key.
 func (m *Meta) GetEncryptedString(key string, encryptionKey []byte) (string, error) {
-	v, err := m.GetString(key)
+	v, err := m.GetBytes(key)
 	if err != nil {
 		return "", err
 	}
 
-	decrypted, err := crypto.DecryptStringWithAESKey([]byte(v), encryptionKey)
+	decrypted, err := crypto.DecryptStringWithAESKey(v, encryptionKey)
 	if err != nil {
 		return "", err
 	}
@@ -161,16 +161,16 @@ func (m *Meta) AddEncrypted(key string, val any, encryptionKey []byte) error {
 		if err != nil {
 			return err
 		}
-		return m.Add(key, string(encrypted))
 	case []byte:
 		encrypted, err = crypto.EncryptWithAESKey(val, encryptionKey)
 		if err != nil {
 			return err
 		}
-		return m.Add(key, encrypted)
 	default:
 		return ErrNotEncryptable
 	}
+
+	return m.Add(key, encrypted)
 }
 
 // Equals tells if two Meta hold the same key/values.

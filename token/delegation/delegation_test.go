@@ -183,10 +183,8 @@ func TestEncryptedMeta(t *testing.T) {
 			decodedTkn, _, err := delegation.FromSealed(data)
 			require.NoError(t, err)
 
-			encrypted, err := decodedTkn.Meta().GetString(tt.key)
-			require.NoError(t, err)
-			// Verify the encrypted value is different from original
-			require.NotEqual(t, tt.value, encrypted)
+			_, err = decodedTkn.Meta().GetString(tt.key)
+			require.Error(t, err)
 
 			decrypted, err := decodedTkn.Meta().GetEncryptedString(tt.key, encryptionKey)
 			require.NoError(t, err)

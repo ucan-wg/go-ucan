@@ -34,9 +34,8 @@ func TestMeta_Add(t *testing.T) {
 		err = m.AddEncrypted("secret", "hello world", key)
 		require.NoError(t, err)
 
-		encrypted, err := m.GetString("secret")
-		require.NoError(t, err)
-		require.NotEqual(t, "hello world", encrypted)
+		_, err = m.GetString("secret")
+		require.Error(t, err) // the ciphertext is saved as []byte instead of string
 
 		decrypted, err := m.GetEncryptedString("secret", key)
 		require.NoError(t, err)
