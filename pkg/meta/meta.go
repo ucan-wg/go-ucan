@@ -1,7 +1,6 @@
 package meta
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -15,7 +14,9 @@ import (
 )
 
 var ErrUnsupported = errors.New("failure adding unsupported type to meta")
+
 var ErrNotFound = errors.New("key-value not found in meta")
+
 var ErrNotEncryptable = errors.New("value of this type cannot be encrypted")
 
 // Meta is a container for meta key-value pairs in a UCAN token.
@@ -131,6 +132,9 @@ func (m *Meta) GetNode(key string) (ipld.Node, error) {
 // Accepted types for the value are: bool, string, int, int32, int64, []byte,
 // and ipld.Node.
 func (m *Meta) Add(key string, val any) error {
+	if _, ok := m.Values[key]; ok {
+		return fmt.Errorf("duplicate key %q", key)
+	}
 	switch val := val.(type) {
 	case bool:
 		m.Values[key] = basicnode.NewBool(val)
@@ -215,6 +219,11 @@ func (m *Meta) String() string {
 
 	buf.WriteString("}")
 	return buf.String()
+}
+
+// ReadOnly returns a read-only version of Meta.
+func (m *Meta) ReadOnly() ReadOnly {
+	return ReadOnly{m: m}
 }
 
 func fqtn(val any) string {

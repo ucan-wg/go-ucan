@@ -193,14 +193,12 @@ func FromIPLD(node datamodel.Node) (*Token, error) {
 }
 
 func (t *Token) toIPLD(privKey crypto.PrivKey) (datamodel.Node, error) {
-	var sub *string
+	var aud *string
 
-	if t.subject != did.Undef {
-		s := t.subject.String()
-		sub = &s
+	if t.audience != did.Undef {
+		a := t.audience.String()
+		aud = &a
 	}
-
-	// TODO
 
 	var exp *int64
 	if t.expiration != nil {
@@ -208,14 +206,29 @@ func (t *Token) toIPLD(privKey crypto.PrivKey) (datamodel.Node, error) {
 		exp = &u
 	}
 
+	var iat *int64
+	if t.invokedAt != nil {
+		i := t.invokedAt.Unix()
+		iat = &i
+	}
+
 	model := &tokenPayloadModel{
 		Iss:   t.issuer.String(),
-		Aud:   t.audience.String(),
-		Sub:   sub,
+		Aud:   aud,
+		Sub:   t.subject.String(),
 		Cmd:   t.command.String(),
+		Args:  t.arguments,
+		Prf:   t.proof,
+		Meta:  t.meta,
 		Nonce: t.nonce,
-		Meta:  *t.meta,
 		Exp:   exp,
+		Iat:   iat,
+		Cause: t.cause,
+	}
+
+	// seems like it's a requirement to have a null meta if there are no values?
+	if len(model.Meta.Keys) == 0 {
+		model.Meta = nil
 	}
 
 	return envelope.ToIPLD(privKey, model)

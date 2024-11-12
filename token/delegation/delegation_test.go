@@ -103,8 +103,6 @@ func TestConstructors(t *testing.T) {
 		data, err := tkn.ToDagJson(privKey)
 		require.NoError(t, err)
 
-		t.Log(string(data))
-
 		golden.Assert(t, string(data), "new.dagjson")
 	})
 
@@ -121,8 +119,6 @@ func TestConstructors(t *testing.T) {
 
 		data, err := tkn.ToDagJson(privKey)
 		require.NoError(t, err)
-
-		t.Log(string(data))
 
 		golden.Assert(t, string(data), "root.dagjson")
 	})

@@ -17,7 +17,7 @@ type Token interface {
 	// Issuer returns the did.DID representing the Token's issuer.
 	Issuer() did.DID
 	// Meta returns the Token's metadata.
-	Meta() *meta.Meta
+	Meta() meta.ReadOnly
 }
 
 type Marshaller interface {
