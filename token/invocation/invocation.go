@@ -3,6 +3,45 @@
 // from the [envelope]-enclosed, signed and DAG-CBOR-encoded form that
 // should most commonly be used for transport and storage.
 //
+// # Invocation token validation
+//
+// Per the specification, invocation Tokens must be validated before the
+// command is executed.  This validation can happen in multiple stages:
+//
+//  1. When the invocation is unsealed from its containing envelope:
+//     a. The envelope can be decoded.
+//     b. The envelope contains a Signature, VarsigHeader and Payload.
+//     c. The Payload contains an iss field that contains a valid did:key.
+//     d. The a public key can be extracted from the did:key.
+//     e. The public key type is supported by go-ucan.
+//     f. The Signature can be decoded per the VarsigHeader.
+//     g. The SigPayload can be verified using the Signature and public key.
+//     h. The field key of the TokenPayload matches the expected tag.
+//  2. When the invocation is created or passes step one:
+//     a. The Issuer field is not empty.
+//     b. The Subject field is not empty
+//     c. The Command field is not empty and the Command is not a wildcard.
+//     d. The Policy field is present (but may be empty).
+//     e. The Arguments field is present (but may be empty).
+//  3. When an unsealed invocation passes steps one and two for execution:
+//     a. The invocation can not be expired.
+//     b. Invoked at should not be in the future.
+//  4. When the proof chain is being validated:
+//     a. There must be at least one delegation in the proof chain.
+//     b. All referenced delegations must be available.
+//     c. The first proof must be issued to the Invoker (audience DID).
+//     d. The token must not be expired (expiration in the future or absent).
+//     e. The token must be active (nbf in the past or absent).
+//     f. The Issuer of each delegation must be the Audience in the next
+//     one.
+//     g. The last token must be a root delegation.
+//     h. The Subject of each delegation must equal the invocation's
+//     Audience field.
+//     i. The command of each delegation must "allow" the one before it.
+//  5. If steps 1-4 pass:
+//     a. The policy must "match" the arguments.
+//     b. The nonce (if present) is not reused.
+//
 // [envelope]: https://github.com/ucan-wg/spec#envelope
 // [invocation]: https://github.com/ucan-wg/invocation
 package invocation
@@ -104,16 +143,71 @@ type DelegationLoader interface {
 	GetDelegation(cid cid.Cid) (*delegation.Token, error)
 }
 
-func (t *Token) ExecutionAllowed(loader DelegationLoader) bool {
+func (t *Token) ExecutionAllowed(loader DelegationLoader) (bool, error) {
 	return t.executionAllowed(loader, t.arguments)
 }
 
-func (t *Token) ExecutionAllowedWithArgsHook(loader DelegationLoader, hook func(*args.Args) *args.Args) bool {
+func (t *Token) ExecutionAllowedWithArgsHook(loader DelegationLoader, hook func(*args.Args) *args.Args) (bool, error) {
 	return t.executionAllowed(loader, hook(t.arguments))
 }
 
-func (t *Token) executionAllowed(loader DelegationLoader, arguments *args.Args) bool {
-	panic("TODO")
+func (t *Token) executionAllowed(loader DelegationLoader, arguments *args.Args) (bool, error) {
+	// There must be at least one delegation referenced - 4a
+	if len(t.proof) < 1 {
+		return false, ErrNoProof
+	}
+
+	type chainer interface {
+		Issuer() did.DID
+		Subject() did.DID // TODO: if the invocation token's Audience is nil, copy the subject into it
+		Command() command.Command
+	}
+
+	// This starts as the invocation token but will be the root delegation
+	// after the for loop below completes
+	var lastChainer chainer = t
+
+	for i, dlgCid := range t.proof {
+		// The token must be present - 4b
+		dlg, err := loader.GetDelegation(dlgCid)
+		if err != nil {
+			return false, fmt.Errorf("%w: need %s", ErrMissingDelegation, dlgCid)
+		}
+
+		// No tokens in the proof chain may be expired - 4d
+		if dlg.Expiration() != nil && dlg.Expiration().Before(time.Now()) {
+			return false, fmt.Errorf("%w: CID is %s", ErrDelegationExpired, dlgCid)
+		}
+
+		// No tokens in the proof chain may be inactive - 4e
+		if dlg.NotBefore() != nil && dlg.NotBefore().After(time.Now()) {
+			return false, fmt.Errorf("%w: CID is %s", ErrDelegationInactive, dlgCid)
+		}
+
+		// First proof must have the invoker's Issuer as the Audience - 4c
+		if i == 0 && dlg.Audience() != t.Issuer() {
+			return false, fmt.Errorf("%w: expected %s, got %s", ErrNotIssuedToInvoker, t.issuer, dlg.Audience())
+		}
+
+		// Tokens must form a chain with current issuer equal to the
+		// next audience - 4f
+		if lastChainer.Issuer() != dlg.Audience() {
+			return false, fmt.Errorf("%w: expected %s, got %s", ErrBrokenChain, lastChainer.Issuer(), dlg.Audience())
+		}
+
+		// TODO: Checking the subject consistency can happen here - 4h
+		// TODO: Checking the command equivalence or attenuation can happen here - 4i
+
+		lastChainer = dlg
+	}
+
+	// The last prf value must be a root delegation (have the issuer field
+	// match the Subject field) - 4g
+	if lastChainer.Issuer() != lastChainer.Subject() {
+		return false, fmt.Errorf("%w: expected %s, got %s", ErrLastNotRoot, lastChainer.Subject(), lastChainer.Issuer())
+	}
+
+	return true, nil
 }
 
 // Issuer returns the did.DID representing the Token's issuer.
