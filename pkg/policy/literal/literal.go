@@ -55,6 +55,64 @@ func List[T any](l []T) (ipld.Node, error) {
 	})
 }
 
+// Any creates an IPLD node from any value
+// If possible, use another dedicated function for your type for performance.
+func Any(v any) (res ipld.Node, err error) {
+	// TODO: handle uint overflow below
+
+	// some fast path
+	switch val := v.(type) {
+	case bool:
+		return basicnode.NewBool(val), nil
+	case string:
+		return basicnode.NewString(val), nil
+	case int:
+		return basicnode.NewInt(int64(val)), nil
+	case int8:
+		return basicnode.NewInt(int64(val)), nil
+	case int16:
+		return basicnode.NewInt(int64(val)), nil
+	case int32:
+		return basicnode.NewInt(int64(val)), nil
+	case int64:
+		return basicnode.NewInt(val), nil
+	case uint:
+		return basicnode.NewInt(int64(val)), nil
+	case uint8:
+		return basicnode.NewInt(int64(val)), nil
+	case uint16:
+		return basicnode.NewInt(int64(val)), nil
+	case uint32:
+		return basicnode.NewInt(int64(val)), nil
+	case uint64:
+		return basicnode.NewInt(int64(val)), nil
+	case float32:
+		return basicnode.NewFloat(float64(val)), nil
+	case float64:
+		return basicnode.NewFloat(val), nil
+	case []byte:
+		return basicnode.NewBytes(val), nil
+	case datamodel.Node:
+		return val, nil
+	case cid.Cid:
+		return LinkCid(val), nil
+	default:
+	}
+
+	builder := basicnode.Prototype__Any{}.NewBuilder()
+
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("%v", r)
+			res = nil
+		}
+	}()
+
+	anyAssemble(v)(builder)
+
+	return builder.Build(), nil
+}
+
 func anyAssemble(val any) qp.Assemble {
 	var rt reflect.Type
 	var rv reflect.Value
@@ -117,6 +175,11 @@ func anyAssemble(val any) qp.Assemble {
 		return qp.Float(rv.Float())
 	case reflect.String:
 		return qp.String(rv.String())
+	case reflect.Struct:
+		if rt == reflect.TypeOf(cid.Cid{}) {
+			c := rv.Interface().(cid.Cid)
+			return qp.Link(cidlink.Link{Cid: c})
+		}
 	default:
 	}
 
