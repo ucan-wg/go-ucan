@@ -15,12 +15,13 @@ import (
 	"github.com/ucan-wg/go-ucan/pkg/policy/literal"
 )
 
-// Args are the Command's arguments when an invocation Token is processed
-// by the executor.
-//
-// This type must be compatible with the IPLD type represented by the IPLD
-// schema { String : Any }.
+// Args are the Command's arguments when an invocation Token is processed by the executor.
+// This also serves as a way to construct the underlying IPLD data with minimum allocations
+// and transformations, while hiding the IPLD complexity from the caller.
 type Args struct {
+	// This type must be compatible with the IPLD type represented by the IPLD
+	// schema { String : Any }.
+
 	Keys   []string
 	Values map[string]ipld.Node
 }
@@ -34,9 +35,7 @@ func New() *Args {
 
 // Add inserts a key/value pair in the Args set.
 //
-// Accepted types for val are: bool, string, int, int8, int16,
-// int32, int64, uint, uint8, uint16, uint32, float32, float64, []byte,
-// []any, map[string]any, ipld.Node and nil.
+// Accepted types for val are any CBOR compatible type, or directly IPLD values.
 func (a *Args) Add(key string, val any) error {
 	if _, ok := a.Values[key]; ok {
 		return fmt.Errorf("duplicate key %q", key)

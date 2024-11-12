@@ -2,23 +2,23 @@ package meta
 
 import (
 	"fmt"
-	"reflect"
 	"strings"
 
 	"github.com/ipld/go-ipld-prime"
-	"github.com/ipld/go-ipld-prime/datamodel"
-	"github.com/ipld/go-ipld-prime/node/basicnode"
 	"github.com/ipld/go-ipld-prime/printer"
-)
 
-var ErrUnsupported = fmt.Errorf("failure adding unsupported type to meta")
+	"github.com/ucan-wg/go-ucan/pkg/policy/literal"
+)
 
 var ErrNotFound = fmt.Errorf("key-value not found in meta")
 
 // Meta is a container for meta key-value pairs in a UCAN token.
-// This also serves as a way to construct the underlying IPLD data with minimum allocations and transformations,
-// while hiding the IPLD complexity from the caller.
+// This also serves as a way to construct the underlying IPLD data with minimum allocations
+// and transformations, while hiding the IPLD complexity from the caller.
 type Meta struct {
+	// This type must be compatible with the IPLD type represented by the IPLD
+	// schema { String : Any }.
+
 	Keys   []string
 	Values map[string]ipld.Node
 }
@@ -95,35 +95,20 @@ func (m *Meta) GetNode(key string) (ipld.Node, error) {
 }
 
 // Add adds a key/value pair in the meta set.
-// Accepted types for the value are: bool, string, int, int32, int64, []byte,
-// and ipld.Node.
+// Accepted types for val are any CBOR compatible type, or directly IPLD values.
 func (m *Meta) Add(key string, val any) error {
 	if _, ok := m.Values[key]; ok {
 		return fmt.Errorf("duplicate key %q", key)
 	}
-	switch val := val.(type) {
-	case bool:
-		m.Values[key] = basicnode.NewBool(val)
-	case string:
-		m.Values[key] = basicnode.NewString(val)
-	case int:
-		m.Values[key] = basicnode.NewInt(int64(val))
-	case int32:
-		m.Values[key] = basicnode.NewInt(int64(val))
-	case int64:
-		m.Values[key] = basicnode.NewInt(val)
-	case float32:
-		m.Values[key] = basicnode.NewFloat(float64(val))
-	case float64:
-		m.Values[key] = basicnode.NewFloat(val)
-	case []byte:
-		m.Values[key] = basicnode.NewBytes(val)
-	case datamodel.Node:
-		m.Values[key] = val
-	default:
-		return fmt.Errorf("%w: %s", ErrUnsupported, fqtn(val))
+
+	node, err := literal.Any(val)
+	if err != nil {
+		return err
 	}
+
 	m.Keys = append(m.Keys, key)
+	m.Values[key] = node
+
 	return nil
 }
 
@@ -165,16 +150,4 @@ func (m *Meta) String() string {
 // ReadOnly returns a read-only version of Meta.
 func (m *Meta) ReadOnly() ReadOnly {
 	return ReadOnly{m: m}
-}
-
-func fqtn(val any) string {
-	var name string
-
-	t := reflect.TypeOf(val)
-	for t.Kind() == reflect.Pointer {
-		name += "*"
-		t = t.Elem()
-	}
-
-	return name + t.PkgPath() + "." + t.Name()
 }

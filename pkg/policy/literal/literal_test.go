@@ -218,6 +218,42 @@ func TestAny(t *testing.T) {
 	require.Error(t, err)
 }
 
+func BenchmarkAny(b *testing.B) {
+	b.Run("bool", func(b *testing.B) {
+		b.ReportAllocs()
+
+		for n := 0; n < b.N; n++ {
+			_, _ = Any(true)
+		}
+	})
+
+	b.Run("string", func(b *testing.B) {
+		b.ReportAllocs()
+		for n := 0; n < b.N; n++ {
+			_, _ = Any("foobar")
+		}
+	})
+
+	b.Run("bytes", func(b *testing.B) {
+		b.ReportAllocs()
+		for n := 0; n < b.N; n++ {
+			_, _ = Any([]byte{1, 2, 3, 4})
+		}
+	})
+
+	b.Run("map", func(b *testing.B) {
+		b.ReportAllocs()
+		for n := 0; n < b.N; n++ {
+			_, _ = Any(map[string]any{
+				"foo": "bar",
+				"foofoo": map[string]string{
+					"barbar": "foo",
+				},
+			})
+		}
+	})
+}
+
 func must[T any](t T, err error) T {
 	if err != nil {
 		panic(err)
