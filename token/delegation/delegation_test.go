@@ -173,7 +173,7 @@ func TestEncryptedMeta(t *testing.T) {
 			t.Parallel()
 
 			tkn, err := delegation.New(privKey, aud, cmd, pol,
-				delegation.WithEncryptedMeta(tt.key, tt.value, encryptionKey),
+				delegation.WithEncryptedMetaString(tt.key, tt.value, encryptionKey),
 			)
 			require.NoError(t, err)
 
@@ -208,7 +208,7 @@ func TestEncryptedMeta(t *testing.T) {
 		}
 		var opts []delegation.Option
 		for k, v := range values {
-			opts = append(opts, delegation.WithEncryptedMeta(k, v, encryptionKey))
+			opts = append(opts, delegation.WithEncryptedMetaString(k, v, encryptionKey))
 		}
 
 		// Create token with multiple encrypted values

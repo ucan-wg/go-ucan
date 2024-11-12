@@ -44,10 +44,17 @@ func WithMeta(key string, val any) Option {
 	}
 }
 
-// WithEncryptedMeta adds a key/value pair in the "meta" field.
-// The value is encrypted with the given aesKey.
-// Accepted types for the value are: string, []byte.
-func WithEncryptedMeta(key string, val any, encryptionKey []byte) Option {
+// WithEncryptedMetaString adds a key/value pair in the "meta" field.
+// The string value is encrypted with the given aesKey.
+func WithEncryptedMetaString(key, val string, encryptionKey []byte) Option {
+	return func(t *Token) error {
+		return t.meta.AddEncrypted(key, val, encryptionKey)
+	}
+}
+
+// WithEncryptedMetaBytes adds a key/value pair in the "meta" field.
+// The []byte value is encrypted with the given aesKey.
+func WithEncryptedMetaBytes(key string, val, encryptionKey []byte) Option {
 	return func(t *Token) error {
 		return t.meta.AddEncrypted(key, val, encryptionKey)
 	}
