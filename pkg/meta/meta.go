@@ -1,6 +1,7 @@
 package meta
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -10,7 +11,7 @@ import (
 	"github.com/ipld/go-ipld-prime/node/basicnode"
 	"github.com/ipld/go-ipld-prime/printer"
 
-	"github.com/ucan-wg/go-ucan/pkg/crypto"
+	"github.com/ucan-wg/go-ucan/pkg/meta/internal/crypto"
 )
 
 var ErrUnsupported = errors.New("failure adding unsupported type to meta")

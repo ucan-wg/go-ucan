@@ -44,6 +44,15 @@ func WithMeta(key string, val any) Option {
 	}
 }
 
+// WithEncryptedMeta adds a key/value pair in the "meta" field.
+// The value is encrypted with the given aesKey.
+// Accepted types for the value are: string, []byte.
+func WithEncryptedMeta(key string, val any, encryptionKey []byte) Option {
+	return func(t *Token) error {
+		return t.meta.AddEncrypted(key, val, encryptionKey)
+	}
+}
+
 // WithNonce sets the Token's nonce with the given value.
 //
 // If this option is not used, a random 12-byte nonce is generated for
