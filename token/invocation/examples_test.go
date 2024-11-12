@@ -11,8 +11,6 @@ import (
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/codec/dagcbor"
 	"github.com/ipld/go-ipld-prime/codec/dagjson"
-	"github.com/ipld/go-ipld-prime/datamodel"
-	"github.com/ipld/go-ipld-prime/fluent/qp"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
 	"github.com/libp2p/go-libp2p/core/crypto"
 
@@ -146,7 +144,7 @@ func prettyDAGJSON(data []byte) (string, error) {
 	return out.String(), nil
 }
 
-func setupExampleNew() (privKey crypto.PrivKey, iss, sub did.DID, cmd command.Command, args map[string]datamodel.Node, prf []cid.Cid, meta map[string]datamodel.Node, errs error) {
+func setupExampleNew() (privKey crypto.PrivKey, iss, sub did.DID, cmd command.Command, args map[string]any, prf []cid.Cid, meta map[string]any, errs error) {
 	var err error
 
 	privKey, iss, err = did.GenerateEd25519()
@@ -164,31 +162,19 @@ func setupExampleNew() (privKey crypto.PrivKey, iss, sub did.DID, cmd command.Co
 		errs = errors.Join(errs, fmt.Errorf("failed to parse command: %w", err))
 	}
 
-	headers, err := qp.BuildMap(basicnode.Prototype.Any, 2, func(ma datamodel.MapAssembler) {
-		qp.MapEntry(ma, "Content-Type", qp.String("application/json"))
-	})
-	if err != nil {
-		errs = errors.Join(errs, fmt.Errorf("failed to build headers: %w", err))
+	headers := map[string]string{
+		"Content-Type": "application/json",
 	}
 
-	// ***** WARNING - do not change the order of these elements.  DAG-CBOR
-	//                 will order them alphabetically and the unsealed
-	//                 result won't match if the input isn't also created in
-	//                 alphabetical order.
-	payload, err := qp.BuildMap(basicnode.Prototype.Any, 4, func(ma datamodel.MapAssembler) {
-		qp.MapEntry(ma, "body", qp.String("UCAN is great"))
-		qp.MapEntry(ma, "draft", qp.Bool(true))
-		qp.MapEntry(ma, "title", qp.String("UCAN for Fun and Profit"))
-		qp.MapEntry(ma, "topics", qp.List(2, func(la datamodel.ListAssembler) {
-			qp.ListEntry(la, qp.String("authz"))
-			qp.ListEntry(la, qp.String("journal"))
-		}))
-	})
-	if err != nil {
-		errs = errors.Join(errs, fmt.Errorf("failed to build payload: %w", err))
+	payload := map[string]any{
+		"body":   "UCAN is great",
+		"draft":  true,
+		"title":  "UCAN for Fun and Profit",
+		"topics": []string{"authz", "journal"},
 	}
 
-	args = map[string]datamodel.Node{
+	args = map[string]any{
+		// you can also directly pass IPLD values
 		"uri":     basicnode.NewString("https://example.com/blog/posts"),
 		"headers": headers,
 		"payload": payload,
@@ -206,22 +192,9 @@ func setupExampleNew() (privKey crypto.PrivKey, iss, sub did.DID, cmd command.Co
 		}
 	}
 
-	// ***** WARNING - do not change the order of these elements.  DAG-CBOR
-	//                 will order them alphabetically and the unsealed
-	//                 result won't match if the input isn't also created in
-	//                 alphabetical order.
-	tags, err := qp.BuildList(basicnode.Prototype.Any, 3, func(la datamodel.ListAssembler) {
-		qp.ListEntry(la, qp.String("blog"))
-		qp.ListEntry(la, qp.String("post"))
-		qp.ListEntry(la, qp.String("pr#123"))
-	})
-	if err != nil {
-		errs = errors.Join(errs, fmt.Errorf("failed to build tags: %w", err))
-	}
-
-	meta = map[string]datamodel.Node{
+	meta = map[string]any{
 		"env":  basicnode.NewString("development"),
-		"tags": tags,
+		"tags": []string{"blog", "post", "pr#123"},
 	}
 
 	return // WARNING: named return values
