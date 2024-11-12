@@ -9,10 +9,9 @@ import (
 	"github.com/ipld/go-ipld-prime/printer"
 
 	"github.com/ucan-wg/go-ucan/pkg/meta/internal/crypto"
-
-
 	"github.com/ucan-wg/go-ucan/pkg/policy/literal"
 )
+
 var ErrUnsupported = errors.New("failure adding unsupported type to meta")
 
 var ErrNotFound = errors.New("key-value not found in meta")
