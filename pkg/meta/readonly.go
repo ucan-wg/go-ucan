@@ -17,6 +17,10 @@ func (r ReadOnly) GetString(key string) (string, error) {
 	return r.m.GetString(key)
 }
 
+func (r ReadOnly) GetEncryptedString(key string, encryptionKey []byte) (string, error) {
+	return r.m.GetEncryptedString(key, encryptionKey)
+}
+
 func (r ReadOnly) GetInt64(key string) (int64, error) {
 	return r.m.GetInt64(key)
 }
@@ -27,6 +31,10 @@ func (r ReadOnly) GetFloat64(key string) (float64, error) {
 
 func (r ReadOnly) GetBytes(key string) ([]byte, error) {
 	return r.m.GetBytes(key)
+}
+
+func (r ReadOnly) GetEncryptedBytes(key string, encryptionKey []byte) ([]byte, error) {
+	return r.m.GetEncryptedBytes(key, encryptionKey)
 }
 
 func (r ReadOnly) GetNode(key string) (ipld.Node, error) {

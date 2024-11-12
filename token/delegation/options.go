@@ -44,6 +44,22 @@ func WithMeta(key string, val any) Option {
 	}
 }
 
+// WithEncryptedMetaString adds a key/value pair in the "meta" field.
+// The string value is encrypted with the given aesKey.
+func WithEncryptedMetaString(key, val string, encryptionKey []byte) Option {
+	return func(t *Token) error {
+		return t.meta.AddEncrypted(key, val, encryptionKey)
+	}
+}
+
+// WithEncryptedMetaBytes adds a key/value pair in the "meta" field.
+// The []byte value is encrypted with the given aesKey.
+func WithEncryptedMetaBytes(key string, val, encryptionKey []byte) Option {
+	return func(t *Token) error {
+		return t.meta.AddEncrypted(key, val, encryptionKey)
+	}
+}
+
 // WithNotBefore set's the Token's optional "notBefore" field to the value
 // of the provided time.Time.
 func WithNotBefore(nbf time.Time) Option {

@@ -1,6 +1,7 @@
 package delegation_test
 
 import (
+	"encoding/base64"
 	"testing"
 	"time"
 
@@ -66,6 +67,8 @@ const (
 
 	newCID  = "zdpuAn9JgGPvnt2WCmTaKktZdbuvcVGTg9bUT5kQaufwUtZ6e"
 	rootCID = "zdpuAkgGmUp5JrXvehGuuw9JA8DLQKDaxtK3R8brDQQVC2i5X"
+
+	aesKey = "xQklMmNTnVrmaPBq/0pwV5fEwuv/iClF5HWak9MsgI8="
 )
 
 func TestConstructors(t *testing.T) {
@@ -118,6 +121,109 @@ func TestConstructors(t *testing.T) {
 		require.NoError(t, err)
 
 		golden.Assert(t, string(data), "root.dagjson")
+	})
+}
+
+func TestEncryptedMeta(t *testing.T) {
+	t.Parallel()
+
+	privKey := privKey(t, issuerPrivKeyCfg)
+	aud, err := did.Parse(AudienceDID)
+	require.NoError(t, err)
+	cmd, err := command.Parse(subJectCmd)
+	require.NoError(t, err)
+	pol, err := policy.FromDagJson(subjectPol)
+	require.NoError(t, err)
+
+	encryptionKey, err := base64.StdEncoding.DecodeString(aesKey)
+	require.NoError(t, err)
+	require.Len(t, encryptionKey, 32)
+
+	tests := []struct {
+		name        string
+		key         string
+		value       string
+		expectError bool
+	}{
+		{
+			name:  "simple string",
+			key:   "secret1",
+			value: "hello world",
+		},
+		{
+			name:  "empty string",
+			key:   "secret2",
+			value: "",
+		},
+		{
+			name:  "special characters",
+			key:   "secret3",
+			value: "!@#$%^&*()_+-=[]{}|;:,.<>?",
+		},
+		{
+			name:  "unicode characters",
+			key:   "secret4",
+			value: "Hello, 世界! 👋",
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			tkn, err := delegation.New(privKey, aud, cmd, pol,
+				delegation.WithEncryptedMetaString(tt.key, tt.value, encryptionKey),
+			)
+			require.NoError(t, err)
+
+			data, err := tkn.ToDagCbor(privKey)
+			require.NoError(t, err)
+
+			decodedTkn, _, err := delegation.FromSealed(data)
+			require.NoError(t, err)
+
+			_, err = decodedTkn.Meta().GetString(tt.key)
+			require.Error(t, err)
+
+			decrypted, err := decodedTkn.Meta().GetEncryptedString(tt.key, encryptionKey)
+			require.NoError(t, err)
+			// Verify the decrypted value is equal to the original
+			require.Equal(t, tt.value, decrypted)
+
+			// Try to decrypt with wrong key
+			wrongKey := make([]byte, 32)
+			_, err = decodedTkn.Meta().GetEncryptedString(tt.key, wrongKey)
+			require.Error(t, err)
+		})
+	}
+
+	t.Run("multiple encrypted values in the same token", func(t *testing.T) {
+		values := map[string]string{
+			"secret1": "value1",
+			"secret2": "value2",
+			"secret3": "value3",
+		}
+		var opts []delegation.Option
+		for k, v := range values {
+			opts = append(opts, delegation.WithEncryptedMetaString(k, v, encryptionKey))
+		}
+
+		// Create token with multiple encrypted values
+		tkn, err := delegation.New(privKey, aud, cmd, pol, opts...)
+		require.NoError(t, err)
+
+		data, err := tkn.ToDagCbor(privKey)
+		require.NoError(t, err)
+
+		decodedTkn, _, err := delegation.FromSealed(data)
+		require.NoError(t, err)
+
+		for k, v := range values {
+			decrypted, err := decodedTkn.Meta().GetEncryptedString(k, encryptionKey)
+			require.NoError(t, err)
+			require.Equal(t, v, decrypted)
+		}
 	})
 }
 
