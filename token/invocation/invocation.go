@@ -8,7 +8,6 @@
 package invocation
 
 import (
-	"crypto/rand"
 	"errors"
 	"fmt"
 	"time"
@@ -19,6 +18,7 @@ import (
 	"github.com/ucan-wg/go-ucan/pkg/args"
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/meta"
+	"github.com/ucan-wg/go-ucan/token/internal/nonce"
 	"github.com/ucan-wg/go-ucan/token/internal/parse"
 )
 
@@ -85,7 +85,7 @@ func New(iss, sub did.DID, cmd command.Command, prf []cid.Cid, opts ...Option) (
 	}
 
 	if len(tkn.nonce) == 0 {
-		tkn.nonce, err = generateNonce()
+		tkn.nonce, err = nonce.Generate()
 		if err != nil {
 			return nil, err
 		}
@@ -219,15 +219,4 @@ func tokenFromModel(m tokenPayloadModel) (*Token, error) {
 	}
 
 	return &tkn, nil
-}
-
-// generateNonce creates a 12-byte random nonce.
-// TODO: some crypto scheme require more, is that our case?
-func generateNonce() ([]byte, error) {
-	res := make([]byte, 12)
-	_, err := rand.Read(res)
-	if err != nil {
-		return nil, err
-	}
-	return res, nil
 }
