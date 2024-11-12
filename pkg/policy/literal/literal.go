@@ -55,6 +55,23 @@ func List[T any](l []T) (ipld.Node, error) {
 	})
 }
 
+// Any creates an IPLD node from any value
+// If possible, use another dedicated function for your type for performance.
+func Any(v any) (res ipld.Node, err error) {
+	builder := basicnode.Prototype__Any{}.NewBuilder()
+
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("%v", r)
+			res = nil
+		}
+	}()
+
+	anyAssemble(v)(builder)
+
+	return builder.Build(), nil
+}
+
 func anyAssemble(val any) qp.Assemble {
 	var rt reflect.Type
 	var rv reflect.Value
@@ -117,6 +134,11 @@ func anyAssemble(val any) qp.Assemble {
 		return qp.Float(rv.Float())
 	case reflect.String:
 		return qp.String(rv.String())
+	case reflect.Struct:
+		if rt == reflect.TypeOf(cid.Cid{}) {
+			c := rv.Interface().(cid.Cid)
+			return qp.Link(cidlink.Link{Cid: c})
+		}
 	default:
 	}
 
