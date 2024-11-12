@@ -31,20 +31,22 @@ func (ks KeySize) IsValid() bool {
 var ErrShortCipherText = errors.New("ciphertext too short")
 var ErrNoEncryptionKey = errors.New("encryption key is required")
 var ErrInvalidKeySize = errors.New("invalid key size: must be 16, 24, or 32 bytes")
+var ErrZeroKey = errors.New("encryption key cannot be all zeros")
 
-// NewKey generates a random AES key of the specified size.
-// If no size is provided, it defaults to KeySize256 (32 bytes).
+// GenerateKey generates a random AES key of default size KeySize256 (32 bytes).
 // Returns an error if the specified size is invalid or if key generation fails.
-func NewKey(size ...KeySize) ([]byte, error) {
-	keySize := KeySize256
-	if len(size) > 0 {
-		keySize = size[0]
-		if !keySize.IsValid() {
-			return nil, ErrInvalidKeySize
-		}
+func GenerateKey() ([]byte, error) {
+	return GenerateKeyWithSize(KeySize256)
+}
+
+// GenerateKeyWithSize generates a random AES key of the specified size.
+// Returns an error if the specified size is invalid or if key generation fails.
+func GenerateKeyWithSize(size KeySize) ([]byte, error) {
+	if !size.IsValid() {
+		return nil, ErrInvalidKeySize
 	}
 
-	key := make([]byte, keySize)
+	key := make([]byte, size)
 	if _, err := io.ReadFull(rand.Reader, key); err != nil {
 		return nil, fmt.Errorf("failed to generate AES key: %w", err)
 	}
@@ -119,5 +121,12 @@ func validateAESKey(key []byte) error {
 		return ErrInvalidKeySize
 	}
 
-	return nil
+	// check if key is all zeros
+	for _, b := range key {
+		if b != 0 {
+			return nil
+		}
+	}
+
+	return ErrZeroKey
 }

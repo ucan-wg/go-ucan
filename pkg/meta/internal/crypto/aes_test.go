@@ -3,7 +3,6 @@ package crypto
 import (
 	"bytes"
 	"crypto/rand"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -13,38 +12,42 @@ func TestAESEncryption(t *testing.T) {
 	t.Parallel()
 
 	key := make([]byte, 32) // generated random 32-byte key
-	_, err := rand.Read(key)
-	require.NoError(t, err)
+	_, errKey := rand.Read(key)
+	require.NoError(t, errKey)
 
 	tests := []struct {
 		name    string
 		data    []byte
 		key     []byte
-		wantErr bool
+		wantErr error
 	}{
 		{
-			name:    "valid encryption/decryption",
-			data:    []byte("hello world"),
-			key:     key,
-			wantErr: false,
+			name: "valid encryption/decryption",
+			data: []byte("hello world"),
+			key:  key,
 		},
 		{
 			name:    "nil key returns error",
 			data:    []byte("hello world"),
 			key:     nil,
-			wantErr: true,
+			wantErr: ErrNoEncryptionKey,
 		},
 		{
-			name:    "empty data",
-			data:    []byte{},
-			key:     key,
-			wantErr: false,
+			name: "empty data",
+			data: []byte{},
+			key:  key,
 		},
 		{
 			name:    "invalid key size",
 			data:    []byte("hello world"),
 			key:     make([]byte, 31),
-			wantErr: true,
+			wantErr: ErrInvalidKeySize,
+		},
+		{
+			name:    "zero key returns error",
+			data:    []byte("hello world"),
+			key:     make([]byte, 32),
+			wantErr: ErrZeroKey,
 		},
 	}
 
@@ -54,13 +57,12 @@ func TestAESEncryption(t *testing.T) {
 			t.Parallel()
 
 			encrypted, err := EncryptWithAESKey(tt.data, tt.key)
-			if tt.wantErr {
-				require.Error(t, err)
+			if tt.wantErr != nil {
+				require.ErrorIs(t, err, tt.wantErr)
+
 				return
 			}
 			require.NoError(t, err)
-
-			fmt.Println(string(encrypted))
 
 			decrypted, err := DecryptStringWithAESKey(encrypted, tt.key)
 			require.NoError(t, err)
