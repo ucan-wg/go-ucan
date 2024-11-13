@@ -76,8 +76,9 @@ type Token struct {
 	// The Command's arguments
 	arguments *args.Args
 	// CIDs of the delegation.Token that prove the chain of authority
-	// They need to form a strictly linear chain, and being ordered starting from the root Delegation (issued by the Subject),
-	// in a strict sequence where the aud of the previous Delegation matches the iss of the next Delegation.
+	// They need to form a strictly linear chain, and being ordered starting from the
+	// leaf Delegation (with aud matching the invocation's iss), in a strict sequence
+	// where the iss of the previous Delegation matches the aud of the next Delegation.
 	proof []cid.Cid
 	// Arbitrary Metadata
 	meta *meta.Meta
