@@ -98,7 +98,34 @@ func (c Command) Join(segments ...string) Command {
 // Segments returns the ordered segments that comprise the Command as a
 // slice of strings.
 func (c Command) Segments() []string {
-	return strings.Split(string(c), separator)
+	if c == separator {
+		return nil
+	}
+	return strings.Split(string(c), separator)[1:]
+}
+
+// Covers returns true if the command is identical or a parent of the given other command.
+func (c Command) Covers(other Command) bool {
+	// fast-path, equivalent to the code below (verified with fuzzing)
+	if !strings.HasPrefix(string(other), string(c)) {
+		return false
+	}
+	return c == separator || len(c) == len(other) || other[len(c)] == separator[0]
+
+	/* -------
+
+	otherSegments := other.Segments()
+	if len(otherSegments) < len(c.Segments()) {
+		return false
+	}
+	for i, s := range c.Segments() {
+		if otherSegments[i] != s {
+			return false
+		}
+	}
+	return true
+
+	*/
 }
 
 // String returns the composed representation the command.  This is also

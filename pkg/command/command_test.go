@@ -73,6 +73,21 @@ func TestJoin(t *testing.T) {
 	require.Equal(t, "/faz/boz/foo/bar", command.MustParse("/faz/boz").Join("foo", "bar").String())
 }
 
+func TestSegments(t *testing.T) {
+	require.Empty(t, command.Top().Segments())
+	require.Equal(t, []string{"foo", "bar", "baz"}, command.MustParse("/foo/bar/baz").Segments())
+}
+
+func TestCovers(t *testing.T) {
+	require.True(t, command.MustParse("/foo/bar/baz").Covers(command.MustParse("/foo/bar/baz")))
+	require.True(t, command.MustParse("/foo/bar").Covers(command.MustParse("/foo/bar/baz")))
+	require.False(t, command.MustParse("/foo/bar/baz").Covers(command.MustParse("/foo/bar")))
+	require.True(t, command.MustParse("/").Covers(command.MustParse("/foo")))
+	require.True(t, command.MustParse("/").Covers(command.MustParse("/foo/bar/baz")))
+	require.False(t, command.MustParse("/foo").Covers(command.MustParse("/foo00")))
+	require.False(t, command.MustParse("/foo/bar").Covers(command.MustParse("/foo/bar00")))
+}
+
 type testcase struct {
 	name string
 	inp  string
