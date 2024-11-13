@@ -176,3 +176,30 @@ func randToken() (*delegation.Token, cid.Cid, []byte) {
 	}
 	return t, c, b
 }
+
+func FuzzContainerRead(f *testing.F) {
+	// Generate a corpus
+	for tokenCount := 0; tokenCount < 10; tokenCount++ {
+		writer := NewWriter()
+		for i := 0; i < tokenCount; i++ {
+			_, c, data := randToken()
+			writer.AddSealed(c, data)
+		}
+		buf := bytes.NewBuffer(nil)
+		err := writer.ToCbor(buf)
+		require.NoError(f, err)
+
+		f.Add(buf.Bytes())
+	}
+
+	f.Fuzz(func(t *testing.T, data []byte) {
+		start := time.Now()
+
+		// search for panics
+		_, _ = FromCbor(bytes.NewReader(data))
+
+		if time.Since(start) > 100*time.Millisecond {
+			panic("too long")
+		}
+	})
+}

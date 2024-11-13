@@ -40,6 +40,13 @@ func TestCarRoundTrip(t *testing.T) {
 }
 
 func FuzzCarRoundTrip(f *testing.F) {
+	// Note: this fuzzing is somewhat broken.
+	// After some time, the fuzzer discover that a varint can be serialized in different
+	// ways that lead to the same integer value. This means that the CAR format can have
+	// multiple legal binary representation for the exact same data, which is what we are
+	// trying to detect here. Ideally, the format would be stricter, but that's how things
+	// are.
+
 	example, err := os.ReadFile("testdata/sample-v1.car")
 	require.NoError(f, err)
 
