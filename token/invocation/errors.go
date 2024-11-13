@@ -2,31 +2,36 @@ package invocation
 
 import "errors"
 
+// Loading errors
 var (
-	// ErrDelegationExpired is returned if one of the delegations in the
-	// proof chain has expired.
-	ErrDelegationExpired = errors.New("delegation in proof chain has expired")
+	// ErrMissingDelegation
+	ErrMissingDelegation = errors.New("loader missing delegation for proof chain")
+)
 
-	// ErrDelegationInactive is returned if one of the delegations in the
-	// proof chain is not yet active.
-	ErrDelegationInactive = errors.New("delegation in proof chain not yet active")
+// Time bound errors
+var (
+	// ErrTokenExpired is returned if a token is invalid at execution time
+	ErrTokenInvalidNow = errors.New("token has expired")
+)
+
+// Principal alignment errors
+var (
+	// ErrNoProof is returned when no delegations were provided to prove
+	// that the invocation should be executed.
+	ErrNoProof = errors.New("at least one delegation must be provided to validate the invocation")
 
 	// ErrLastNotRoot is returned if the last delegation token in the proof
 	// chain is not a root delegation token.
 	ErrLastNotRoot = errors.New("the last delegation token in proof chain must be a root token")
 
-	// ErrMissingDelegation
-	ErrMissingDelegation = errors.New("loader missing delegation for proof chain")
-
-	// ErrNoProof is returned when no delegations were provided to prove
-	// that the invocation should be executed.
-	ErrNoProof = errors.New("at least one delegation must be provided to validate the invocation")
-
-	// ErrNotIssuedToInvoder is returned if the first delegation token's
-	// Audience DID is not the Invoker's Issuer DID.
-	ErrNotIssuedToInvoker = errors.New("first delegation token is not issued to invoker")
-
-	// ErrBrokenChain is returned when the Audience of each delegation is
+	// ErrBrokenChain is returned when the Audience of a delegation is
 	// not the Issuer of the previous one.
-	ErrBrokenChain = errors.New("delegation proof chain is broken")
+	ErrBrokenChain = errors.New("delegation proof chain doesn't connect the invocation to the subject")
+
+	// ErrWrongSub is returned when the Subject of a delegation is not the invocation audience.
+	ErrWrongSub = errors.New("delegation subject need to match the invocation audience")
+
+	// ErrCommandNotCovered is returned when a delegation command doesn't cover (identical or parent of) the
+	// next delegation or invocation's command.
+	ErrCommandNotCovered = errors.New("allowed command doesn't cover the next delegation or invocation")
 )

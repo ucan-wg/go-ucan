@@ -126,6 +126,7 @@ func New(iss, sub did.DID, cmd command.Command, prf []cid.Cid, opts ...Option) (
 		}
 	}
 
+	var err error
 	if len(tkn.nonce) == 0 {
 		tkn.nonce, err = nonce.Generate()
 		if err != nil {
@@ -140,10 +141,6 @@ func New(iss, sub did.DID, cmd command.Command, prf []cid.Cid, opts ...Option) (
 	return &tkn, nil
 }
 
-type DelegationLoader interface {
-	GetDelegation(cid cid.Cid) (*delegation.Token, error)
-}
-
 func (t *Token) ExecutionAllowed(loader DelegationLoader) (bool, error) {
 	return t.executionAllowed(loader, t.arguments)
 }
@@ -153,59 +150,21 @@ func (t *Token) ExecutionAllowedWithArgsHook(loader DelegationLoader, hook func(
 }
 
 func (t *Token) executionAllowed(loader DelegationLoader, arguments *args.Args) (bool, error) {
-	// There must be at least one delegation referenced - 4a
-	if len(t.proof) < 1 {
-		return false, ErrNoProof
+	delegations, err := t.loadProofs(loader)
+	if err != nil {
+		return false, err
 	}
 
-	type chainer interface {
-		Issuer() did.DID
-		Subject() did.DID // TODO: if the invocation token's Audience is nil, copy the subject into it
-		Command() command.Command
+	if err := t.verifyProofs(delegations); err != nil {
+		return false, err
 	}
 
-	// This starts as the invocation token but will be the root delegation
-	// after the for loop below completes
-	var lastChainer chainer = t
-
-	for i, dlgCid := range t.proof {
-		// The token must be present - 4b
-		dlg, err := loader.GetDelegation(dlgCid)
-		if err != nil {
-			return false, fmt.Errorf("%w: need %s", ErrMissingDelegation, dlgCid)
-		}
-
-		// No tokens in the proof chain may be expired - 4d
-		if dlg.Expiration() != nil && dlg.Expiration().Before(time.Now()) {
-			return false, fmt.Errorf("%w: CID is %s", ErrDelegationExpired, dlgCid)
-		}
-
-		// No tokens in the proof chain may be inactive - 4e
-		if dlg.NotBefore() != nil && dlg.NotBefore().After(time.Now()) {
-			return false, fmt.Errorf("%w: CID is %s", ErrDelegationInactive, dlgCid)
-		}
-
-		// First proof must have the invoker's Issuer as the Audience - 4c
-		if i == 0 && dlg.Audience() != t.Issuer() {
-			return false, fmt.Errorf("%w: expected %s, got %s", ErrNotIssuedToInvoker, t.issuer, dlg.Audience())
-		}
-
-		// Tokens must form a chain with current issuer equal to the
-		// next audience - 4f
-		if lastChainer.Issuer() != dlg.Audience() {
-			return false, fmt.Errorf("%w: expected %s, got %s", ErrBrokenChain, lastChainer.Issuer(), dlg.Audience())
-		}
-
-		// TODO: Checking the subject consistency can happen here - 4h
-		// TODO: Checking the command equivalence or attenuation can happen here - 4i
-
-		lastChainer = dlg
+	if err := t.verifyTimeBound(delegations); err != nil {
+		return false, err
 	}
 
-	// The last prf value must be a root delegation (have the issuer field
-	// match the Subject field) - 4g
-	if lastChainer.Issuer() != lastChainer.Subject() {
-		return false, fmt.Errorf("%w: expected %s, got %s", ErrLastNotRoot, lastChainer.Subject(), lastChainer.Issuer())
+	if err := t.verifyArgs(delegations, arguments); err != nil {
+		return false, err
 	}
 
 	return true, nil
@@ -302,6 +261,17 @@ func (t *Token) validate() error {
 	}
 
 	return errs
+}
+
+func (t *Token) loadProofs(loader DelegationLoader) (res []*delegation.Token, err error) {
+	res = make([]*delegation.Token, len(t.proof))
+	for i, c := range t.proof {
+		res[i], err = loader.GetDelegation(c)
+		if err != nil {
+			return nil, fmt.Errorf("%w: need %s", ErrMissingDelegation, c)
+		}
+	}
+	return res, nil
 }
 
 // tokenFromModel build a decoded view of the raw IPLD data.
