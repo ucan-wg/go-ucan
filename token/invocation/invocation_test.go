@@ -94,7 +94,7 @@ func TestToken_ExecutionAllowed(t *testing.T) {
 
 		args := invocationtest.EmptyArguments
 		prf := invocationtest.Proof(t, dlg1TknCIDStr, expiredDlg0TknCIDStr, rootTknCIDStr)
-		testFails(t, invocation.ErrDelegationExpired, []string{"seg0"}, args, prf)
+		testFails(t, invocation.ErrTokenInvalidNow, []string{"seg0"}, args, prf)
 	})
 
 	t.Run("fails - referenced delegation inactive", func(t *testing.T) {
@@ -102,7 +102,7 @@ func TestToken_ExecutionAllowed(t *testing.T) {
 
 		args := invocationtest.EmptyArguments
 		prf := invocationtest.Proof(t, dlg1TknCIDStr, inactiveDlg0TknCIDStr, rootTknCIDStr)
-		testFails(t, invocation.ErrDelegationInactive, []string{"seg0"}, args, prf)
+		testFails(t, invocation.ErrTokenInvalidNow, []string{"seg0"}, args, prf)
 	})
 
 	t.Run("fails - last (or only) delegation not root", func(t *testing.T) {
@@ -126,7 +126,7 @@ func TestToken_ExecutionAllowed(t *testing.T) {
 
 		args := invocationtest.EmptyArguments
 		prf := invocationtest.Proof(t, dlg0TknCIDStr, rootTknCIDStr)
-		testFails(t, invocation.ErrNotIssuedToInvoker, []string{"seg0"}, args, prf)
+		testFails(t, invocation.ErrBrokenChain, []string{"seg0"}, args, prf)
 	})
 }
 

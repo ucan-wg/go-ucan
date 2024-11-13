@@ -162,7 +162,7 @@ func (t *Token) IsValidNow() bool {
 // IsValidNow verifies that the token can be used at the given time, based on expiration or "not before" fields.
 // This does NOT do any other kind of verifications.
 func (t *Token) IsValidAt(ti time.Time) bool {
-	if t.expiration == nil && ti.After(*t.expiration) {
+	if t.expiration != nil && ti.After(*t.expiration) {
 		return false
 	}
 	if t.notBefore != nil && ti.Before(*t.notBefore) {

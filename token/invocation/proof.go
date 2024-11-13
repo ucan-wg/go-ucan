@@ -26,6 +26,8 @@ func (t *Token) verifyProofs(delegations []*delegation.Token) error {
 		aud = t.subject
 	}
 
+	fmt.Println("Subject:", t.subject, ", Audience:", aud)
+
 	var last *delegation.Token
 
 	// control from the invocation to the root
