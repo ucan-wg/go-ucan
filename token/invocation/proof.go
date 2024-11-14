@@ -19,6 +19,11 @@ type DelegationLoader interface {
 // - principal alignment
 // - command alignment
 func (t *Token) verifyProofs(delegations []*delegation.Token) error {
+	// There must be at least one delegation referenced
+	if len(delegations) < 1 {
+		return ErrNoProof
+	}
+
 	cmd := t.command
 	iss := t.issuer
 	aud := t.audience
@@ -37,21 +42,12 @@ func (t *Token) verifyProofs(delegations []*delegation.Token) error {
 		if dlg.Audience() != iss {
 			return fmt.Errorf("%w: delegation %s, expected %s, got %s", ErrBrokenChain, dlgCid, iss, dlg.Audience())
 		}
-		iss = dlg.Audience()
+		iss = dlg.Issuer()
 
 		if !dlg.Command().Covers(cmd) {
 			return fmt.Errorf("%w: delegation %s, %s doesn't cover %s", ErrCommandNotCovered, dlgCid, dlg.Command(), cmd)
 		}
 		cmd = dlg.Command()
-
-		iss = dlg.Issuer()
-	}
-
-	// There must be at least one delegation referenced
-	// (yes, it's an odd way to test this, but it allows for the static check to not be mad about "last"
-	// being possibly nil below).
-	if len(delegations) < 1 {
-		return ErrNoProof
 	}
 
 	// The last prf value must be a root delegation (have the issuer field
