@@ -26,10 +26,6 @@ func (t *Token) verifyProofs(delegations []*delegation.Token) error {
 		aud = t.subject
 	}
 
-	fmt.Println("Subject:", t.subject, ", Audience:", aud)
-
-	var last *delegation.Token
-
 	// control from the invocation to the root
 	for i, dlgCid := range t.proof {
 		dlg := delegations[i]
@@ -48,19 +44,19 @@ func (t *Token) verifyProofs(delegations []*delegation.Token) error {
 		}
 		cmd = dlg.Command()
 
-		last = dlg
+		iss = dlg.Issuer()
 	}
 
 	// There must be at least one delegation referenced
 	// (yes, it's an odd way to test this, but it allows for the static check to not be mad about "last"
 	// being possibly nil below).
-	if last == nil {
+	if len(delegations) < 1 {
 		return ErrNoProof
 	}
 
 	// The last prf value must be a root delegation (have the issuer field
 	// match the Subject field) - 4g
-	if last.Issuer() != last.Subject() {
+	if last := delegations[len(delegations)-1]; last.Issuer() != last.Subject() {
 		return fmt.Errorf("%w: expected %s, got %s", ErrLastNotRoot, last.Subject(), last.Issuer())
 	}
 
