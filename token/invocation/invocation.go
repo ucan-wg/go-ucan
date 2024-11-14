@@ -3,45 +3,6 @@
 // from the [envelope]-enclosed, signed and DAG-CBOR-encoded form that
 // should most commonly be used for transport and storage.
 //
-// # Invocation token validation
-//
-// Per the specification, invocation Tokens must be validated before the
-// command is executed.  This validation can happen in multiple stages:
-//
-//  1. When the invocation is unsealed from its containing envelope:
-//     a. The envelope can be decoded.
-//     b. The envelope contains a Signature, VarsigHeader and Payload.
-//     c. The Payload contains an iss field that contains a valid did:key.
-//     d. The a public key can be extracted from the did:key.
-//     e. The public key type is supported by go-ucan.
-//     f. The Signature can be decoded per the VarsigHeader.
-//     g. The SigPayload can be verified using the Signature and public key.
-//     h. The field key of the TokenPayload matches the expected tag.
-//  2. When the invocation is created or passes step one:
-//     a. The Issuer field is not empty.
-//     b. The Subject field is not empty
-//     c. The Command field is not empty and the Command is not a wildcard.
-//     d. The Policy field is present (but may be empty).
-//     e. The Arguments field is present (but may be empty).
-//  3. When an unsealed invocation passes steps one and two for execution:
-//     a. The invocation can not be expired.
-//     b. Invoked at should not be in the future.
-//  4. When the proof chain is being validated:
-//     a. There must be at least one delegation in the proof chain.
-//     b. All referenced delegations must be available.
-//     c. The first proof must be issued to the Invoker (audience DID).
-//     d. The token must not be expired (expiration in the future or absent).
-//     e. The token must be active (nbf in the past or absent).
-//     f. The Issuer of each delegation must be the Audience in the next
-//     one.
-//     g. The last token must be a root delegation.
-//     h. The Subject of each delegation must equal the invocation's
-//     Audience field.
-//     i. The command of each delegation must "allow" the one before it.
-//  5. If steps 1-4 pass:
-//     a. The policy must "match" the arguments.
-//     b. The nonce (if present) is not reused.
-//
 // [envelope]: https://github.com/ucan-wg/spec#envelope
 // [invocation]: https://github.com/ucan-wg/invocation
 package invocation
@@ -152,6 +113,7 @@ func (t *Token) ExecutionAllowedWithArgsHook(loader DelegationLoader, hook func(
 func (t *Token) executionAllowed(loader DelegationLoader, arguments *args.Args) (bool, error) {
 	delegations, err := t.loadProofs(loader)
 	if err != nil {
+		// All referenced delegations must be available - 4b
 		return false, err
 	}
 
@@ -238,7 +200,7 @@ func (t *Token) IsValidNow() bool {
 // IsValidNow verifies that the token can be used at the given time, based on expiration or "not before" fields.
 // This does NOT do any other kind of verifications.
 func (t *Token) IsValidAt(ti time.Time) bool {
-	if t.expiration == nil && ti.After(*t.expiration) {
+	if t.expiration != nil && ti.After(*t.expiration) {
 		return false
 	}
 	return true
