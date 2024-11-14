@@ -98,15 +98,36 @@ func FromCbor(r io.Reader) (Reader, error) {
 	if err != nil {
 		return nil, err
 	}
-	if n.Kind() != datamodel.Kind_List {
-		return nil, fmt.Errorf("not a list")
+	if n.Kind() != datamodel.Kind_Map {
+		return nil, fmt.Errorf("invalid container format: expected map")
+	}
+	if n.Length() != 1 {
+		return nil, fmt.Errorf("invalid container format: expected single version key")
 	}
 
-	ctn := make(Reader, n.Length())
+	// get the first (and only) key-value pair
+	it := n.MapIterator()
+	key, tokensNode, err := it.Next()
+	if err != nil {
+		return nil, err
+	}
 
-	it := n.ListIterator()
-	for !it.Done() {
-		_, val, err := it.Next()
+	version, err := key.AsString()
+	if err != nil {
+		return nil, fmt.Errorf("invalid container format: version must be string")
+	}
+	if version != currentContainerVersion {
+		return nil, fmt.Errorf("unsupported container version: %s", version)
+	}
+
+	if tokensNode.Kind() != datamodel.Kind_List {
+		return nil, fmt.Errorf("invalid container format: tokens must be a list")
+	}
+
+	ctn := make(Reader, tokensNode.Length())
+	it2 := tokensNode.ListIterator()
+	for !it2.Done() {
+		_, val, err := it2.Next()
 		if err != nil {
 			return nil, err
 		}

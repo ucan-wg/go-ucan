@@ -14,6 +14,8 @@ import (
 
 // TODO: should we have a multibase to wrap the cbor? but there is no reader/write in go-multibase :-(
 
+const currentContainerVersion = "ctn-v1"
+
 // Writer is a token container writer. It provides a convenient way to aggregate and serialize tokens together.
 type Writer map[cid.Cid][]byte
 
@@ -43,10 +45,12 @@ func (ctn Writer) ToCarBase64(w io.Writer) error {
 }
 
 func (ctn Writer) ToCbor(w io.Writer) error {
-	node, err := qp.BuildList(basicnode.Prototype.Any, int64(len(ctn)), func(la datamodel.ListAssembler) {
-		for _, bytes := range ctn {
-			qp.ListEntry(la, qp.Bytes(bytes))
-		}
+	node, err := qp.BuildMap(basicnode.Prototype.Any, 1, func(ma datamodel.MapAssembler) {
+		qp.MapEntry(ma, currentContainerVersion, qp.List(int64(len(ctn)), func(la datamodel.ListAssembler) {
+			for _, bytes := range ctn {
+				qp.ListEntry(la, qp.Bytes(bytes))
+			}
+		}))
 	})
 	if err != nil {
 		return err
