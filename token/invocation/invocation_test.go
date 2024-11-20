@@ -39,7 +39,7 @@ func TestToken_ExecutionAllowed(t *testing.T) {
 	t.Run("passes - proof chain attenuates command", func(t *testing.T) {
 		t.Parallel()
 
-		testPasses(t, didtest.PersonaFrank, delegationtest.AttenuatedCommand, emptyArguments, delegationtest.ProofAliceBobCarolDanErinFrankValidAttenuatedCommand)
+		testPasses(t, didtest.PersonaFrank, delegationtest.AttenuatedCommand, emptyArguments, delegationtest.ProofAliceBobCarolDanErinFrank_ValidAttenuatedCommand)
 	})
 
 	t.Run("passes - invocation attenuates command", func(t *testing.T) {
@@ -67,14 +67,14 @@ func TestToken_ExecutionAllowed(t *testing.T) {
 	t.Run("fails - referenced delegation expired", func(t *testing.T) {
 		t.Parallel()
 
-		testFails(t, invocation.ErrTokenInvalidNow, didtest.PersonaFrank, delegationtest.NominalCommand, emptyArguments, delegationtest.ProofAliceBobCarolDanErinFrankInvalidExpired)
+		testFails(t, invocation.ErrTokenInvalidNow, didtest.PersonaFrank, delegationtest.NominalCommand, emptyArguments, delegationtest.ProofAliceBobCarolDanErinFrank_InvalidExpired)
 
 	})
 
 	t.Run("fails - referenced delegation inactive", func(t *testing.T) {
 		t.Parallel()
 
-		testFails(t, invocation.ErrTokenInvalidNow, didtest.PersonaFrank, delegationtest.NominalCommand, emptyArguments, delegationtest.ProofAliceBobCarolDanErinFrankInvalidInactive)
+		testFails(t, invocation.ErrTokenInvalidNow, didtest.PersonaFrank, delegationtest.NominalCommand, emptyArguments, delegationtest.ProofAliceBobCarolDanErinFrank_InvalidInactive)
 	})
 
 	t.Run("fails - last (or only) delegation not root", func(t *testing.T) {
@@ -101,7 +101,7 @@ func TestToken_ExecutionAllowed(t *testing.T) {
 	t.Run("fails - proof chain expands command", func(t *testing.T) {
 		t.Parallel()
 
-		testFails(t, invocation.ErrCommandNotCovered, didtest.PersonaFrank, delegationtest.NominalCommand, emptyArguments, delegationtest.ProofAliceBobCarolDanErinFrankInvalidExpandedCommand)
+		testFails(t, invocation.ErrCommandNotCovered, didtest.PersonaFrank, delegationtest.NominalCommand, emptyArguments, delegationtest.ProofAliceBobCarolDanErinFrank_InvalidExpandedCommand)
 	})
 
 	t.Run("fails - invocation expands command", func(t *testing.T) {
@@ -113,20 +113,19 @@ func TestToken_ExecutionAllowed(t *testing.T) {
 	t.Run("fails - inconsistent subject", func(t *testing.T) {
 		t.Parallel()
 
-		testFails(t, invocation.ErrWrongSub, didtest.PersonaFrank, delegationtest.ExpandedCommand, emptyArguments, delegationtest.ProofAliceBobCarolDanErinFrankInvalidSubject)
+		testFails(t, invocation.ErrWrongSub, didtest.PersonaFrank, delegationtest.ExpandedCommand, emptyArguments, delegationtest.ProofAliceBobCarolDanErinFrank_InvalidSubject)
 	})
 }
 
 func test(t *testing.T, persona didtest.Persona, cmd command.Command, args *args.Args, prf []cid.Cid, opts ...invocation.Option) error {
 	t.Helper()
 
-	tkn, err := invocation.New(persona.DID(t), didtest.PersonaAlice.DID(t), cmd, prf, opts...)
+	// TODO: use the args and add minimal test to check that they are verified against the policy
+
+	tkn, err := invocation.New(persona.DID(), didtest.PersonaAlice.DID(), cmd, prf, opts...)
 	require.NoError(t, err)
 
-	ldr, err := delegationtest.GetDelegationLoader()
-	require.NoError(t, err)
-
-	return tkn.ExecutionAllowed(ldr)
+	return tkn.ExecutionAllowed(delegationtest.GetDelegationLoader())
 }
 
 func testFails(t *testing.T, expErr error, persona didtest.Persona, cmd command.Command, args *args.Args, prf []cid.Cid, opts ...invocation.Option) {

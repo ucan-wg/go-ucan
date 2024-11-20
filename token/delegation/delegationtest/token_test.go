@@ -12,8 +12,6 @@ import (
 )
 
 func TestGetDelegation(t *testing.T) {
-	t.Parallel()
-
 	t.Run("passes with valid CID", func(t *testing.T) {
 		t.Parallel()
 

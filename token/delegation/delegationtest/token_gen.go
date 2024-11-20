@@ -30,78 +30,78 @@ var (
 )
 
 var (
-	TokenCarolDanInvalidExpandedCommandCID = gocid.MustParse("bafyreid3m3pk53gqgp5rlzqhvpedbwsqbidqlp4yz64vknwbzj7bxrmsr4")
-	TokenCarolDanInvalidExpandedCommand    = mustGetDelegation(TokenCarolDanInvalidExpandedCommandCID)
+	TokenCarolDan_InvalidExpandedCommandCID = gocid.MustParse("bafyreid3m3pk53gqgp5rlzqhvpedbwsqbidqlp4yz64vknwbzj7bxrmsr4")
+	TokenCarolDan_InvalidExpandedCommand    = mustGetDelegation(TokenCarolDan_InvalidExpandedCommandCID)
 )
 
 var (
-	TokenDanErinInvalidExpandedCommandCID = gocid.MustParse("bafyreifn4sy5onwajx3kqvot5mib6m6xarzrqjozqbzgmzpmc5ox3g2uzm")
-	TokenDanErinInvalidExpandedCommand    = mustGetDelegation(TokenDanErinInvalidExpandedCommandCID)
+	TokenDanErin_InvalidExpandedCommandCID = gocid.MustParse("bafyreifn4sy5onwajx3kqvot5mib6m6xarzrqjozqbzgmzpmc5ox3g2uzm")
+	TokenDanErin_InvalidExpandedCommand    = mustGetDelegation(TokenDanErin_InvalidExpandedCommandCID)
 )
 
 var (
-	TokenErinFrankInvalidExpandedCommandCID = gocid.MustParse("bafyreidmpgd36jznmq42bs34o4qi3fcbrsh4idkg6ejahudejzwb76fwxe")
-	TokenErinFrankInvalidExpandedCommand    = mustGetDelegation(TokenErinFrankInvalidExpandedCommandCID)
+	TokenErinFrank_InvalidExpandedCommandCID = gocid.MustParse("bafyreidmpgd36jznmq42bs34o4qi3fcbrsh4idkg6ejahudejzwb76fwxe")
+	TokenErinFrank_InvalidExpandedCommand    = mustGetDelegation(TokenErinFrank_InvalidExpandedCommandCID)
 )
 
 var (
-	TokenCarolDanValidAttenuatedCommandCID = gocid.MustParse("bafyreiekhtm237vyapk3c6voeb5lnz54crebqdqi3x4wn4u4cbrrhzsqfe")
-	TokenCarolDanValidAttenuatedCommand    = mustGetDelegation(TokenCarolDanValidAttenuatedCommandCID)
+	TokenCarolDan_ValidAttenuatedCommandCID = gocid.MustParse("bafyreiekhtm237vyapk3c6voeb5lnz54crebqdqi3x4wn4u4cbrrhzsqfe")
+	TokenCarolDan_ValidAttenuatedCommand    = mustGetDelegation(TokenCarolDan_ValidAttenuatedCommandCID)
 )
 
 var (
-	TokenDanErinValidAttenuatedCommandCID = gocid.MustParse("bafyreicrvzqferyy7rgo75l5rn6r2nl7zyeexxjmu3dm4ff7rn2coblj4y")
-	TokenDanErinValidAttenuatedCommand    = mustGetDelegation(TokenDanErinValidAttenuatedCommandCID)
+	TokenDanErin_ValidAttenuatedCommandCID = gocid.MustParse("bafyreicrvzqferyy7rgo75l5rn6r2nl7zyeexxjmu3dm4ff7rn2coblj4y")
+	TokenDanErin_ValidAttenuatedCommand    = mustGetDelegation(TokenDanErin_ValidAttenuatedCommandCID)
 )
 
 var (
-	TokenErinFrankValidAttenuatedCommandCID = gocid.MustParse("bafyreie6fhspk53kplcc2phla3e7z7fzldlbmmpuwk6nbow5q6s2zjmw2q")
-	TokenErinFrankValidAttenuatedCommand    = mustGetDelegation(TokenErinFrankValidAttenuatedCommandCID)
+	TokenErinFrank_ValidAttenuatedCommandCID = gocid.MustParse("bafyreie6fhspk53kplcc2phla3e7z7fzldlbmmpuwk6nbow5q6s2zjmw2q")
+	TokenErinFrank_ValidAttenuatedCommand    = mustGetDelegation(TokenErinFrank_ValidAttenuatedCommandCID)
 )
 
 var (
-	TokenCarolDanInvalidSubjectCID = gocid.MustParse("bafyreifgksz6756if42tnc6rqsnbaa2u3fdrveo7ek44lnj2d64d5sw26u")
-	TokenCarolDanInvalidSubject    = mustGetDelegation(TokenCarolDanInvalidSubjectCID)
+	TokenCarolDan_InvalidSubjectCID = gocid.MustParse("bafyreifgksz6756if42tnc6rqsnbaa2u3fdrveo7ek44lnj2d64d5sw26u")
+	TokenCarolDan_InvalidSubject    = mustGetDelegation(TokenCarolDan_InvalidSubjectCID)
 )
 
 var (
-	TokenDanErinInvalidSubjectCID = gocid.MustParse("bafyreibdwew5nypsxrm4fq73wu6hw3lgwwiolj3bi33xdrbgcf3ogm6fty")
-	TokenDanErinInvalidSubject    = mustGetDelegation(TokenDanErinInvalidSubjectCID)
+	TokenDanErin_InvalidSubjectCID = gocid.MustParse("bafyreibdwew5nypsxrm4fq73wu6hw3lgwwiolj3bi33xdrbgcf3ogm6fty")
+	TokenDanErin_InvalidSubject    = mustGetDelegation(TokenDanErin_InvalidSubjectCID)
 )
 
 var (
-	TokenErinFrankInvalidSubjectCID = gocid.MustParse("bafyreicr364mj3n7x4iyhcksxypelktcqkkw3ptg7ggxtqegw3p3mr6zc4")
-	TokenErinFrankInvalidSubject    = mustGetDelegation(TokenErinFrankInvalidSubjectCID)
+	TokenErinFrank_InvalidSubjectCID = gocid.MustParse("bafyreicr364mj3n7x4iyhcksxypelktcqkkw3ptg7ggxtqegw3p3mr6zc4")
+	TokenErinFrank_InvalidSubject    = mustGetDelegation(TokenErinFrank_InvalidSubjectCID)
 )
 
 var (
-	TokenCarolDanInvalidExpiredCID = gocid.MustParse("bafyreibgtlioorouqpwr6olk6boc3pprl5tx5xs6zpfnv3pvxtggueofii")
-	TokenCarolDanInvalidExpired    = mustGetDelegation(TokenCarolDanInvalidExpiredCID)
+	TokenCarolDan_InvalidExpiredCID = gocid.MustParse("bafyreigenypixaxvhzlry5rjnywvjyl4xvzlzxz2ui74uzys7qdhos4bbu")
+	TokenCarolDan_InvalidExpired    = mustGetDelegation(TokenCarolDan_InvalidExpiredCID)
 )
 
 var (
-	TokenDanErinInvalidExpiredCID = gocid.MustParse("bafyreidhq3hjsfrucbecgcjf2nkcgmq3sh3m5gjxz23vzcaynozs5p3uh4")
-	TokenDanErinInvalidExpired    = mustGetDelegation(TokenDanErinInvalidExpiredCID)
+	TokenDanErin_InvalidExpiredCID = gocid.MustParse("bafyreifvnfb7zqocpdysedcvjkb4y7tqfuziuqjhbbdoay4zg33pwpbzqi")
+	TokenDanErin_InvalidExpired    = mustGetDelegation(TokenDanErin_InvalidExpiredCID)
 )
 
 var (
-	TokenErinFrankInvalidExpiredCID = gocid.MustParse("bafyreido4om3y3ttkmp4c4gxm6pqug76vu3aekb666vdp6zewpvir5zs7u")
-	TokenErinFrankInvalidExpired    = mustGetDelegation(TokenErinFrankInvalidExpiredCID)
+	TokenErinFrank_InvalidExpiredCID = gocid.MustParse("bafyreicvydzt3obkqx7krmoi3zu4tlirlksibxfks5jc7vlvjxjamv2764")
+	TokenErinFrank_InvalidExpired    = mustGetDelegation(TokenErinFrank_InvalidExpiredCID)
 )
 
 var (
-	TokenCarolDanInvalidInactiveCID = gocid.MustParse("bafyreicea5y2nvlitvxijkupeavtg23i7ktjk3uejnaquguurzptiabk4u")
-	TokenCarolDanInvalidInactive    = mustGetDelegation(TokenCarolDanInvalidInactiveCID)
+	TokenCarolDan_InvalidInactiveCID = gocid.MustParse("bafyreicea5y2nvlitvxijkupeavtg23i7ktjk3uejnaquguurzptiabk4u")
+	TokenCarolDan_InvalidInactive    = mustGetDelegation(TokenCarolDan_InvalidInactiveCID)
 )
 
 var (
-	TokenDanErinInvalidInactiveCID = gocid.MustParse("bafyreifsgqzkmxj2vexuts3z766mwcjreiisjg2jykyzf7tbj5sclutpvq")
-	TokenDanErinInvalidInactive    = mustGetDelegation(TokenDanErinInvalidInactiveCID)
+	TokenDanErin_InvalidInactiveCID = gocid.MustParse("bafyreifsgqzkmxj2vexuts3z766mwcjreiisjg2jykyzf7tbj5sclutpvq")
+	TokenDanErin_InvalidInactive    = mustGetDelegation(TokenDanErin_InvalidInactiveCID)
 )
 
 var (
-	TokenErinFrankInvalidInactiveCID = gocid.MustParse("bafyreifbfegon24c6dndiqyktahzs65vhyasrygbw7nhsvojn6distsdre")
-	TokenErinFrankInvalidInactive    = mustGetDelegation(TokenErinFrankInvalidInactiveCID)
+	TokenErinFrank_InvalidInactiveCID = gocid.MustParse("bafyreifbfegon24c6dndiqyktahzs65vhyasrygbw7nhsvojn6distsdre")
+	TokenErinFrank_InvalidInactive    = mustGetDelegation(TokenErinFrank_InvalidInactiveCID)
 )
 
 var ProofAliceBob = []gocid.Cid{
@@ -134,107 +134,107 @@ var ProofAliceBobCarolDanErinFrank = []gocid.Cid{
 	TokenAliceBobCID,
 }
 
-var ProofAliceBobCarolDanInvalidExpandedCommand = []gocid.Cid{
-	TokenCarolDanInvalidExpandedCommandCID,
+var ProofAliceBobCarolDan_InvalidExpandedCommand = []gocid.Cid{
+	TokenCarolDan_InvalidExpandedCommandCID,
 	TokenBobCarolCID,
 	TokenAliceBobCID,
 }
 
-var ProofAliceBobCarolDanErinInvalidExpandedCommand = []gocid.Cid{
-	TokenDanErinInvalidExpandedCommandCID,
-	TokenCarolDanInvalidExpandedCommandCID,
+var ProofAliceBobCarolDanErin_InvalidExpandedCommand = []gocid.Cid{
+	TokenDanErin_InvalidExpandedCommandCID,
+	TokenCarolDan_InvalidExpandedCommandCID,
 	TokenBobCarolCID,
 	TokenAliceBobCID,
 }
 
-var ProofAliceBobCarolDanErinFrankInvalidExpandedCommand = []gocid.Cid{
-	TokenErinFrankInvalidExpandedCommandCID,
-	TokenDanErinInvalidExpandedCommandCID,
-	TokenCarolDanInvalidExpandedCommandCID,
+var ProofAliceBobCarolDanErinFrank_InvalidExpandedCommand = []gocid.Cid{
+	TokenErinFrank_InvalidExpandedCommandCID,
+	TokenDanErin_InvalidExpandedCommandCID,
+	TokenCarolDan_InvalidExpandedCommandCID,
 	TokenBobCarolCID,
 	TokenAliceBobCID,
 }
 
-var ProofAliceBobCarolDanValidAttenuatedCommand = []gocid.Cid{
-	TokenCarolDanValidAttenuatedCommandCID,
+var ProofAliceBobCarolDan_ValidAttenuatedCommand = []gocid.Cid{
+	TokenCarolDan_ValidAttenuatedCommandCID,
 	TokenBobCarolCID,
 	TokenAliceBobCID,
 }
 
-var ProofAliceBobCarolDanErinValidAttenuatedCommand = []gocid.Cid{
-	TokenDanErinValidAttenuatedCommandCID,
-	TokenCarolDanValidAttenuatedCommandCID,
+var ProofAliceBobCarolDanErin_ValidAttenuatedCommand = []gocid.Cid{
+	TokenDanErin_ValidAttenuatedCommandCID,
+	TokenCarolDan_ValidAttenuatedCommandCID,
 	TokenBobCarolCID,
 	TokenAliceBobCID,
 }
 
-var ProofAliceBobCarolDanErinFrankValidAttenuatedCommand = []gocid.Cid{
-	TokenErinFrankValidAttenuatedCommandCID,
-	TokenDanErinValidAttenuatedCommandCID,
-	TokenCarolDanValidAttenuatedCommandCID,
+var ProofAliceBobCarolDanErinFrank_ValidAttenuatedCommand = []gocid.Cid{
+	TokenErinFrank_ValidAttenuatedCommandCID,
+	TokenDanErin_ValidAttenuatedCommandCID,
+	TokenCarolDan_ValidAttenuatedCommandCID,
 	TokenBobCarolCID,
 	TokenAliceBobCID,
 }
 
-var ProofAliceBobCarolDanInvalidSubject = []gocid.Cid{
-	TokenCarolDanInvalidSubjectCID,
+var ProofAliceBobCarolDan_InvalidSubject = []gocid.Cid{
+	TokenCarolDan_InvalidSubjectCID,
 	TokenBobCarolCID,
 	TokenAliceBobCID,
 }
 
-var ProofAliceBobCarolDanErinInvalidSubject = []gocid.Cid{
-	TokenDanErinInvalidSubjectCID,
-	TokenCarolDanInvalidSubjectCID,
+var ProofAliceBobCarolDanErin_InvalidSubject = []gocid.Cid{
+	TokenDanErin_InvalidSubjectCID,
+	TokenCarolDan_InvalidSubjectCID,
 	TokenBobCarolCID,
 	TokenAliceBobCID,
 }
 
-var ProofAliceBobCarolDanErinFrankInvalidSubject = []gocid.Cid{
-	TokenErinFrankInvalidSubjectCID,
-	TokenDanErinInvalidSubjectCID,
-	TokenCarolDanInvalidSubjectCID,
+var ProofAliceBobCarolDanErinFrank_InvalidSubject = []gocid.Cid{
+	TokenErinFrank_InvalidSubjectCID,
+	TokenDanErin_InvalidSubjectCID,
+	TokenCarolDan_InvalidSubjectCID,
 	TokenBobCarolCID,
 	TokenAliceBobCID,
 }
 
-var ProofAliceBobCarolDanInvalidExpired = []gocid.Cid{
-	TokenCarolDanInvalidExpiredCID,
+var ProofAliceBobCarolDan_InvalidExpired = []gocid.Cid{
+	TokenCarolDan_InvalidExpiredCID,
 	TokenBobCarolCID,
 	TokenAliceBobCID,
 }
 
-var ProofAliceBobCarolDanErinInvalidExpired = []gocid.Cid{
-	TokenDanErinInvalidExpiredCID,
-	TokenCarolDanInvalidExpiredCID,
+var ProofAliceBobCarolDanErin_InvalidExpired = []gocid.Cid{
+	TokenDanErin_InvalidExpiredCID,
+	TokenCarolDan_InvalidExpiredCID,
 	TokenBobCarolCID,
 	TokenAliceBobCID,
 }
 
-var ProofAliceBobCarolDanErinFrankInvalidExpired = []gocid.Cid{
-	TokenErinFrankInvalidExpiredCID,
-	TokenDanErinInvalidExpiredCID,
-	TokenCarolDanInvalidExpiredCID,
+var ProofAliceBobCarolDanErinFrank_InvalidExpired = []gocid.Cid{
+	TokenErinFrank_InvalidExpiredCID,
+	TokenDanErin_InvalidExpiredCID,
+	TokenCarolDan_InvalidExpiredCID,
 	TokenBobCarolCID,
 	TokenAliceBobCID,
 }
 
-var ProofAliceBobCarolDanInvalidInactive = []gocid.Cid{
-	TokenCarolDanInvalidInactiveCID,
+var ProofAliceBobCarolDan_InvalidInactive = []gocid.Cid{
+	TokenCarolDan_InvalidInactiveCID,
 	TokenBobCarolCID,
 	TokenAliceBobCID,
 }
 
-var ProofAliceBobCarolDanErinInvalidInactive = []gocid.Cid{
-	TokenDanErinInvalidInactiveCID,
-	TokenCarolDanInvalidInactiveCID,
+var ProofAliceBobCarolDanErin_InvalidInactive = []gocid.Cid{
+	TokenDanErin_InvalidInactiveCID,
+	TokenCarolDan_InvalidInactiveCID,
 	TokenBobCarolCID,
 	TokenAliceBobCID,
 }
 
-var ProofAliceBobCarolDanErinFrankInvalidInactive = []gocid.Cid{
-	TokenErinFrankInvalidInactiveCID,
-	TokenDanErinInvalidInactiveCID,
-	TokenCarolDanInvalidInactiveCID,
+var ProofAliceBobCarolDanErinFrank_InvalidInactive = []gocid.Cid{
+	TokenErinFrank_InvalidInactiveCID,
+	TokenDanErin_InvalidInactiveCID,
+	TokenCarolDan_InvalidInactiveCID,
 	TokenBobCarolCID,
 	TokenAliceBobCID,
 }

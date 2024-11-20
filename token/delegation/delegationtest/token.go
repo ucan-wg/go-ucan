@@ -38,27 +38,29 @@ var ProofEmpty = []cid.Cid{}
 //go:embed data
 var fs embed.FS
 
-var (
-	once sync.Once
-	ldr  delegation.Loader
-	err  error
-)
-
 var _ delegation.Loader = (*delegationLoader)(nil)
 
 type delegationLoader struct {
 	tokens map[cid.Cid]*delegation.Token
 }
 
+var (
+	once sync.Once
+	ldr  delegation.Loader
+)
+
 // GetDelegationLoader returns a singleton instance of a test
 // DelegationLoader containing all the tokens present in the data/
 // directory.
-func GetDelegationLoader() (delegation.Loader, error) {
+func GetDelegationLoader() delegation.Loader {
 	once.Do(func() {
+		var err error
 		ldr, err = loadDelegations()
+		if err != nil {
+			panic(err)
+		}
 	})
-
-	return ldr, err
+	return ldr
 }
 
 // GetDelegation implements invocation.DelegationLoader.
@@ -101,12 +103,7 @@ func loadDelegations() (delegation.Loader, error) {
 // GetDelegation is a shortcut that gets (or creates) the DelegationLoader
 // and attempts to return the token referenced by the provided CID.
 func GetDelegation(id cid.Cid) (*delegation.Token, error) {
-	ldr, err := GetDelegationLoader()
-	if err != nil {
-		return nil, err
-	}
-
-	return ldr.GetDelegation(id)
+	return GetDelegationLoader().GetDelegation(id)
 }
 
 func mustGetDelegation(id cid.Cid) *delegation.Token {
@@ -114,6 +111,5 @@ func mustGetDelegation(id cid.Cid) *delegation.Token {
 	if err != nil {
 		panic(err)
 	}
-
 	return tkn
 }

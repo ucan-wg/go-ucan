@@ -7,14 +7,14 @@
 //
 // Delegation proof-chain names contain each didtest.Persona name in
 // order starting with the root delegation (which will always be generated
-// by Alice.)  This is opposite of the list of cic.Cids that represent the
+// by Alice). This is the opposite of the list of cic.Cids that represent the
 // proof chain.
 //
 // For both the generated delegation tokens granted to Carol's Persona and
 // the proof chains containing Carol's delegations to Dan, if there is no
 // suffix, the proof chain will be deemed valid.  If there is a suffix, it
 // will consist of either the word "Valid" or "Invalid" and the name of the
-// field that has been altered.  Only optional fields will generate proof
+// field that has been altered. Only optional fields will generate proof
 // chains with Valid suffixes.
 //
 // If changes are made to the list of Personas included in the chain, or
@@ -25,9 +25,9 @@
 //	go test . -update
 //
 // Generated delegation Tokens are stored in the data/ directory and loaded
-// into the DelegationLoader on the first call to GetDelegationLoader.
+// into the delegation.Loader.
 // Generated references to these tokens and the tokens themselves are
-// created in the token_gen.go file.  See /token/invocation/invocation_test.go
+// created in the token_gen.go file. See /token/invocation/invocation_test.go
 // for an example of how these delegation tokens and proof-chains can
 // be used during testing.
 package delegationtest
