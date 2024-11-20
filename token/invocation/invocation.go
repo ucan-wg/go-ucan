@@ -164,6 +164,8 @@ func (t *Token) Arguments() args.ReadOnly {
 
 // Proof() returns the ordered list of cid.Cid which reference the
 // delegation Tokens that authorize this invocation.
+// Ordering is from the leaf Delegation (with aud matching the invocation's iss)
+// to the root delegation.
 func (t *Token) Proof() []cid.Cid {
 	return t.proof
 }

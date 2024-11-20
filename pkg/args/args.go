@@ -5,6 +5,7 @@ package args
 
 import (
 	"fmt"
+	"iter"
 	"sort"
 	"strings"
 
@@ -54,18 +55,33 @@ func (a *Args) Add(key string, val any) error {
 	return nil
 }
 
+type Iterator interface {
+	Iter() iter.Seq2[string, ipld.Node]
+}
+
 // Include merges the provided arguments into the existing arguments.
 //
 // If duplicate keys are encountered, the new value is silently dropped
 // without causing an error.
-func (a *Args) Include(other *Args) {
-	for _, key := range other.Keys {
+func (a *Args) Include(other Iterator) {
+	for key, value := range other.Iter() {
 		if _, ok := a.Values[key]; ok {
 			// don't overwrite
 			continue
 		}
-		a.Values[key] = other.Values[key]
+		a.Values[key] = value
 		a.Keys = append(a.Keys, key)
+	}
+}
+
+// Iter iterates over the args key/values
+func (a *Args) Iter() iter.Seq2[string, ipld.Node] {
+	return func(yield func(string, ipld.Node) bool) {
+		for _, key := range a.Keys {
+			if !yield(key, a.Values[key]) {
+				return
+			}
+		}
 	}
 }
 

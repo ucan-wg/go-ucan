@@ -3,6 +3,8 @@ package meta
 import (
 	"errors"
 	"fmt"
+	"iter"
+	"sort"
 	"strings"
 
 	"github.com/ipld/go-ipld-prime"
@@ -171,6 +173,36 @@ func (m *Meta) AddEncrypted(key string, val any, encryptionKey []byte) error {
 	return m.Add(key, encrypted)
 }
 
+type Iterator interface {
+	Iter() iter.Seq2[string, ipld.Node]
+}
+
+// Include merges the provided meta into the existing one.
+//
+// If duplicate keys are encountered, the new value is silently dropped
+// without causing an error.
+func (m *Meta) Include(other Iterator) {
+	for key, value := range other.Iter() {
+		if _, ok := m.Values[key]; ok {
+			// don't overwrite
+			continue
+		}
+		m.Values[key] = value
+		m.Keys = append(m.Keys, key)
+	}
+}
+
+// Iter iterates over the meta key/values
+func (m *Meta) Iter() iter.Seq2[string, ipld.Node] {
+	return func(yield func(string, ipld.Node) bool) {
+		for _, key := range m.Keys {
+			if !yield(key, m.Values[key]) {
+				return
+			}
+		}
+	}
+}
+
 // Equals tells if two Meta hold the same key/values.
 func (m *Meta) Equals(other *Meta) bool {
 	if len(m.Keys) != len(other.Keys) {
@@ -188,6 +220,8 @@ func (m *Meta) Equals(other *Meta) bool {
 }
 
 func (m *Meta) String() string {
+	sort.Strings(m.Keys)
+
 	buf := strings.Builder{}
 	buf.WriteString("{")
 
@@ -209,5 +243,18 @@ func (m *Meta) String() string {
 
 // ReadOnly returns a read-only version of Meta.
 func (m *Meta) ReadOnly() ReadOnly {
-	return ReadOnly{m: m}
+	return ReadOnly{meta: m}
+}
+
+// Clone makes a deep copy.
+func (m *Meta) Clone() *Meta {
+	res := &Meta{
+		Keys:   make([]string, len(m.Keys)),
+		Values: make(map[string]ipld.Node, len(m.Values)),
+	}
+	copy(res.Keys, m.Keys)
+	for k, v := range m.Values {
+		res.Values[k] = v
+	}
+	return res
 }
