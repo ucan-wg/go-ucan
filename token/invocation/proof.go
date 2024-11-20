@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ipfs/go-cid"
-
 	"github.com/ucan-wg/go-ucan/pkg/args"
 	"github.com/ucan-wg/go-ucan/pkg/policy"
 	"github.com/ucan-wg/go-ucan/token/delegation"
@@ -48,10 +46,6 @@ import (
 //  5. If steps 1-4 pass:
 //     a. The policy must "match" the arguments. (verifyArgs below)
 //     b. The nonce (if present) is not reused. (out of scope for go-ucan)
-
-type DelegationLoader interface {
-	GetDelegation(cid cid.Cid) (*delegation.Token, error)
-}
 
 // verifyProofs controls that the proof chain allows the invocation:
 // - principal alignment

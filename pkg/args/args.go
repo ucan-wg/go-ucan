@@ -6,11 +6,13 @@ package args
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/datamodel"
 	"github.com/ipld/go-ipld-prime/fluent/qp"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
+	"github.com/ipld/go-ipld-prime/printer"
 
 	"github.com/ucan-wg/go-ucan/pkg/policy/literal"
 )
@@ -70,6 +72,7 @@ func (a *Args) Include(other *Args) {
 // ToIPLD wraps an instance of an Args with an ipld.Node.
 func (a *Args) ToIPLD() (ipld.Node, error) {
 	sort.Strings(a.Keys)
+
 	return qp.BuildMap(basicnode.Prototype.Any, int64(len(a.Keys)), func(ma datamodel.MapAssembler) {
 		for _, key := range a.Keys {
 			qp.MapEntry(ma, key, qp.Node(a.Values[key]))
@@ -91,4 +94,44 @@ func (a *Args) Equals(other *Args) bool {
 		}
 	}
 	return true
+}
+
+func (a *Args) String() string {
+	sort.Strings(a.Keys)
+
+	buf := strings.Builder{}
+	buf.WriteString("{")
+
+	for _, key := range a.Keys {
+		buf.WriteString("\n\t")
+		buf.WriteString(key)
+		buf.WriteString(": ")
+		buf.WriteString(strings.ReplaceAll(printer.Sprint(a.Values[key]), "\n", "\n\t"))
+		buf.WriteString(",")
+	}
+
+	if len(a.Keys) > 0 {
+		buf.WriteString("\n")
+	}
+	buf.WriteString("}")
+
+	return buf.String()
+}
+
+// ReadOnly returns a read-only version of Args.
+func (a *Args) ReadOnly() ReadOnly {
+	return ReadOnly{args: a}
+}
+
+// Clone makes a deep copy.
+func (a *Args) Clone() *Args {
+	res := &Args{
+		Keys:   make([]string, len(a.Keys)),
+		Values: make(map[string]ipld.Node, len(a.Values)),
+	}
+	copy(res.Keys, a.Keys)
+	for k, v := range a.Values {
+		res.Values[k] = v
+	}
+	return res
 }

@@ -5,13 +5,12 @@ import (
 
 	"github.com/ipfs/go-cid"
 	"github.com/stretchr/testify/require"
+
 	"github.com/ucan-wg/go-ucan/did/didtest"
 	"github.com/ucan-wg/go-ucan/pkg/args"
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/token/delegation/delegationtest"
 	"github.com/ucan-wg/go-ucan/token/invocation"
-
-	"github.com/stretchr/testify/assert"
 )
 
 const (
@@ -118,7 +117,7 @@ func TestToken_ExecutionAllowed(t *testing.T) {
 	})
 }
 
-func test(t *testing.T, persona didtest.Persona, cmd command.Command, args *args.Args, prf []cid.Cid, opts ...invocation.Option) (bool, error) {
+func test(t *testing.T, persona didtest.Persona, cmd command.Command, args *args.Args, prf []cid.Cid, opts ...invocation.Option) error {
 	t.Helper()
 
 	tkn, err := invocation.New(persona.DID(t), didtest.PersonaAlice.DID(t), cmd, prf, opts...)
@@ -131,13 +130,11 @@ func test(t *testing.T, persona didtest.Persona, cmd command.Command, args *args
 }
 
 func testFails(t *testing.T, expErr error, persona didtest.Persona, cmd command.Command, args *args.Args, prf []cid.Cid, opts ...invocation.Option) {
-	ok, err := test(t, persona, cmd, args, prf, opts...)
+	err := test(t, persona, cmd, args, prf, opts...)
 	require.ErrorIs(t, err, expErr)
-	assert.False(t, ok)
 }
 
 func testPasses(t *testing.T, persona didtest.Persona, cmd command.Command, args *args.Args, prf []cid.Cid, opts ...invocation.Option) {
-	ok, err := test(t, persona, cmd, args, prf, opts...)
+	err := test(t, persona, cmd, args, prf, opts...)
 	require.NoError(t, err)
-	assert.True(t, ok)
 }

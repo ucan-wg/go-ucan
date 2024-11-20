@@ -102,34 +102,38 @@ func New(iss, sub did.DID, cmd command.Command, prf []cid.Cid, opts ...Option) (
 	return &tkn, nil
 }
 
-func (t *Token) ExecutionAllowed(loader DelegationLoader) (bool, error) {
+func (t *Token) ExecutionAllowed(loader delegation.Loader) error {
 	return t.executionAllowed(loader, t.arguments)
 }
 
-func (t *Token) ExecutionAllowedWithArgsHook(loader DelegationLoader, hook func(*args.Args) *args.Args) (bool, error) {
-	return t.executionAllowed(loader, hook(t.arguments))
+func (t *Token) ExecutionAllowedWithArgsHook(loader delegation.Loader, hook func(args args.ReadOnly) (*args.Args, error)) error {
+	newArgs, err := hook(t.arguments.ReadOnly())
+	if err != nil {
+		return err
+	}
+	return t.executionAllowed(loader, newArgs)
 }
 
-func (t *Token) executionAllowed(loader DelegationLoader, arguments *args.Args) (bool, error) {
+func (t *Token) executionAllowed(loader delegation.Loader, arguments *args.Args) error {
 	delegations, err := t.loadProofs(loader)
 	if err != nil {
 		// All referenced delegations must be available - 4b
-		return false, err
+		return err
 	}
 
 	if err := t.verifyProofs(delegations); err != nil {
-		return false, err
+		return err
 	}
 
 	if err := t.verifyTimeBound(delegations); err != nil {
-		return false, err
+		return err
 	}
 
 	if err := t.verifyArgs(delegations, arguments); err != nil {
-		return false, err
+		return err
 	}
 
-	return true, nil
+	return nil
 }
 
 // Issuer returns the did.DID representing the Token's issuer.
@@ -154,8 +158,8 @@ func (t *Token) Command() command.Command {
 
 // Arguments returns the arguments to be used when the command is
 // invoked.
-func (t *Token) Arguments() *args.Args {
-	return t.arguments
+func (t *Token) Arguments() args.ReadOnly {
+	return t.arguments.ReadOnly()
 }
 
 // Proof() returns the ordered list of cid.Cid which reference the
@@ -225,7 +229,7 @@ func (t *Token) validate() error {
 	return errs
 }
 
-func (t *Token) loadProofs(loader DelegationLoader) (res []*delegation.Token, err error) {
+func (t *Token) loadProofs(loader delegation.Loader) (res []*delegation.Token, err error) {
 	res = make([]*delegation.Token, len(t.proof))
 	for i, c := range t.proof {
 		res[i], err = loader.GetDelegation(c)
