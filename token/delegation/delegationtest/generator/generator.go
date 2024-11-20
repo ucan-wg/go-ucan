@@ -1,4 +1,4 @@
-package delegationtest
+package main
 
 import (
 	"os"
@@ -15,11 +15,13 @@ import (
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/policy"
 	"github.com/ucan-wg/go-ucan/token/delegation"
+	"github.com/ucan-wg/go-ucan/token/delegation/delegationtest"
 )
 
 const (
 	tokenNamePrefix      = "Token"
 	proorChainNamePrefix = "Proof"
+	tokenExt             = ".dagcbor"
 )
 
 var constantNonce = []byte{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b}
@@ -83,7 +85,7 @@ func (g *generator) chainPersonas(personas []didtest.Persona, acc acc, vari vari
 	params := newDelegationParams{
 		privKey: personas[0].PrivKey(),
 		aud:     personas[1].DID(),
-		cmd:     NominalCommand,
+		cmd:     delegationtest.NominalCommand,
 		pol:     policy.Policy{},
 		opts: []delegation.Option{
 			delegation.WithSubject(didtest.PersonaAlice.DID()),
@@ -107,10 +109,10 @@ func (g *generator) chainPersonas(personas []didtest.Persona, acc acc, vari vari
 	if personas[0] == didtest.PersonaCarol {
 		variants := []variant{
 			{name: "InvalidExpandedCommand", variant: func(p *newDelegationParams) {
-				p.cmd = ExpandedCommand
+				p.cmd = delegationtest.ExpandedCommand
 			}},
 			{name: "ValidAttenuatedCommand", variant: func(p *newDelegationParams) {
-				p.cmd = AttenuatedCommand
+				p.cmd = delegationtest.AttenuatedCommand
 			}},
 			{name: "InvalidSubject", variant: func(p *newDelegationParams) {
 				p.opts = append(p.opts, delegation.WithSubject(didtest.PersonaBob.DID()))
@@ -164,7 +166,7 @@ func (g *generator) createDelegation(params newDelegationParams, name string, va
 		dlgName += "_" + vari.name
 	}
 
-	err = os.WriteFile(filepath.Join(tokenDir, dlgName+tokenExt), data, 0o644)
+	err = os.WriteFile(filepath.Join("..", delegationtest.TokenDir, dlgName+tokenExt), data, 0o644)
 	if err != nil {
 		return cid.Undef, err
 	}
@@ -223,5 +225,5 @@ func (g *generator) writeGoFile() error {
 		file.Line()
 	}
 
-	return file.Save("token_gen.go")
+	return file.Save("../token_gen.go")
 }

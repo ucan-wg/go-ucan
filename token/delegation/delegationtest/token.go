@@ -11,11 +11,6 @@ import (
 	"github.com/ucan-wg/go-ucan/token/delegation"
 )
 
-const (
-	tokenDir = "data"
-	tokenExt = ".dagcbor"
-)
-
 var (
 	// ExpandedCommand is the parent of the NominalCommand and represents
 	// the cases where the delegation proof-chain or invocation token tries
@@ -34,6 +29,8 @@ var (
 
 // ProofEmpty provides an empty proof chain for testing purposes.
 var ProofEmpty = []cid.Cid{}
+
+const TokenDir = "data"
 
 //go:embed data
 var fs embed.FS
@@ -74,7 +71,7 @@ func (l *delegationLoader) GetDelegation(id cid.Cid) (*delegation.Token, error) 
 }
 
 func loadDelegations() (delegation.Loader, error) {
-	dirEntries, err := fs.ReadDir("data")
+	dirEntries, err := fs.ReadDir(TokenDir)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +79,7 @@ func loadDelegations() (delegation.Loader, error) {
 	tkns := make(map[cid.Cid]*delegation.Token, len(dirEntries))
 
 	for _, dirEntry := range dirEntries {
-		data, err := fs.ReadFile(filepath.Join(tokenDir, dirEntry.Name()))
+		data, err := fs.ReadFile(filepath.Join(TokenDir, dirEntry.Name()))
 		if err != nil {
 			return nil, err
 		}
