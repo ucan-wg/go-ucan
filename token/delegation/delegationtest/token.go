@@ -2,14 +2,13 @@ package delegationtest
 
 import (
 	"embed"
-	"fmt"
 	"path/filepath"
 	"sync"
 
 	"github.com/ipfs/go-cid"
+
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/token/delegation"
-	"github.com/ucan-wg/go-ucan/token/invocation"
 )
 
 const (
@@ -41,11 +40,11 @@ var fs embed.FS
 
 var (
 	once sync.Once
-	ldr  invocation.DelegationLoader
+	ldr  delegation.Loader
 	err  error
 )
 
-var _ invocation.DelegationLoader = (*delegationLoader)(nil)
+var _ delegation.Loader = (*delegationLoader)(nil)
 
 type delegationLoader struct {
 	tokens map[cid.Cid]*delegation.Token
@@ -54,7 +53,7 @@ type delegationLoader struct {
 // GetDelegationLoader returns a singleton instance of a test
 // DelegationLoader containing all the tokens present in the data/
 // directory.
-func GetDelegationLoader() (invocation.DelegationLoader, error) {
+func GetDelegationLoader() (delegation.Loader, error) {
 	once.Do(func() {
 		ldr, err = loadDelegations()
 	})
@@ -66,13 +65,13 @@ func GetDelegationLoader() (invocation.DelegationLoader, error) {
 func (l *delegationLoader) GetDelegation(id cid.Cid) (*delegation.Token, error) {
 	tkn, ok := l.tokens[id]
 	if !ok {
-		return nil, fmt.Errorf("%w: CID %s", invocation.ErrMissingDelegation, id.String())
+		return nil, delegation.ErrDelegationNotFound
 	}
 
 	return tkn, nil
 }
 
-func loadDelegations() (invocation.DelegationLoader, error) {
+func loadDelegations() (delegation.Loader, error) {
 	dirEntries, err := fs.ReadDir("data")
 	if err != nil {
 		return nil, err

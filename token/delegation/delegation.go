@@ -48,7 +48,7 @@ type Token struct {
 
 // New creates a validated Token from the provided parameters and options.
 //
-// When creating a delegated token, the Issuer's (iss) DID is assembed
+// When creating a delegated token, the Issuer's (iss) DID is assembled
 // using the public key associated with the private key sent as the first
 // parameter.
 func New(privKey crypto.PrivKey, aud did.DID, cmd command.Command, pol policy.Policy, opts ...Option) (*Token, error) {

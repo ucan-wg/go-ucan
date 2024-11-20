@@ -2,6 +2,7 @@ package container
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"io"
 	"iter"
@@ -34,13 +35,16 @@ func (ctn Reader) GetToken(cid cid.Cid) (token.Token, error) {
 // GetDelegation is the same as GetToken but only return a delegation.Token, with the right type.
 func (ctn Reader) GetDelegation(cid cid.Cid) (*delegation.Token, error) {
 	tkn, err := ctn.GetToken(cid)
+	if errors.Is(err, ErrNotFound) {
+		return nil, delegation.ErrDelegationNotFound
+	}
 	if err != nil {
 		return nil, err
 	}
 	if tkn, ok := tkn.(*delegation.Token); ok {
 		return tkn, nil
 	}
-	return nil, fmt.Errorf("not a delegation token")
+	return nil, delegation.ErrDelegationNotFound
 }
 
 // GetAllDelegations returns all the delegation.Token in the container.

@@ -6,8 +6,9 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/ucan-wg/go-ucan/token/delegation"
 	"github.com/ucan-wg/go-ucan/token/delegation/delegationtest"
-	"github.com/ucan-wg/go-ucan/token/invocation"
 )
 
 func TestGetDelegation(t *testing.T) {
@@ -25,8 +26,7 @@ func TestGetDelegation(t *testing.T) {
 		t.Parallel()
 
 		tkn, err := delegationtest.GetDelegation(cid.Undef)
-		require.ErrorIs(t, err, invocation.ErrMissingDelegation)
-		require.ErrorContains(t, err, "CID b")
+		require.ErrorIs(t, err, delegation.ErrDelegationNotFound)
 		assert.Nil(t, tkn)
 	})
 }

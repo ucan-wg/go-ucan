@@ -37,6 +37,37 @@ func ExamplePolicy() {
 	// ]
 }
 
+func ExamplePolicy_accumulate() {
+	var statements []policy.Constructor
+
+	statements = append(statements, policy.Equal(".status", literal.String("draft")))
+
+	statements = append(statements, policy.All(".reviewer",
+		policy.Like(".email", "*@example.com"),
+	))
+
+	statements = append(statements, policy.Any(".tags", policy.Or(
+		policy.Equal(".", literal.String("news")),
+		policy.Equal(".", literal.String("press")),
+	)))
+
+	pol := policy.MustConstruct(statements...)
+
+	fmt.Println(pol)
+
+	// Output:
+	// [
+	//   ["==", ".status", "draft"],
+	//   ["all", ".reviewer",
+	//     ["like", ".email", "*@example.com"]],
+	//   ["any", ".tags",
+	//     ["or", [
+	//       ["==", ".", "news"],
+	//       ["==", ".", "press"]]]
+	//     ]
+	// ]
+}
+
 func TestConstruct(t *testing.T) {
 	pol, err := policy.Construct(
 		policy.Equal(".status", literal.String("draft")),

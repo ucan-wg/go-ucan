@@ -12,9 +12,7 @@ import (
 	"github.com/ucan-wg/go-ucan/pkg/policy/literal"
 )
 
-var ErrUnsupported = errors.New("failure adding unsupported type to meta")
-
-var ErrNotFound = errors.New("key-value not found in meta")
+var ErrNotFound = errors.New("key not found in meta")
 
 var ErrNotEncryptable = errors.New("value of this type cannot be encrypted")
 
@@ -193,18 +191,19 @@ func (m *Meta) String() string {
 	buf := strings.Builder{}
 	buf.WriteString("{")
 
-	var i int
 	for key, node := range m.Values {
-		if i > 0 {
-			buf.WriteString(", ")
-		}
-		i++
+		buf.WriteString("\n\t")
 		buf.WriteString(key)
-		buf.WriteString(":")
-		buf.WriteString(printer.Sprint(node))
+		buf.WriteString(": ")
+		buf.WriteString(strings.ReplaceAll(printer.Sprint(node), "\n", "\n\t"))
+		buf.WriteString(",")
 	}
 
+	if len(m.Values) > 0 {
+		buf.WriteString("\n")
+	}
 	buf.WriteString("}")
+
 	return buf.String()
 }
 
