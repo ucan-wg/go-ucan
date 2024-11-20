@@ -78,7 +78,7 @@ func MustParse(str string) DID {
 
 // Defined tells if the DID is defined, not equal to Undef.
 func (d DID) Defined() bool {
-	return d.code == 0 || len(d.bytes) > 0
+	return d.code != 0 || len(d.bytes) > 0
 }
 
 // PubKey returns the public key encapsulated by the did:key.

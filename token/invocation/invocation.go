@@ -18,6 +18,7 @@ import (
 	"github.com/ucan-wg/go-ucan/pkg/args"
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/meta"
+	"github.com/ucan-wg/go-ucan/token/delegation"
 	"github.com/ucan-wg/go-ucan/token/internal/nonce"
 	"github.com/ucan-wg/go-ucan/token/internal/parse"
 )
@@ -33,11 +34,13 @@ type Token struct {
 
 	// The Command
 	command command.Command
-	// The Command's Arguments
+	// The Command's arguments
 	arguments *args.Args
-	// Delegations that prove the chain of authority
+	// CIDs of the delegation.Token that prove the chain of authority
+	// They need to form a strictly linear chain, and being ordered starting from the
+	// leaf Delegation (with aud matching the invocation's iss), in a strict sequence
+	// where the iss of the previous Delegation matches the aud of the next Delegation.
 	proof []cid.Cid
-
 	// Arbitrary Metadata
 	meta *meta.Meta
 
@@ -84,6 +87,7 @@ func New(iss, sub did.DID, cmd command.Command, prf []cid.Cid, opts ...Option) (
 		}
 	}
 
+	var err error
 	if len(tkn.nonce) == 0 {
 		tkn.nonce, err = nonce.Generate()
 		if err != nil {
@@ -96,6 +100,40 @@ func New(iss, sub did.DID, cmd command.Command, prf []cid.Cid, opts ...Option) (
 	}
 
 	return &tkn, nil
+}
+
+func (t *Token) ExecutionAllowed(loader delegation.Loader) error {
+	return t.executionAllowed(loader, t.arguments)
+}
+
+func (t *Token) ExecutionAllowedWithArgsHook(loader delegation.Loader, hook func(args args.ReadOnly) (*args.Args, error)) error {
+	newArgs, err := hook(t.arguments.ReadOnly())
+	if err != nil {
+		return err
+	}
+	return t.executionAllowed(loader, newArgs)
+}
+
+func (t *Token) executionAllowed(loader delegation.Loader, arguments *args.Args) error {
+	delegations, err := t.loadProofs(loader)
+	if err != nil {
+		// All referenced delegations must be available - 4b
+		return err
+	}
+
+	if err := t.verifyProofs(delegations); err != nil {
+		return err
+	}
+
+	if err := t.verifyTimeBound(delegations); err != nil {
+		return err
+	}
+
+	if err := t.verifyArgs(delegations, arguments); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Issuer returns the did.DID representing the Token's issuer.
@@ -120,8 +158,8 @@ func (t *Token) Command() command.Command {
 
 // Arguments returns the arguments to be used when the command is
 // invoked.
-func (t *Token) Arguments() *args.Args {
-	return t.arguments
+func (t *Token) Arguments() args.ReadOnly {
+	return t.arguments.ReadOnly()
 }
 
 // Proof() returns the ordered list of cid.Cid which reference the
@@ -157,6 +195,21 @@ func (t *Token) Cause() *cid.Cid {
 	return t.cause
 }
 
+// IsValidNow verifies that the token can be used at the current time, based on expiration or "not before" fields.
+// This does NOT do any other kind of verifications.
+func (t *Token) IsValidNow() bool {
+	return t.IsValidAt(time.Now())
+}
+
+// IsValidNow verifies that the token can be used at the given time, based on expiration or "not before" fields.
+// This does NOT do any other kind of verifications.
+func (t *Token) IsValidAt(ti time.Time) bool {
+	if t.expiration != nil && ti.After(*t.expiration) {
+		return false
+	}
+	return true
+}
+
 func (t *Token) validate() error {
 	var errs error
 
@@ -174,6 +227,17 @@ func (t *Token) validate() error {
 	}
 
 	return errs
+}
+
+func (t *Token) loadProofs(loader delegation.Loader) (res []*delegation.Token, err error) {
+	res = make([]*delegation.Token, len(t.proof))
+	for i, c := range t.proof {
+		res[i], err = loader.GetDelegation(c)
+		if err != nil {
+			return nil, fmt.Errorf("%w: need %s", ErrMissingDelegation, c)
+		}
+	}
+	return res, nil
 }
 
 // tokenFromModel build a decoded view of the raw IPLD data.
