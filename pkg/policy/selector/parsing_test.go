@@ -30,6 +30,29 @@ func TestParse(t *testing.T) {
 		require.Empty(t, sel[0].Slice())
 		require.Equal(t, sel[0].Field(), "foo")
 		require.Empty(t, sel[0].Index())
+
+		sel, err = Parse(".foo_bar")
+		require.NoError(t, err)
+		require.Equal(t, 1, len(sel))
+		require.False(t, sel[0].Identity())
+		require.False(t, sel[0].Optional())
+		require.False(t, sel[0].Iterator())
+		require.Empty(t, sel[0].Slice())
+		require.Equal(t, sel[0].Field(), "foo_bar")
+		require.Empty(t, sel[0].Index())
+
+		sel, err = Parse(".foo-bar")
+		require.NoError(t, err)
+		require.Equal(t, 1, len(sel))
+		require.False(t, sel[0].Identity())
+		require.False(t, sel[0].Optional())
+		require.False(t, sel[0].Iterator())
+		require.Empty(t, sel[0].Slice())
+		require.Equal(t, sel[0].Field(), "foo-bar")
+		require.Empty(t, sel[0].Index())
+
+		sel, err = Parse(".foo*bar")
+		require.ErrorContains(t, err, "invalid segment")
 	})
 
 	t.Run("explicit field", func(t *testing.T) {
