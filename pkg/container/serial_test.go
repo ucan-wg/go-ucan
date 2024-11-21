@@ -26,10 +26,10 @@ func TestContainerRoundTrip(t *testing.T) {
 		writer func(ctn Writer, w io.Writer) error
 		reader func(io.Reader) (Reader, error)
 	}{
-		{"car", Writer.ToCar, FromCar},
-		{"carBase64", Writer.ToCarBase64, FromCarBase64},
-		{"cbor", Writer.ToCbor, FromCbor},
-		{"cborBase64", Writer.ToCborBase64, FromCborBase64},
+		{"car", Writer.ToCarWriter, FromCarReader},
+		{"carBase64", Writer.ToCarBase64Writer, FromCarBase64Reader},
+		{"cbor", Writer.ToCborWriter, FromCborReader},
+		{"cborBase64", Writer.ToCborBase64Writer, FromCborBase64Reader},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			tokens := make(map[cid.Cid]*delegation.Token)
@@ -98,10 +98,10 @@ func BenchmarkContainerSerialisation(b *testing.B) {
 		writer func(ctn Writer, w io.Writer) error
 		reader func(io.Reader) (Reader, error)
 	}{
-		{"car", Writer.ToCar, FromCar},
-		{"carBase64", Writer.ToCarBase64, FromCarBase64},
-		{"cbor", Writer.ToCbor, FromCbor},
-		{"cborBase64", Writer.ToCborBase64, FromCborBase64},
+		{"car", Writer.ToCarWriter, FromCarReader},
+		{"carBase64", Writer.ToCarBase64Writer, FromCarBase64Reader},
+		{"cbor", Writer.ToCborWriter, FromCborReader},
+		{"cborBase64", Writer.ToCborBase64Writer, FromCborBase64Reader},
 	} {
 		writer := NewWriter()
 
@@ -185,18 +185,17 @@ func FuzzContainerRead(f *testing.F) {
 			_, c, data := randToken()
 			writer.AddSealed(c, data)
 		}
-		buf := bytes.NewBuffer(nil)
-		err := writer.ToCbor(buf)
+		data, err := writer.ToCbor()
 		require.NoError(f, err)
 
-		f.Add(buf.Bytes())
+		f.Add(data)
 	}
 
 	f.Fuzz(func(t *testing.T, data []byte) {
 		start := time.Now()
 
 		// search for panics
-		_, _ = FromCbor(bytes.NewReader(data))
+		_, _ = FromCbor(data)
 
 		if time.Since(start) > 100*time.Millisecond {
 			panic("too long")
