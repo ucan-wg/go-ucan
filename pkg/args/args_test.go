@@ -1,6 +1,7 @@
 package args_test
 
 import (
+	"maps"
 	"sync"
 	"testing"
 
@@ -8,6 +9,7 @@ import (
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/codec/dagcbor"
 	"github.com/ipld/go-ipld-prime/datamodel"
+	"github.com/ipld/go-ipld-prime/node/basicnode"
 	"github.com/ipld/go-ipld-prime/schema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -131,6 +133,56 @@ func TestArgs_Include(t *testing.T) {
 	assert.Equal(t, "val2", must(argsIn.Values["key2"].AsString()))
 	assert.Equal(t, "val3", must(argsIn.Values["key3"].AsString()))
 	assert.Equal(t, "val4", must(argsIn.Values["key4"].AsString()))
+}
+
+func TestIterCloneEquals(t *testing.T) {
+	a := args.New()
+
+	require.NoError(t, a.Add("foo", "bar"))
+	require.NoError(t, a.Add("baz", 1234))
+
+	expected := map[string]ipld.Node{
+		"foo": basicnode.NewString("bar"),
+		"baz": basicnode.NewInt(1234),
+	}
+
+	// args -> iter
+	require.Equal(t, expected, maps.Collect(a.Iter()))
+
+	// readonly -> iter
+	ro := a.ReadOnly()
+	require.Equal(t, expected, maps.Collect(ro.Iter()))
+
+	// args -> clone -> iter
+	clone := a.Clone()
+	require.Equal(t, expected, maps.Collect(clone.Iter()))
+
+	// readonly -> WriteableClone -> iter
+	wclone := ro.WriteableClone()
+	require.Equal(t, expected, maps.Collect(wclone.Iter()))
+
+	require.True(t, a.Equals(wclone))
+	require.True(t, ro.Equals(wclone.ReadOnly()))
+}
+
+func TestInclude(t *testing.T) {
+	a1 := args.New()
+
+	require.NoError(t, a1.Add("samekey", "bar"))
+	require.NoError(t, a1.Add("baz", 1234))
+
+	a2 := args.New()
+
+	require.NoError(t, a2.Add("samekey", "othervalue")) // check no overwrite
+	require.NoError(t, a2.Add("otherkey", 1234))
+
+	a1.Include(a2)
+
+	require.Equal(t, map[string]ipld.Node{
+		"samekey":  basicnode.NewString("bar"),
+		"baz":      basicnode.NewInt(1234),
+		"otherkey": basicnode.NewInt(1234),
+	}, maps.Collect(a1.Iter()))
 }
 
 const (
