@@ -11,7 +11,7 @@ import (
 var (
 	indexRegex = regexp.MustCompile(`^-?\d+$`)
 	sliceRegex = regexp.MustCompile(`^((\-?\d+:\-?\d*)|(\-?\d*:\-?\d+))$`)
-	fieldRegex = regexp.MustCompile(`^\.[a-zA-Z_]*?$`)
+	fieldRegex = regexp.MustCompile(`^\.[a-zA-Z_-]*?$`)
 )
 
 func Parse(str string) (Selector, error) {
