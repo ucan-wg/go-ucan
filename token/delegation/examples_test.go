@@ -2,7 +2,6 @@ package delegation_test
 
 import (
 	"bytes"
-	"crypto/rand"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
@@ -13,9 +12,8 @@ import (
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/codec/dagcbor"
 	"github.com/ipld/go-ipld-prime/codec/dagjson"
-	"github.com/libp2p/go-libp2p/core/crypto"
 
-	"github.com/ucan-wg/go-ucan/did"
+	"github.com/ucan-wg/go-ucan/did/didtest"
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/policy"
 	"github.com/ucan-wg/go-ucan/pkg/policy/literal"
@@ -26,15 +24,7 @@ import (
 // The following example shows how to create a delegation.Token with
 // distinct DIDs for issuer (iss), audience (aud) and subject (sub).
 func ExampleNew() {
-	issPriv, issPub, err := crypto.GenerateEd25519Key(rand.Reader)
-	printThenPanicOnErr(err)
-
-	issDid, err := did.FromPubKey(issPub)
-	printThenPanicOnErr(err)
-	fmt.Println("issDid:", issDid)
-
-	audDid := did.MustParse(AudienceDID)
-	subDid := did.MustParse(subjectDID)
+	fmt.Println("issDid:", didtest.PersonaBob.DID().String())
 
 	// The command defines the shape of the arguments that will be evaluated against the policy
 	cmd := command.MustParse("/foo/bar")
@@ -51,8 +41,8 @@ func ExampleNew() {
 		)),
 	)
 
-	tkn, err := delegation.New(issPriv, audDid, cmd, pol,
-		delegation.WithSubject(subDid),
+	tkn, err := delegation.New(didtest.PersonaBob.DID(), didtest.PersonaCarol.DID(), cmd, pol,
+		delegation.WithSubject(didtest.PersonaAlice.DID()),
 		delegation.WithExpirationIn(time.Hour),
 		delegation.WithNotBeforeIn(time.Minute),
 		delegation.WithMeta("foo", "bar"),
@@ -61,101 +51,91 @@ func ExampleNew() {
 	printThenPanicOnErr(err)
 
 	// "Seal", meaning encode and wrap into a signed envelope.
-	data, id, err := tkn.ToSealed(issPriv)
+	data, id, err := tkn.ToSealed(didtest.PersonaBob.PrivKey())
 	printThenPanicOnErr(err)
 
 	printCIDAndSealed(id, data)
 
 	// Example output:
 	//
-	// issDid: did:key:z6MkhVFznPeR572rTK51UjoTNpnF8cxuWfPm9oBMPr7y8ABe
+	// issDid: did:key:z6MkvJPmEZZYbgiw1ouT1oouTsTFBHJSts9ophVsNgcRmYxU
 	//
-	// CID (base58BTC): zdpuAv6g2eJSc4RJwEpmooGLVK4wJ4CZpnM92tPVYt5jtMoLW
+	// CID (base58BTC): zdpuAsqfZkgg2jgZyob23sq1J9xwtf9PHgt1PsskVCMq7Vvxk
 	//
-	// DAG-CBOR (base64) out: glhA5rvl8uKmDVGvAVSt4m/0MGiXl9dZwljJJ9m2qHCoIB617l26UvMxyH5uvN9hM7ozfVATiq4mLhoGgm9IGnEEAqJhaEQ07QFxc3VjYW4vZGxnQDEuMC4wLXJjLjGpY2F1ZHg4ZGlkOmtleTp6Nk1rcTVZbWJKY1RyUEV4TkRpMjZpbXJUQ3BLaGVwakJGQlNIcXJCRE4yQXJQa3ZjY21kaC9mb28vYmFyY2V4cBpnDWzqY2lzc3g4ZGlkOmtleTp6Nk1raFZGem5QZVI1NzJyVEs1MVVqb1ROcG5GOGN4dVdmUG05b0JNUHI3eThBQmVjbmJmGmcNXxZjcG9sg4NiPT1nLnN0YXR1c2VkcmFmdINjYWxsaS5yZXZpZXdlcoNkbGlrZWYuZW1haWxtKkBleGFtcGxlLmNvbYNjYW55ZS50YWdzgmJvcoKDYj09YS5kbmV3c4NiPT1hLmVwcmVzc2NzdWJ4OGRpZDprZXk6ejZNa3RBMXVCZENwcTR1SkJxRTlqak1pTHl4WkJnOWE2eGdQUEtKak1xc3M2WmMyZG1ldGGiY2Jhehh7Y2Zvb2NiYXJlbm9uY2VMu0HMgJ5Y+M84I/66
-	//
+	// DAG-CBOR (base64) out: lhAOnjc0bPptlI5MxRBrIK3YmAP1CxKfXOPkz6MHt/UJCx2gCN+6gXZX2N+BIJvmy8XmAO5sT2GYimiV7HlJH1AA6JhaEQ07QFxc3VjYW4vZGxnQDEuMC4wLXJjLjGpY2F1ZHg4ZGlkOmtleTp6Nk1rZ3VwY2hoNUh3dUhhaFM3WXN5RThiTHVhMU1yOHAyaUtOUmh5dlN2UkFzOW5jY21kaC9mb28vYmFyY2V4cBpnROP/Y2lzc3g4ZGlkOmtleTp6Nk1rdkpQbUVaWlliZ2l3MW91VDFvb3VUc1RGQkhKU3RzOW9waFZzTmdjUm1ZeFVjbmJmGmdE1itjcG9sg4NiPT1nLnN0YXR1c2VkcmFmdINjYWxsaS5yZXZpZXdlcoNkbGlrZWYuZW1haWxtKkBleGFtcGxlLmNvbYNjYW55ZS50YWdzgmJvcoKDYj09YS5kbmV3c4NiPT1hLmVwcmVzc2NzdWJ4OGRpZDprZXk6ejZNa3V1a2syc2tEWExRbjdOSzNFaDlqTW5kWWZ2REJ4eGt0Z3BpZEpBcWI3TTNwZG1ldGGiY2Jhehh7Y2Zvb2NiYXJlbm9uY2VMv+Diy6GExIuM1eX4
 	// Converted to DAG-JSON out:
-	// [
-	//	{
-	//		"/": {
-	//			"bytes": "5rvl8uKmDVGvAVSt4m/0MGiXl9dZwljJJ9m2qHCoIB617l26UvMxyH5uvN9hM7ozfVATiq4mLhoGgm9IGnEEAg"
-	//		}
-	//	},
-	//	{
-	//		"h": {
+	//	[
+	//		{
 	//			"/": {
-	//				"bytes": "NO0BcQ"
+	//				"bytes": "5rvl8uKmDVGvAVSt4m/0MGiXl9dZwljJJ9m2qHCoIB617l26UvMxyH5uvN9hM7ozfVATiq4mLhoGgm9IGnEEAg"
 	//			}
 	//		},
-	//		"ucan/dlg@1.0.0-rc.1": {
-	//			"aud": "did:key:z6Mkq5YmbJcTrPExNDi26imrTCpKhepjBFBSHqrBDN2ArPkv",
-	//			"cmd": "/foo/bar",
-	//			"exp": 1728933098,
-	//			"iss": "did:key:z6MkhVFznPeR572rTK51UjoTNpnF8cxuWfPm9oBMPr7y8ABe",
-	//			"meta": {
-	//				"baz": 123,
-	//				"foo": "bar"
-	//			},
-	//			"nbf": 1728929558,
-	//			"nonce": {
+	//		{
+	//			"h": {
 	//				"/": {
-	//					"bytes": "u0HMgJ5Y+M84I/66"
+	//					"bytes": "NO0BcQ"
 	//				}
 	//			},
-	//			"pol": [
-	//				[
-	//					"==",
-	//					".status",
-	//					"draft"
-	//				],
-	//				[
-	//					"all",
-	//					".reviewer",
+	//			"ucan/dlg@1.0.0-rc.1": {
+	//				"aud": "did:key:z6Mkq5YmbJcTrPExNDi26imrTCpKhepjBFBSHqrBDN2ArPkv",
+	//				"cmd": "/foo/bar",
+	//				"exp": 1728933098,
+	//				"iss": "did:key:z6MkhVFznPeR572rTK51UjoTNpnF8cxuWfPm9oBMPr7y8ABe",
+	//				"meta": {
+	//					"baz": 123,
+	//					"foo": "bar"
+	//				},
+	//				"nbf": 1728929558,
+	//				"nonce": {
+	//					"/": {
+	//						"bytes": "u0HMgJ5Y+M84I/66"
+	//					}
+	//				},
+	//				"pol": [
 	//					[
-	//						"like",
-	//						".email",
-	//						"*@example.com"
-	//					]
-	//				],
-	//				[
-	//					"any",
-	//					".tags",
+	//						"==",
+	//						".status",
+	//						"draft"
+	//					],
 	//					[
-	//						"or",
+	//						"all",
+	//						".reviewer",
 	//						[
+	//							"like",
+	//							".email",
+	//							"*@example.com"
+	//						]
+	//					],
+	//					[
+	//						"any",
+	//						".tags",
+	//						[
+	//							"or",
 	//							[
-	//								"==",
-	//								".",
-	//								"news"
-	//							],
-	//							[
-	//								"==",
-	//								".",
-	//								"press"
+	//								[
+	//									"==",
+	//									".",
+	//									"news"
+	//								],
+	//								[
+	//									"==",
+	//									".",
+	//									"press"
+	//								]
 	//							]
 	//						]
 	//					]
-	//				]
-	//			],
-	//			"sub": "did:key:z6MktA1uBdCpq4uJBqE9jjMiLyxZBg9a6xgPPKJjMqss6Zc2"
+	//				],
+	//				"sub": "did:key:z6MktA1uBdCpq4uJBqE9jjMiLyxZBg9a6xgPPKJjMqss6Zc2"
+	//			}
 	//		}
-	//	}
-	// ]
+	//	]
 }
 
 // The following example shows how to create a UCAN root delegation.Token
 // - a delegation.Token with the subject (sub) set to the value of issuer
 // (iss).
 func ExampleRoot() {
-	issPriv, issPub, err := crypto.GenerateEd25519Key(rand.Reader)
-	printThenPanicOnErr(err)
-
-	issDid, err := did.FromPubKey(issPub)
-	printThenPanicOnErr(err)
-	fmt.Println("issDid:", issDid)
-
-	audDid := did.MustParse(AudienceDID)
-
 	// The command defines the shape of the arguments that will be evaluated against the policy
 	cmd := command.MustParse("/foo/bar")
 
@@ -171,7 +151,7 @@ func ExampleRoot() {
 		)),
 	)
 
-	tkn, err := delegation.Root(issPriv, audDid, cmd, pol,
+	tkn, err := delegation.Root(didtest.PersonaAlice.DID(), didtest.PersonaBob.DID(), cmd, pol,
 		delegation.WithExpirationIn(time.Hour),
 		delegation.WithNotBeforeIn(time.Minute),
 		delegation.WithMeta("foo", "bar"),
@@ -180,7 +160,7 @@ func ExampleRoot() {
 	printThenPanicOnErr(err)
 
 	// "Seal", meaning encode and wrap into a signed envelope.
-	data, id, err := tkn.ToSealed(issPriv)
+	data, id, err := tkn.ToSealed(didtest.PersonaAlice.PrivKey())
 	printThenPanicOnErr(err)
 
 	printCIDAndSealed(id, data)
@@ -189,82 +169,82 @@ func ExampleRoot() {
 	//
 	// issDid: did:key:z6MknWJqz17Y4AfsXSJUFKomuBR4GTkViM7kJYutzTMkCyFF
 	//
-	// CID (base58BTC): zdpuAwLojgfvFCbjz2FsKrvN1khDQ9mFGT6b6pxjMfz73Roed
+	// CID (base58BTC): zdpuAkwYz8nY7uU8j3F6wVTfFY1VEoExwvUAYBEwRWfTozddE
 	//
-	// DAG-CBOR (base64) out: glhA6dBhbhhGE36CW22OxjOEIAqdDmBqCNsAhCRljnBdXd7YrVOUG+bnXGCIwd4dTGgpEdmY06PFIl7IXKXCh/ESBqJhaEQ07QFxc3VjYW4vZGxnQDEuMC4wLXJjLjGpY2F1ZHg4ZGlkOmtleTp6Nk1rcTVZbWJKY1RyUEV4TkRpMjZpbXJUQ3BLaGVwakJGQlNIcXJCRE4yQXJQa3ZjY21kaC9mb28vYmFyY2V4cBpnDW0wY2lzc3g4ZGlkOmtleTp6Nk1rbldKcXoxN1k0QWZzWFNKVUZLb211QlI0R1RrVmlNN2tKWXV0elRNa0N5RkZjbmJmGmcNX1xjcG9sg4NiPT1nLnN0YXR1c2VkcmFmdINjYWxsaS5yZXZpZXdlcoNkbGlrZWYuZW1haWxtKkBleGFtcGxlLmNvbYNjYW55ZS50YWdzgmJvcoKDYj09YS5kbmV3c4NiPT1hLmVwcmVzc2NzdWJ4OGRpZDprZXk6ejZNa25XSnF6MTdZNEFmc1hTSlVGS29tdUJSNEdUa1ZpTTdrSll1dHpUTWtDeUZGZG1ldGGiY2Jhehh7Y2Zvb2NiYXJlbm9uY2VMJOsjYi1Pq3OIB0La
+	// DAG-CBOR (base64) out: glhAVpW67FJ+myNi+azvnw2jivuiqXTuMrDZI2Qdaa8jE1Oi3mkjnm7DyqSQGADcomcuDslMWKmJ+OIyvbPG5PtSA6JhaEQ07QFxc3VjYW4vZGxnQDEuMC4wLXJjLjGpY2F1ZHg4ZGlkOmtleTp6Nk1rdkpQbUVaWlliZ2l3MW91VDFvb3VUc1RGQkhKU3RzOW9waFZzTmdjUm1ZeFVjY21kaC9mb28vYmFyY2V4cBpnROVoY2lzc3g4ZGlkOmtleTp6Nk1rdXVrazJza0RYTFFuN05LM0VoOWpNbmRZZnZEQnh4a3RncGlkSkFxYjdNM3BjbmJmGmdE15RjcG9sg4NiPT1nLnN0YXR1c2VkcmFmdINjYWxsaS5yZXZpZXdlcoNkbGlrZWYuZW1haWxtKkBleGFtcGxlLmNvbYNjYW55ZS50YWdzgmJvcoKDYj09YS5kbmV3c4NiPT1hLmVwcmVzc2NzdWJ4OGRpZDprZXk6ejZNa3V1a2syc2tEWExRbjdOSzNFaDlqTW5kWWZ2REJ4eGt0Z3BpZEpBcWI3TTNwZG1ldGGiY2Jhehh7Y2Zvb2NiYXJlbm9uY2VMwzDc03WBciJIGPWG
 	//
 	// Converted to DAG-JSON out:
-	// [
-	//	{
-	//		"/": {
-	//			"bytes": "6dBhbhhGE36CW22OxjOEIAqdDmBqCNsAhCRljnBdXd7YrVOUG+bnXGCIwd4dTGgpEdmY06PFIl7IXKXCh/ESBg"
-	//		}
-	//	},
-	//	{
-	//		"h": {
+	//	[
+	//		{
 	//			"/": {
-	//				"bytes": "NO0BcQ"
+	//				"bytes": "VpW67FJ+myNi+azvnw2jivuiqXTuMrDZI2Qdaa8jE1Oi3mkjnm7DyqSQGADcomcuDslMWKmJ+OIyvbPG5PtSAw"
 	//			}
 	//		},
-	//		"ucan/dlg@1.0.0-rc.1": {
-	//			"aud": "did:key:z6Mkq5YmbJcTrPExNDi26imrTCpKhepjBFBSHqrBDN2ArPkv",
-	//			"cmd": "/foo/bar",
-	//			"exp": 1728933168,
-	//			"iss": "did:key:z6MknWJqz17Y4AfsXSJUFKomuBR4GTkViM7kJYutzTMkCyFF",
-	//			"meta": {
-	//				"baz": 123,
-	//				"foo": "bar"
-	//			},
-	//			"nbf": 1728929628,
-	//			"nonce": {
+	//		{
+	//			"h": {
 	//				"/": {
-	//					"bytes": "JOsjYi1Pq3OIB0La"
+	//					"bytes": "NO0BcQ"
 	//				}
 	//			},
-	//			"pol": [
-	//				[
-	//					"==",
-	//					".status",
-	//					"draft"
-	//				],
-	//				[
-	//					"all",
-	//					".reviewer",
+	//			"ucan/dlg@1.0.0-rc.1": {
+	//				"aud": "did:key:z6MkvJPmEZZYbgiw1ouT1oouTsTFBHJSts9ophVsNgcRmYxU",
+	//				"cmd": "/foo/bar",
+	//				"exp": 1732568424,
+	//				"iss": "did:key:z6Mkuukk2skDXLQn7NK3Eh9jMndYfvDBxxktgpidJAqb7M3p",
+	//				"meta": {
+	//					"baz": 123,
+	//					"foo": "bar"
+	//				},
+	//				"nbf": 1732564884,
+	//				"nonce": {
+	//					"/": {
+	//						"bytes": "wzDc03WBciJIGPWG"
+	//					}
+	//				},
+	//				"pol": [
 	//					[
-	//						"like",
-	//						".email",
-	//						"*@example.com"
-	//					]
-	//				],
-	//				[
-	//					"any",
-	//					".tags",
+	//						"==",
+	//						".status",
+	//						"draft"
+	//					],
 	//					[
-	//						"or",
+	//						"all",
+	//						".reviewer",
 	//						[
+	//							"like",
+	//							".email",
+	//							"*@example.com"
+	//						]
+	//					],
+	//					[
+	//						"any",
+	//						".tags",
+	//						[
+	//							"or",
 	//							[
-	//								"==",
-	//								".",
-	//								"news"
-	//							],
-	//							[
-	//								"==",
-	//								".",
-	//								"press"
+	//								[
+	//									"==",
+	//									".",
+	//									"news"
+	//								],
+	//								[
+	//									"==",
+	//									".",
+	//									"press"
+	//								]
 	//							]
 	//						]
 	//					]
-	//				]
-	//			],
-	//			"sub": "did:key:z6MknWJqz17Y4AfsXSJUFKomuBR4GTkViM7kJYutzTMkCyFF"
+	//				],
+	//				"sub": "did:key:z6Mkuukk2skDXLQn7NK3Eh9jMndYfvDBxxktgpidJAqb7M3p"
+	//			}
 	//		}
-	//	}
-	// ]
+	//	]
 }
 
 // The following example demonstrates how to get a delegation.Token from
 // a DAG-CBOR []byte.
-func ExampleToken_FromSealed() {
+func ExampleFromSealed() {
 	const cborBase64 = "glhAmnAkgfjAx4SA5pzJmtaHRJtTGNpF1y6oqb4yhGoM2H2EUGbBYT4rVDjMKBgCjhdGHjipm00L8iR5SsQh3sIEBaJhaEQ07QFxc3VjYW4vZGxnQDEuMC4wLXJjLjGoY2F1ZHg4ZGlkOmtleTp6Nk1rcTVZbWJKY1RyUEV4TkRpMjZpbXJUQ3BLaGVwakJGQlNIcXJCRE4yQXJQa3ZjY21kaC9mb28vYmFyY2V4cPZjaXNzeDhkaWQ6a2V5Ono2TWtwem4ybjNaR1QyVmFxTUdTUUMzdHptelY0VFM5UzcxaUZzRFhFMVdub05IMmNwb2yDg2I9PWcuc3RhdHVzZWRyYWZ0g2NhbGxpLnJldmlld2Vyg2RsaWtlZi5lbWFpbG0qQGV4YW1wbGUuY29tg2NhbnllLnRhZ3OCYm9ygoNiPT1hLmRuZXdzg2I9PWEuZXByZXNzY3N1Yng4ZGlkOmtleTp6Nk1rdEExdUJkQ3BxNHVKQnFFOWpqTWlMeXhaQmc5YTZ4Z1BQS0pqTXFzczZaYzJkbWV0YaBlbm9uY2VMAAECAwQFBgcICQoL"
 
 	cborBytes, err := base64.StdEncoding.DecodeString(cborBase64)

@@ -5,11 +5,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/stretchr/testify/require"
 	"gotest.tools/v3/golden"
 
-	"github.com/ucan-wg/go-ucan/did"
+	"github.com/ucan-wg/go-ucan/did/didtest"
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/policy"
 	"github.com/ucan-wg/go-ucan/token/delegation"
@@ -18,16 +17,8 @@ import (
 const (
 	nonce = "6roDhGi0kiNriQAz7J3d+bOeoI/tj8ENikmQNbtjnD0"
 
-	AudiencePrivKeyCfg = "CAESQL1hvbXpiuk2pWr/XFbfHJcZNpJ7S90iTA3wSCTc/BPRneCwPnCZb6c0vlD6ytDWqaOt0HEOPYnqEpnzoBDprSM="
-	AudienceDID        = "did:key:z6Mkq5YmbJcTrPExNDi26imrTCpKhepjBFBSHqrBDN2ArPkv"
-
-	issuerPrivKeyCfg = "CAESQLSql38oDmQXIihFFaYIjb73mwbPsc7MIqn4o8PN4kRNnKfHkw5gRP1IV9b6d0estqkZayGZ2vqMAbhRixjgkDU="
-	issuerDID        = "did:key:z6Mkpzn2n3ZGT2VaqMGSQC3tzmzV4TS9S71iFsDXE1WnoNH2"
-
-	subjectPrivKeyCfg = "CAESQL9RtjZ4dQBeXtvDe53UyvslSd64kSGevjdNiA1IP+hey5i/3PfRXSuDr71UeJUo1fLzZ7mGldZCOZL3gsIQz5c="
-	subjectDID        = "did:key:z6MktA1uBdCpq4uJBqE9jjMiLyxZBg9a6xgPPKJjMqss6Zc2"
-	subJectCmd        = "/foo/bar"
-	subjectPol        = `
+	subJectCmd = "/foo/bar"
+	subjectPol = `
 [
 	[
 		"==",
@@ -65,7 +56,7 @@ const (
 ]
 `
 
-	newCID  = "zdpuAn9JgGPvnt2WCmTaKktZdbuvcVGTg9bUT5kQaufwUtZ6e"
+	newCID  = "zdpuAwa4qv3ncMDPeDoqVxjZy3JoyWsbqUzm94rdA1AvRFkkw"
 	rootCID = "zdpuAkgGmUp5JrXvehGuuw9JA8DLQKDaxtK3R8brDQQVC2i5X"
 
 	aesKey = "xQklMmNTnVrmaPBq/0pwV5fEwuv/iClF5HWak9MsgI8="
@@ -73,13 +64,6 @@ const (
 
 func TestConstructors(t *testing.T) {
 	t.Parallel()
-
-	privKey := privKey(t, issuerPrivKeyCfg)
-
-	aud, err := did.Parse(AudienceDID)
-
-	sub, err := did.Parse(subjectDID)
-	require.NoError(t, err)
 
 	cmd, err := command.Parse(subJectCmd)
 	require.NoError(t, err)
@@ -91,16 +75,16 @@ func TestConstructors(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("New", func(t *testing.T) {
-		tkn, err := delegation.New(privKey, aud, cmd, pol,
+		tkn, err := delegation.New(didtest.PersonaAlice.DID(), didtest.PersonaBob.DID(), cmd, pol,
 			delegation.WithNonce([]byte(nonce)),
-			delegation.WithSubject(sub),
+			delegation.WithSubject(didtest.PersonaAlice.DID()),
 			delegation.WithExpiration(exp),
 			delegation.WithMeta("foo", "fooo"),
 			delegation.WithMeta("bar", "barr"),
 		)
 		require.NoError(t, err)
 
-		data, err := tkn.ToDagJson(privKey)
+		data, err := tkn.ToDagJson(didtest.PersonaAlice.PrivKey())
 		require.NoError(t, err)
 
 		golden.Assert(t, string(data), "new.dagjson")
@@ -109,7 +93,7 @@ func TestConstructors(t *testing.T) {
 	t.Run("Root", func(t *testing.T) {
 		t.Parallel()
 
-		tkn, err := delegation.Root(privKey, aud, cmd, pol,
+		tkn, err := delegation.Root(didtest.PersonaAlice.DID(), didtest.PersonaBob.DID(), cmd, pol,
 			delegation.WithNonce([]byte(nonce)),
 			delegation.WithExpiration(exp),
 			delegation.WithMeta("foo", "fooo"),
@@ -117,7 +101,7 @@ func TestConstructors(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		data, err := tkn.ToDagJson(privKey)
+		data, err := tkn.ToDagJson(didtest.PersonaAlice.PrivKey())
 		require.NoError(t, err)
 
 		golden.Assert(t, string(data), "root.dagjson")
@@ -127,9 +111,6 @@ func TestConstructors(t *testing.T) {
 func TestEncryptedMeta(t *testing.T) {
 	t.Parallel()
 
-	privKey := privKey(t, issuerPrivKeyCfg)
-	aud, err := did.Parse(AudienceDID)
-	require.NoError(t, err)
 	cmd, err := command.Parse(subJectCmd)
 	require.NoError(t, err)
 	pol, err := policy.FromDagJson(subjectPol)
@@ -172,12 +153,12 @@ func TestEncryptedMeta(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			tkn, err := delegation.New(privKey, aud, cmd, pol,
+			tkn, err := delegation.New(didtest.PersonaAlice.DID(), didtest.PersonaBob.DID(), cmd, pol,
 				delegation.WithEncryptedMetaString(tt.key, tt.value, encryptionKey),
 			)
 			require.NoError(t, err)
 
-			data, err := tkn.ToDagCbor(privKey)
+			data, err := tkn.ToDagCbor(didtest.PersonaAlice.PrivKey())
 			require.NoError(t, err)
 
 			decodedTkn, _, err := delegation.FromSealed(data)
@@ -210,10 +191,10 @@ func TestEncryptedMeta(t *testing.T) {
 		}
 
 		// Create token with multiple encrypted values
-		tkn, err := delegation.New(privKey, aud, cmd, pol, opts...)
+		tkn, err := delegation.New(didtest.PersonaAlice.DID(), didtest.PersonaBob.DID(), cmd, pol, opts...)
 		require.NoError(t, err)
 
-		data, err := tkn.ToDagCbor(privKey)
+		data, err := tkn.ToDagCbor(didtest.PersonaAlice.PrivKey())
 		require.NoError(t, err)
 
 		decodedTkn, _, err := delegation.FromSealed(data)
@@ -225,14 +206,4 @@ func TestEncryptedMeta(t *testing.T) {
 			require.Equal(t, v, decrypted)
 		}
 	})
-}
-
-func privKey(t require.TestingT, privKeyCfg string) crypto.PrivKey {
-	privKeyMar, err := crypto.ConfigDecodeKey(privKeyCfg)
-	require.NoError(t, err)
-
-	privKey, err := crypto.UnmarshalPrivateKey(privKeyMar)
-	require.NoError(t, err)
-
-	return privKey
 }
