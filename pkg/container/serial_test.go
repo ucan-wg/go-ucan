@@ -166,7 +166,7 @@ func randToken() (*delegation.Token, cid.Cid, []byte) {
 		opts = append(opts, delegation.WithMeta(randomString(8), randomString(10)))
 	}
 
-	t, err := delegation.New(priv, aud, cmd, pol, opts...)
+	t, err := delegation.New(iss, aud, cmd, pol, opts...)
 	if err != nil {
 		panic(err)
 	}

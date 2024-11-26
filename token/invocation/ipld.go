@@ -1,6 +1,7 @@
 package invocation
 
 import (
+	"fmt"
 	"io"
 
 	"github.com/ipfs/go-cid"
@@ -193,6 +194,15 @@ func FromIPLD(node datamodel.Node) (*Token, error) {
 }
 
 func (t *Token) toIPLD(privKey crypto.PrivKey) (datamodel.Node, error) {
+	// sanity check that privKey and issuer are matching
+	issPub, err := t.issuer.PubKey()
+	if err != nil {
+		return nil, err
+	}
+	if !issPub.Equals(privKey.GetPublic()) {
+		return nil, fmt.Errorf("private key doesn't match the issuer")
+	}
+
 	var aud *string
 
 	if t.audience != did.Undef {

@@ -14,8 +14,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/libp2p/go-libp2p/core/crypto"
-
 	"github.com/ucan-wg/go-ucan/did"
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/meta"
@@ -51,12 +49,7 @@ type Token struct {
 // When creating a delegated token, the Issuer's (iss) DID is assembled
 // using the public key associated with the private key sent as the first
 // parameter.
-func New(privKey crypto.PrivKey, aud did.DID, cmd command.Command, pol policy.Policy, opts ...Option) (*Token, error) {
-	iss, err := did.FromPrivKey(privKey)
-	if err != nil {
-		return nil, err
-	}
-
+func New(iss, aud did.DID, cmd command.Command, pol policy.Policy, opts ...Option) (*Token, error) {
 	tkn := &Token{
 		issuer:   iss,
 		audience: aud,
@@ -73,6 +66,7 @@ func New(privKey crypto.PrivKey, aud did.DID, cmd command.Command, pol policy.Po
 		}
 	}
 
+	var err error
 	if len(tkn.nonce) == 0 {
 		tkn.nonce, err = nonce.Generate()
 		if err != nil {
@@ -93,15 +87,10 @@ func New(privKey crypto.PrivKey, aud did.DID, cmd command.Command, pol policy.Po
 // When creating a root token, both the Issuer's (iss) and Subject's
 // (sub) DIDs are assembled from the public key associated with the
 // private key passed as the first argument.
-func Root(privKey crypto.PrivKey, aud did.DID, cmd command.Command, pol policy.Policy, opts ...Option) (*Token, error) {
-	sub, err := did.FromPrivKey(privKey)
-	if err != nil {
-		return nil, err
-	}
+func Root(iss, aud did.DID, cmd command.Command, pol policy.Policy, opts ...Option) (*Token, error) {
+	opts = append(opts, WithSubject(iss))
 
-	opts = append(opts, WithSubject(sub))
-
-	return New(privKey, aud, cmd, pol, opts...)
+	return New(iss, aud, cmd, pol, opts...)
 }
 
 // Issuer returns the did.DID representing the Token's issuer.

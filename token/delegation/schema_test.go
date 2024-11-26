@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gotest.tools/v3/golden"
 
+	"github.com/ucan-wg/go-ucan/did/didtest"
 	"github.com/ucan-wg/go-ucan/token/delegation"
 	"github.com/ucan-wg/go-ucan/token/internal/envelope"
 )
@@ -21,7 +22,7 @@ func TestSchemaRoundTrip(t *testing.T) {
 	t.Parallel()
 
 	delegationJson := golden.Get(t, "new.dagjson")
-	privKey := privKey(t, issuerPrivKeyCfg)
+	privKey := didtest.PersonaAlice.PrivKey()
 
 	t.Run("via buffers", func(t *testing.T) {
 		t.Parallel()
@@ -72,6 +73,16 @@ func TestSchemaRoundTrip(t *testing.T) {
 
 		assert.JSONEq(t, string(delegationJson), readJson.String())
 	})
+
+	t.Run("fails with wrong PrivKey", func(t *testing.T) {
+		t.Parallel()
+
+		p1, err := delegation.FromDagJson(delegationJson)
+		require.NoError(t, err)
+
+		_, _, err = p1.ToSealed(didtest.PersonaBob.PrivKey())
+		require.EqualError(t, err, "private key doesn't match the issuer")
+	})
 }
 
 func BenchmarkSchemaLoad(b *testing.B) {
@@ -83,7 +94,7 @@ func BenchmarkSchemaLoad(b *testing.B) {
 
 func BenchmarkRoundTrip(b *testing.B) {
 	delegationJson := golden.Get(b, "new.dagjson")
-	privKey := privKey(b, issuerPrivKeyCfg)
+	privKey := didtest.PersonaAlice.PrivKey()
 
 	b.Run("via buffers", func(b *testing.B) {
 		p1, _ := delegation.FromDagJson(delegationJson)
