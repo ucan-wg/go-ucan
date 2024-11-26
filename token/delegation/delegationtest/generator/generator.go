@@ -151,7 +151,12 @@ func (g *generator) chainPersonas(personas []didtest.Persona, acc acc, vari vari
 func (g *generator) createDelegation(params newDelegationParams, name string, vari variant) (cid.Cid, error) {
 	vari.variant(&params)
 
-	tkn, err := delegation.New(params.privKey, params.aud, params.cmd, params.pol, params.opts...)
+	issDID, err := did.FromPrivKey(params.privKey)
+	if err != nil {
+		return cid.Undef, err
+	}
+
+	tkn, err := delegation.New(issDID, params.aud, params.cmd, params.pol, params.opts...)
 	if err != nil {
 		return cid.Undef, err
 	}
