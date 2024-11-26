@@ -1,6 +1,7 @@
 package container
 
 import (
+	"bytes"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -71,33 +72,13 @@ func (ctn Reader) GetInvocation() (*invocation.Token, error) {
 	return nil, ErrNotFound
 }
 
-func FromCar(r io.Reader) (Reader, error) {
-	_, it, err := readCar(r)
-	if err != nil {
-		return nil, err
-	}
-
-	ctn := make(Reader)
-
-	for block, err := range it {
-		if err != nil {
-			return nil, err
-		}
-
-		err = ctn.addToken(block.data)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return ctn, nil
+// FromCbor decodes a DAG-CBOR encoded container.
+func FromCbor(data []byte) (Reader, error) {
+	return FromCborReader(bytes.NewReader(data))
 }
 
-func FromCarBase64(r io.Reader) (Reader, error) {
-	return FromCar(base64.NewDecoder(base64.StdEncoding, r))
-}
-
-func FromCbor(r io.Reader) (Reader, error) {
+// FromCborReader is the same as FromCbor, but with an io.Reader.
+func FromCborReader(r io.Reader) (Reader, error) {
 	n, err := ipld.DecodeStreaming(r, dagcbor.Decode)
 	if err != nil {
 		return nil, err
@@ -147,8 +128,52 @@ func FromCbor(r io.Reader) (Reader, error) {
 	return ctn, nil
 }
 
-func FromCborBase64(r io.Reader) (Reader, error) {
-	return FromCbor(base64.NewDecoder(base64.StdEncoding, r))
+// FromCborBase64 decodes a base64 DAG-CBOR encoded container.
+func FromCborBase64(data []byte) (Reader, error) {
+	return FromCborBase64Reader(bytes.NewReader(data))
+}
+
+// FromCborBase64Reader is the same as FromCborBase64, but with an io.Reader.
+func FromCborBase64Reader(r io.Reader) (Reader, error) {
+	return FromCborReader(base64.NewDecoder(base64.StdEncoding, r))
+}
+
+// FromCar decodes a CAR file encoded container.
+func FromCar(data []byte) (Reader, error) {
+	return FromCarReader(bytes.NewReader(data))
+}
+
+// FromCarReader is the same as FromCar, but with an io.Reader.
+func FromCarReader(r io.Reader) (Reader, error) {
+	_, it, err := readCar(r)
+	if err != nil {
+		return nil, err
+	}
+
+	ctn := make(Reader)
+
+	for block, err := range it {
+		if err != nil {
+			return nil, err
+		}
+
+		err = ctn.addToken(block.data)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return ctn, nil
+}
+
+// FromCarBase64 decodes a base64 CAR file encoded container.
+func FromCarBase64(data []byte) (Reader, error) {
+	return FromCarReader(bytes.NewReader(data))
+}
+
+// FromCarBase64Reader is the same as FromCarBase64, but with an io.Reader.
+func FromCarBase64Reader(r io.Reader) (Reader, error) {
+	return FromCarReader(base64.NewDecoder(base64.StdEncoding, r))
 }
 
 func (ctn Reader) addToken(data []byte) error {

@@ -85,7 +85,11 @@ func (p Persona) Name() string {
 
 // PrivKey returns the Ed25519 private key for the Persona.
 func (p Persona) PrivKey() crypto.PrivKey {
-	return privKeys[p]
+	res, ok := privKeys[p]
+	if !ok {
+		panic(fmt.Sprintf("Unknown persona: %v", p))
+	}
+	return res
 }
 
 // PubKey returns the Ed25519 public key for the Persona.
