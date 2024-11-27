@@ -10,6 +10,10 @@ type ReadOnly struct {
 	args *Args
 }
 
+func (r ReadOnly) GetNode(key string) (ipld.Node, error) {
+	return r.args.GetNode(key)
+}
+
 func (r ReadOnly) Iter() iter.Seq2[string, ipld.Node] {
 	return r.args.Iter()
 }

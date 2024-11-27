@@ -121,7 +121,6 @@ func (m *Meta) GetEncryptedBytes(key string, encryptionKey []byte) ([]byte, erro
 
 // GetNode retrieves a value as a raw IPLD node.
 // Returns ErrNotFound if the given key is missing.
-// Returns datamodel.ErrWrongKind if the value has the wrong type.
 func (m *Meta) GetNode(key string) (ipld.Node, error) {
 	v, ok := m.Values[key]
 	if !ok {
