@@ -17,7 +17,7 @@ func TestInvocationValidationSpecExamples(t *testing.T) {
 	t.Run("with passing args", func(t *testing.T) {
 		t.Parallel()
 
-		exec, stmt := ExamplePolicy.Match(exampleValidArgumentsIPLD)
+		exec, stmt := SpecPolicy.Match(specValidArgumentsIPLD)
 		assert.True(t, exec)
 		assert.Nil(t, stmt)
 	})
@@ -25,7 +25,7 @@ func TestInvocationValidationSpecExamples(t *testing.T) {
 	t.Run("fails on recipients (second statement)", func(t *testing.T) {
 		t.Parallel()
 
-		exec, stmt := ExamplePolicy.Match(exampleInvalidArgumentsIPLD)
+		exec, stmt := SpecPolicy.Match(specInvalidArgumentsIPLD)
 		assert.False(t, exec)
 		assert.NotNil(t, stmt)
 	})

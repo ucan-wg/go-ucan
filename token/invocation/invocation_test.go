@@ -52,13 +52,13 @@ func TestToken_ExecutionAllowed(t *testing.T) {
 	t.Run("passes - arguments satisfy empty policy", func(t *testing.T) {
 		t.Parallel()
 
-		testPasses(t, didtest.PersonaFrank, delegationtest.NominalCommand, policytest.ExampleValidArguments, delegationtest.ProofAliceBobCarolDanErinFrank)
+		testPasses(t, didtest.PersonaFrank, delegationtest.NominalCommand, policytest.SpecValidArguments, delegationtest.ProofAliceBobCarolDanErinFrank)
 	})
 
 	t.Run("passes - arguments satify example policy", func(t *testing.T) {
 		t.Parallel()
 
-		testPasses(t, didtest.PersonaFrank, delegationtest.NominalCommand, policytest.ExampleValidArguments, delegationtest.ProofAliceBobCarolDanErinFrank_ValidExamplePolicy)
+		testPasses(t, didtest.PersonaFrank, delegationtest.NominalCommand, policytest.SpecValidArguments, delegationtest.ProofAliceBobCarolDanErinFrank_ValidExamplePolicy)
 	})
 
 	t.Run("fails - no proof", func(t *testing.T) {
@@ -132,7 +132,7 @@ func TestToken_ExecutionAllowed(t *testing.T) {
 	t.Run("passes - arguments satify example policy", func(t *testing.T) {
 		t.Parallel()
 
-		testFails(t, invocation.ErrPolicyNotSatisfied, didtest.PersonaFrank, delegationtest.NominalCommand, policytest.ExampleInvalidArguments, delegationtest.ProofAliceBobCarolDanErinFrank_ValidExamplePolicy)
+		testFails(t, invocation.ErrPolicyNotSatisfied, didtest.PersonaFrank, delegationtest.NominalCommand, policytest.SpecInvalidArguments, delegationtest.ProofAliceBobCarolDanErinFrank_ValidExamplePolicy)
 	})
 
 }

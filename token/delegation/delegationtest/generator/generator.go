@@ -130,7 +130,7 @@ func (g *generator) chainPersonas(personas []didtest.Persona, acc acc, vari vari
 				p.opts = append(p.opts, delegation.WithNotBefore(nbf))
 			}},
 			{name: "ValidExamplePolicy", variant: func(p *newDelegationParams) {
-				p.pol = policytest.ExamplePolicy
+				p.pol = policytest.SpecPolicy
 			}},
 		}
 
