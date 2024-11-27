@@ -35,3 +35,7 @@ var (
 	// next delegation or invocation's command.
 	ErrCommandNotCovered = errors.New("allowed command doesn't cover the next delegation or invocation")
 )
+
+// ErrPolicyNotSatisfied is returned when the provided Arguments don't
+// satisfy one or more of the aggregated Policy Statements
+var ErrPolicyNotSatisfied = errors.New("the following UCAN policy is not satisfied")

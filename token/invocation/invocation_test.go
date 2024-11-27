@@ -9,6 +9,7 @@ import (
 	"github.com/ucan-wg/go-ucan/did/didtest"
 	"github.com/ucan-wg/go-ucan/pkg/args"
 	"github.com/ucan-wg/go-ucan/pkg/command"
+	"github.com/ucan-wg/go-ucan/pkg/policy/policytest"
 	"github.com/ucan-wg/go-ucan/token/delegation/delegationtest"
 	"github.com/ucan-wg/go-ucan/token/invocation"
 )
@@ -46,6 +47,18 @@ func TestToken_ExecutionAllowed(t *testing.T) {
 		t.Parallel()
 
 		testPasses(t, didtest.PersonaFrank, delegationtest.AttenuatedCommand, emptyArguments, delegationtest.ProofAliceBobCarolDanErinFrank)
+	})
+
+	t.Run("passes - arguments satisfy empty policy", func(t *testing.T) {
+		t.Parallel()
+
+		testPasses(t, didtest.PersonaFrank, delegationtest.NominalCommand, policytest.SpecValidArguments, delegationtest.ProofAliceBobCarolDanErinFrank)
+	})
+
+	t.Run("passes - arguments satify example policy", func(t *testing.T) {
+		t.Parallel()
+
+		testPasses(t, didtest.PersonaFrank, delegationtest.NominalCommand, policytest.SpecValidArguments, delegationtest.ProofAliceBobCarolDanErinFrank_ValidExamplePolicy)
 	})
 
 	t.Run("fails - no proof", func(t *testing.T) {
@@ -115,12 +128,19 @@ func TestToken_ExecutionAllowed(t *testing.T) {
 
 		testFails(t, invocation.ErrWrongSub, didtest.PersonaFrank, delegationtest.ExpandedCommand, emptyArguments, delegationtest.ProofAliceBobCarolDanErinFrank_InvalidSubject)
 	})
+
+	t.Run("passes - arguments satify example policy", func(t *testing.T) {
+		t.Parallel()
+
+		testFails(t, invocation.ErrPolicyNotSatisfied, didtest.PersonaFrank, delegationtest.NominalCommand, policytest.SpecInvalidArguments, delegationtest.ProofAliceBobCarolDanErinFrank_ValidExamplePolicy)
+	})
+
 }
 
 func test(t *testing.T, persona didtest.Persona, cmd command.Command, args *args.Args, prf []cid.Cid, opts ...invocation.Option) error {
 	t.Helper()
 
-	// TODO: use the args and add minimal test to check that they are verified against the policy
+	opts = append(opts, invocation.WithArguments(args))
 
 	tkn, err := invocation.New(persona.DID(), didtest.PersonaAlice.DID(), cmd, prf, opts...)
 	require.NoError(t, err)
