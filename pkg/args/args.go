@@ -4,6 +4,7 @@
 package args
 
 import (
+	"errors"
 	"fmt"
 	"iter"
 	"sort"
@@ -17,6 +18,8 @@ import (
 
 	"github.com/ucan-wg/go-ucan/pkg/policy/literal"
 )
+
+var ErrNotFound = errors.New("key not found in meta")
 
 // Args are the Command's arguments when an invocation Token is processed by the executor.
 // This also serves as a way to construct the underlying IPLD data with minimum allocations
@@ -34,6 +37,16 @@ func New() *Args {
 	return &Args{
 		Values: map[string]ipld.Node{},
 	}
+}
+
+// GetNode retrieves a value as a raw IPLD node.
+// Returns ErrNotFound if the given key is missing.
+func (a *Args) GetNode(key string) (ipld.Node, error) {
+	v, ok := a.Values[key]
+	if !ok {
+		return nil, ErrNotFound
+	}
+	return v, nil
 }
 
 // Add inserts a key/value pair in the Args set.
