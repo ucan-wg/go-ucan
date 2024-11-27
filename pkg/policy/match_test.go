@@ -7,11 +7,8 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/codec/dagjson"
-	"github.com/ipld/go-ipld-prime/datamodel"
-	"github.com/ipld/go-ipld-prime/fluent/qp"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/ucan-wg/go-ucan/pkg/policy/literal"
@@ -903,56 +900,4 @@ func TestPartialMatch(t *testing.T) {
 			}
 		})
 	}
-}
-
-// TestInvocationValidation applies the example policy to the second
-// example arguments as defined in the [Validation] section of the
-// invocation specification.
-//
-// [Validation]: https://github.com/ucan-wg/delegation/tree/v1_ipld#validation
-func TestInvocationValidationSpecExamples(t *testing.T) {
-	t.Parallel()
-
-	pol := MustConstruct(
-		Equal(".from", literal.String("alice@example.com")),
-		Any(".to", Like(".", "*@example.com")),
-	)
-
-	t.Run("with passing args", func(t *testing.T) {
-		t.Parallel()
-
-		argsNode, err := qp.BuildMap(basicnode.Prototype.Any, 2, func(ma datamodel.MapAssembler) {
-			qp.MapEntry(ma, "from", qp.String("alice@example.com"))
-			qp.MapEntry(ma, "to", qp.List(2, func(la datamodel.ListAssembler) {
-				qp.ListEntry(la, qp.String("bob@example.com"))
-				qp.ListEntry(la, qp.String("carol@not.example.com"))
-			}))
-			qp.MapEntry(ma, "title", qp.String("Coffee"))
-			qp.MapEntry(ma, "body", qp.String("Still on for coffee"))
-		})
-		require.NoError(t, err)
-
-		exec, stmt := pol.Match(argsNode)
-		assert.True(t, exec)
-		assert.Nil(t, stmt)
-	})
-
-	t.Run("fails on recipients (second statement)", func(t *testing.T) {
-		t.Parallel()
-
-		argsNode, err := qp.BuildMap(basicnode.Prototype.Any, 2, func(ma datamodel.MapAssembler) {
-			qp.MapEntry(ma, "from", qp.String("alice@example.com"))
-			qp.MapEntry(ma, "to", qp.List(2, func(la datamodel.ListAssembler) {
-				qp.ListEntry(la, qp.String("bob@null.com"))
-				qp.ListEntry(la, qp.String("carol@elsewhere.example.com"))
-			}))
-			qp.MapEntry(ma, "title", qp.String("Coffee"))
-			qp.MapEntry(ma, "body", qp.String("Still on for coffee"))
-		})
-		require.NoError(t, err)
-
-		exec, stmt := pol.Match(argsNode)
-		assert.False(t, exec)
-		assert.NotNil(t, stmt)
-	})
 }

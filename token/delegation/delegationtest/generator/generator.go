@@ -14,6 +14,7 @@ import (
 	"github.com/ucan-wg/go-ucan/did/didtest"
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/policy"
+	"github.com/ucan-wg/go-ucan/pkg/policy/policytest"
 	"github.com/ucan-wg/go-ucan/token/delegation"
 	"github.com/ucan-wg/go-ucan/token/delegation/delegationtest"
 )
@@ -86,7 +87,7 @@ func (g *generator) chainPersonas(personas []didtest.Persona, acc acc, vari vari
 		privKey: personas[0].PrivKey(),
 		aud:     personas[1].DID(),
 		cmd:     delegationtest.NominalCommand,
-		pol:     policy.Policy{},
+		pol:     policytest.EmptyPolicy,
 		opts: []delegation.Option{
 			delegation.WithSubject(didtest.PersonaAlice.DID()),
 			delegation.WithNonce(constantNonce),
@@ -127,6 +128,9 @@ func (g *generator) chainPersonas(personas []didtest.Persona, acc acc, vari vari
 					panic(err)
 				}
 				p.opts = append(p.opts, delegation.WithNotBefore(nbf))
+			}},
+			{name: "ValidExamplePolicy", variant: func(p *newDelegationParams) {
+				p.pol = policytest.ExamplePolicy
 			}},
 		}
 

@@ -134,7 +134,7 @@ func (t *Token) verifyArgs(delegations []*delegation.Token, arguments *args.Args
 
 	ok, statement := policies.Match(argsIpld)
 	if !ok {
-		return fmt.Errorf("the following UCAN policy is not satisfied: %v", statement.String())
+		return fmt.Errorf("%w: %v", ErrPolicyNotSatisfied, statement.String())
 	}
 
 	return nil
