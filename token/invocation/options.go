@@ -6,6 +6,7 @@ import (
 	"github.com/ipfs/go-cid"
 
 	"github.com/ucan-wg/go-ucan/did"
+	"github.com/ucan-wg/go-ucan/pkg/args"
 )
 
 // Option is a type that allows optional fields to be set during the
@@ -16,6 +17,22 @@ type Option func(*Token) error
 func WithArgument(key string, val any) Option {
 	return func(t *Token) error {
 		return t.arguments.Add(key, val)
+	}
+}
+
+// WithArguments merges the provided arguments into the Token's existing
+// arguments.
+//
+// If duplicate keys are encountered, the new value is silently dropped
+// without causing an error.  Since duplicate keys can only be encountered
+// due to previous calls to WithArgument or WithArguments, calling only
+// this function to set the Token's arguments is equivalent to assigning
+// the arguments to the Token.
+func WithArguments(args *args.Args) Option {
+	return func(t *Token) error {
+		t.arguments.Include(args)
+
+		return nil
 	}
 }
 
