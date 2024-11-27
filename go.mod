@@ -3,7 +3,6 @@ module github.com/ucan-wg/go-ucan
 go 1.23
 
 require (
-	github.com/dave/jennifer v1.7.1
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.3.0
 	github.com/ipfs/go-cid v0.4.1
 	github.com/ipld/go-ipld-prime v0.21.0
