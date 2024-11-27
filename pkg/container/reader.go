@@ -19,6 +19,7 @@ import (
 )
 
 var ErrNotFound = fmt.Errorf("not found")
+var ErrMultipleInvocations = fmt.Errorf("multiple invocations")
 
 // Reader is a token container reader. It exposes the tokens conveniently decoded.
 type Reader map[cid.Cid]token.Token
@@ -61,15 +62,36 @@ func (ctn Reader) GetAllDelegations() iter.Seq2[cid.Cid, *delegation.Token] {
 	}
 }
 
-// GetInvocation returns the first found invocation.Token.
+// GetInvocation returns a single invocation.Token.
 // If none are found, ErrNotFound is returned.
+// If more than one invocation exist, ErrMultipleInvocations is returned.
 func (ctn Reader) GetInvocation() (*invocation.Token, error) {
+	var res *invocation.Token
 	for _, t := range ctn {
 		if inv, ok := t.(*invocation.Token); ok {
-			return inv, nil
+			if res != nil {
+				return nil, ErrMultipleInvocations
+			}
+			res = inv
 		}
 	}
-	return nil, ErrNotFound
+	if res == nil {
+		return nil, ErrNotFound
+	}
+	return res, nil
+}
+
+// GetAllInvocations returns all the invocation.Token in the container.
+func (ctn Reader) GetAllInvocations() iter.Seq2[cid.Cid, *invocation.Token] {
+	return func(yield func(cid.Cid, *invocation.Token) bool) {
+		for c, t := range ctn {
+			if t, ok := t.(*invocation.Token); ok {
+				if !yield(c, t) {
+					return
+				}
+			}
+		}
+	}
 }
 
 // FromCbor decodes a DAG-CBOR encoded container.
