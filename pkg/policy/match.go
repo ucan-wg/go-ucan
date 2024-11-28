@@ -9,6 +9,9 @@ import (
 	"github.com/ipld/go-ipld-prime/must"
 )
 
+// MatchTrace, if set, will print tracing statements to stdout of the policy matching resolution.
+var MatchTrace = false
+
 // Match determines if the IPLD node satisfies the policy.
 // The first Statement failing to match is returned as well.
 func (p Policy) Match(node datamodel.Node) (bool, Statement) {
@@ -60,13 +63,18 @@ const (
 // - matchResultNoData: if the selector didn't match the expected data.
 // For matchResultTrue and matchResultNoData, the leaf-most (innermost) statement failing to be true is returned,
 // as well as the corresponding root-most encompassing statement.
-func matchStatement(cur Statement, node ipld.Node) (_ matchResult, leafMost Statement) {
+func matchStatement(cur Statement, node ipld.Node) (output matchResult, leafMost Statement) {
 	var boolToRes = func(v bool) (matchResult, Statement) {
 		if v {
 			return matchResultTrue, nil
 		} else {
 			return matchResultFalse, cur
 		}
+	}
+	if MatchTrace {
+		defer func() {
+			fmt.Printf("match %v --> %v\n", cur, matchResToStr(output))
+		}()
 	}
 
 	switch cur.Kind() {
@@ -275,3 +283,18 @@ func gt(order int) bool  { return order == 1 }
 func gte(order int) bool { return order == 0 || order == 1 }
 func lt(order int) bool  { return order == -1 }
 func lte(order int) bool { return order == 0 || order == -1 }
+
+func matchResToStr(res matchResult) string {
+	switch res {
+	case matchResultTrue:
+		return "True"
+	case matchResultFalse:
+		return "False"
+	case matchResultNoData:
+		return "NoData"
+	case matchResultOptionalNoData:
+		return "OptionalNoData"
+	default:
+		panic("invalid matchResult")
+	}
+}
