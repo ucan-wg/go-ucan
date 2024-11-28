@@ -235,8 +235,7 @@ func (g *generator) writeGoFile() error {
 		fmt.Fprintln(f)
 		fmt.Fprintf(f, "var %s = []cid.Cid{\n", c.name)
 
-		slices.Reverse(c.prf)
-		for _, d := range c.prf {
+		for _, d := range slices.Backward(c.prf) {
 			fmt.Fprintf(f, "\t%s,\n", refs[d])
 		}
 

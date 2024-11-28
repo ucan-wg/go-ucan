@@ -75,17 +75,17 @@ var (
 )
 
 var (
-	TokenCarolDan_InvalidExpiredCID = cid.MustParse("bafyreieokte3abvnnj77uhhlwbem4fukvaujpp4jtirqof2r6zrdwv6may")
+	TokenCarolDan_InvalidExpiredCID = cid.MustParse("bafyreici5ggrh6yyoqfqwfssks4737icit2exxrhhcsljpc6lniz64ejay")
 	TokenCarolDan_InvalidExpired    = mustGetDelegation(TokenCarolDan_InvalidExpiredCID)
 )
 
 var (
-	TokenDanErin_InvalidExpiredCID = cid.MustParse("bafyreia76qfn2krqnzzgzoyvttei5fc74ybyidqb6omoa26jn6u2wy4kmi")
+	TokenDanErin_InvalidExpiredCID = cid.MustParse("bafyreidnkdvkwhuoiwldua4z7mupuoaixktmuihd4h3gqff4nk4lfuoxlq")
 	TokenDanErin_InvalidExpired    = mustGetDelegation(TokenDanErin_InvalidExpiredCID)
 )
 
 var (
-	TokenErinFrank_InvalidExpiredCID = cid.MustParse("bafyreiaglb3rgguhlsjpkpuowr3zfwjrp2c6o2pl3llib3kj2pzusaecda")
+	TokenErinFrank_InvalidExpiredCID = cid.MustParse("bafyreighom66dfg3scp26huljbiovkuuv2bh4izdqahccutrilqz46nz3e")
 	TokenErinFrank_InvalidExpired    = mustGetDelegation(TokenErinFrank_InvalidExpiredCID)
 )
 
