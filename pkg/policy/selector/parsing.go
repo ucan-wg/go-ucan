@@ -12,13 +12,11 @@ var (
 	indexRegex = regexp.MustCompile(`^-?\d+$`)
 	sliceRegex = regexp.MustCompile(`^((\-?\d+:\-?\d*)|(\-?\d*:\-?\d+))$`)
 
-	// According to ECMAScript 2024, identifiers can include:
 	// - Unicode letters
-	// - $, _
 	// - Unicode combining marks
 	// - Unicode digits
 	// - Unicode connector punctuation
-	// Additional characters allowed for compatibility:
+	// - $, _
 	// - hyphen (-)
 	// \p{L} - any kind of letter from any language
 	// \p{Mn}\p{Mc} - combining marks and spacing combining marks
