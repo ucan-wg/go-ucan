@@ -11,7 +11,21 @@ import (
 var (
 	indexRegex = regexp.MustCompile(`^-?\d+$`)
 	sliceRegex = regexp.MustCompile(`^((\-?\d+:\-?\d*)|(\-?\d*:\-?\d+))$`)
-	fieldRegex = regexp.MustCompile(`^\.[a-zA-Z_-]*?$`)
+
+	// According to ECMAScript 2024, identifiers can include:
+	// - Unicode letters
+	// - $, _
+	// - Unicode combining marks
+	// - Unicode digits
+	// - Unicode connector punctuation
+	// Additional characters allowed for compatibility:
+	// - hyphen (-)
+	// \p{L} - any kind of letter from any language
+	// \p{Mn}\p{Mc} - combining marks and spacing combining marks
+	// \p{Nd} - decimal numbers
+	// \p{Pc} - connector punctuation (like underscore)
+	// \p{Sm}\p{So} - math symbols and other symbols
+	fieldRegex = regexp.MustCompile(`^\.[a-zA-Z_\p{L}][a-zA-Z$_\p{L}\p{Mn}\p{Mc}\p{Nd}\p{Pc}\p{Sm}\p{So}-]*?$`)
 )
 
 func Parse(str string) (Selector, error) {

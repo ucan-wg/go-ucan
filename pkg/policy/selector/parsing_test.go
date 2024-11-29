@@ -572,4 +572,48 @@ func TestParse(t *testing.T) {
 		_, err := Parse(".[foo]")
 		require.Error(t, err)
 	})
+
+	t.Run("extended field names", func(t *testing.T) {
+		validFields := []string{
+			".basic",
+			".user_name",
+			".user-name",
+			".userName$special",
+			".αβγ",        // Greek letters
+			".użytkownik", // Polish characters
+			".用户",         // Chinese characters
+			".사용자",        // Korean characters
+			"._private",
+			".number123",
+			".camelCase",
+			".snake_case",
+			".kebab-case",
+			".mixed_kebab-case",
+			".with$dollar",
+			".MIXED_Case_123",
+			".unicode⌘",
+		}
+
+		for _, field := range validFields {
+			sel, err := Parse(field)
+			require.NoError(t, err, "field: %s", field)
+			require.NotNil(t, sel)
+		}
+
+		invalidFields := []string{
+			".123number",         // Can't start with digit
+			".@special",          // @ not allowed
+			".space name",        // No spaces
+			".#hashtag",          // No #
+			".name!",             // No !
+			".{brackets}",        // No brackets
+			".name/with/slashes", // No slashes
+		}
+
+		for _, field := range invalidFields {
+			sel, err := Parse(field)
+			require.Error(t, err, "field: %s", field)
+			require.Nil(t, sel)
+		}
+	})
 }
