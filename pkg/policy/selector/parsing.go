@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/ucan-wg/go-ucan/pkg/policy/limits"
 )
 
 var (
@@ -56,6 +58,9 @@ func Parse(str string) (Selector, error) {
 				if err != nil {
 					return nil, newParseError("invalid index", str, col, tok)
 				}
+				if idx > limits.MaxInt53 || idx < limits.MinInt53 {
+					return nil, newParseError(fmt.Sprintf("index %d exceeds safe integer bounds", idx), str, col, tok)
+				}
 				sel = append(sel, segment{str: tok, optional: opt, index: idx})
 
 			// explicit field, ["abcd"]
@@ -77,6 +82,9 @@ func Parse(str string) (Selector, error) {
 					if err != nil {
 						return nil, newParseError("invalid slice index", str, col, tok)
 					}
+					if i > limits.MaxInt53 || i < limits.MinInt53 {
+						return nil, newParseError(fmt.Sprintf("slice index %d exceeds safe integer bounds", i), str, col, tok)
+					}
 					rng[0] = i
 				}
 				if splt[1] == "" {
@@ -85,6 +93,9 @@ func Parse(str string) (Selector, error) {
 					i, err := strconv.ParseInt(splt[1], 10, 0)
 					if err != nil {
 						return nil, newParseError("invalid slice index", str, col, tok)
+					}
+					if i > limits.MaxInt53 || i < limits.MinInt53 {
+						return nil, newParseError(fmt.Sprintf("slice index %d exceeds safe integer bounds", i), str, col, tok)
 					}
 					rng[1] = i
 				}

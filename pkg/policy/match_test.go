@@ -11,6 +11,7 @@ import (
 	"github.com/ipld/go-ipld-prime/node/basicnode"
 	"github.com/stretchr/testify/require"
 
+	"github.com/ucan-wg/go-ucan/pkg/policy/limits"
 	"github.com/ucan-wg/go-ucan/pkg/policy/literal"
 )
 
@@ -898,6 +899,41 @@ func TestPartialMatch(t *testing.T) {
 			} else {
 				require.Equal(t, tt.expectedStmt, stmt)
 			}
+		})
+	}
+}
+
+func TestIntegerOverflow(t *testing.T) {
+	tests := []struct {
+		name     string
+		expected ipld.Node
+		actual   ipld.Node
+		want     bool
+	}{
+		{
+			name:     "valid integers",
+			expected: literal.Int(42),
+			actual:   literal.Int(43),
+			want:     true, // for gt comparison
+		},
+		{
+			name:     "exceeds MaxInt53",
+			expected: literal.Int(limits.MaxInt53 + 1),
+			actual:   literal.Int(42),
+			want:     false,
+		},
+		{
+			name:     "below MinInt53",
+			expected: literal.Int(limits.MinInt53 - 1),
+			actual:   literal.Int(42),
+			want:     false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := isOrdered(tt.expected, tt.actual, gt)
+			require.Equal(t, tt.want, result)
 		})
 	}
 }

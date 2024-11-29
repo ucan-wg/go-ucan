@@ -12,6 +12,7 @@ import (
 	"github.com/ipld/go-ipld-prime/fluent/qp"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
+	"github.com/ucan-wg/go-ucan/pkg/policy/limits"
 )
 
 var Bool = basicnode.NewBool
@@ -168,9 +169,17 @@ func anyAssemble(val any) qp.Assemble {
 	case reflect.Bool:
 		return qp.Bool(rv.Bool())
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		return qp.Int(rv.Int())
+		i := rv.Int()
+		if i > limits.MaxInt53 || i < limits.MinInt53 {
+			panic(fmt.Sprintf("integer %d exceeds safe bounds", i))
+		}
+		return qp.Int(i)
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		return qp.Int(int64(rv.Uint()))
+		u := rv.Uint()
+		if u > limits.MaxInt53 {
+			panic(fmt.Sprintf("unsigned integer %d exceeds safe bounds", u))
+		}
+		return qp.Int(int64(u))
 	case reflect.Float32, reflect.Float64:
 		return qp.Float(rv.Float())
 	case reflect.String:

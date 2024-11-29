@@ -8,6 +8,7 @@ import (
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/printer"
 	"github.com/stretchr/testify/require"
+	"github.com/ucan-wg/go-ucan/pkg/policy/limits"
 )
 
 func TestList(t *testing.T) {
@@ -214,7 +215,7 @@ func TestAny(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, asLink.(cidlink.Link).Equals(cid.MustParse("bafzbeigai3eoy2ccc7ybwjfz5r3rdxqrinwi4rwytly24tdbh6yk7zslrm")))
 
-	v, err = Any(data["func"])
+	_, err = Any(data["func"])
 	require.Error(t, err)
 }
 
@@ -252,6 +253,59 @@ func BenchmarkAny(b *testing.B) {
 			})
 		}
 	})
+}
+
+func TestAnyAssembleIntegerOverflow(t *testing.T) {
+	tests := []struct {
+		name      string
+		input     interface{}
+		shouldErr bool
+	}{
+		{
+			name:      "valid int",
+			input:     42,
+			shouldErr: false,
+		},
+		{
+			name:      "max safe int",
+			input:     limits.MaxInt53,
+			shouldErr: false,
+		},
+		{
+			name:      "min safe int",
+			input:     limits.MinInt53,
+			shouldErr: false,
+		},
+		{
+			name:      "overflow int",
+			input:     int64(limits.MaxInt53 + 1),
+			shouldErr: true,
+		},
+		{
+			name:      "underflow int",
+			input:     int64(limits.MinInt53 - 1),
+			shouldErr: true,
+		},
+		{
+			name:      "overflow uint",
+			input:     uint64(limits.MaxInt53 + 1),
+			shouldErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldErr {
+				require.Panics(t, func() {
+					anyAssemble(tt.input)
+				})
+			} else {
+				require.NotPanics(t, func() {
+					anyAssemble(tt.input)
+				})
+			}
+		})
+	}
 }
 
 func must[T any](t T, err error) T {
