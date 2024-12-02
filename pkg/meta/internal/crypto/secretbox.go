@@ -25,7 +25,8 @@ func GenerateKey() ([]byte, error) {
 	return key, nil
 }
 
-// EncryptWithKey encrypts data using secretbox with the provided key
+// EncryptWithKey encrypts data using NaCl's secretbox with the provided key.
+// 40 bytes of overhead (24-byte nonce + 16-byte MAC) are added to the plaintext size.
 func EncryptWithKey(data, key []byte) ([]byte, error) {
 	if err := validateKey(key); err != nil {
 		return nil, err

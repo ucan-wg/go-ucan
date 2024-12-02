@@ -150,6 +150,7 @@ func (m *Meta) Add(key string, val any) error {
 // AddEncrypted adds a key/value pair in the meta set.
 // The value is encrypted with the given encryptionKey.
 // Accepted types for the value are: string, []byte.
+// The ciphertext will be 40 bytes larger than the plaintext due to encryption overhead.
 func (m *Meta) AddEncrypted(key string, val any, encryptionKey []byte) error {
 	var encrypted []byte
 	var err error
