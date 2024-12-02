@@ -18,7 +18,6 @@ import (
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/meta"
 	"github.com/ucan-wg/go-ucan/pkg/policy"
-	"github.com/ucan-wg/go-ucan/pkg/policy/limits"
 	"github.com/ucan-wg/go-ucan/token/internal/nonce"
 	"github.com/ucan-wg/go-ucan/token/internal/parse"
 )
@@ -177,18 +176,6 @@ func (t *Token) validate() error {
 		errs = errors.Join(errs, fmt.Errorf("token nonce too small"))
 	}
 
-	if t.notBefore != nil {
-		if err := validateTimestamp(t.notBefore.Unix(), "nbf"); err != nil {
-			errs = errors.Join(errs, err)
-		}
-	}
-
-	if t.expiration != nil {
-		if err := validateTimestamp(t.expiration.Unix(), "exp"); err != nil {
-			errs = errors.Join(errs, err)
-		}
-	}
-
 	return errs
 }
 
@@ -228,20 +215,19 @@ func tokenFromModel(m tokenPayloadModel) (*Token, error) {
 
 	tkn.meta = m.Meta
 
-	tkn.notBefore = parse.OptionalTimestamp(m.Nbf)
-	tkn.expiration = parse.OptionalTimestamp(m.Exp)
+	tkn.notBefore, err = parse.OptionalTimestamp(m.Nbf)
+	if err != nil {
+		return nil, fmt.Errorf("parse notBefore: %w", err)
+	}
+
+	tkn.expiration, err = parse.OptionalTimestamp(m.Exp)
+	if err != nil {
+		return nil, fmt.Errorf("parse expiration: %w", err)
+	}
 
 	if err := tkn.validate(); err != nil {
 		return nil, err
 	}
 
 	return &tkn, nil
-}
-
-func validateTimestamp(ts int64, field string) error {
-	if ts > limits.MaxInt53 || ts < limits.MinInt53 {
-		return fmt.Errorf("token %s timestamp %d exceeds safe integer bounds", field, ts)
-	}
-
-	return nil
 }

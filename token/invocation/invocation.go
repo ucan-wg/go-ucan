@@ -275,8 +275,15 @@ func tokenFromModel(m tokenPayloadModel) (*Token, error) {
 	tkn.proof = m.Prf
 	tkn.meta = m.Meta
 
-	tkn.expiration = parse.OptionalTimestamp(m.Exp)
-	tkn.invokedAt = parse.OptionalTimestamp(m.Iat)
+	tkn.expiration, err = parse.OptionalTimestamp(m.Exp)
+	if err != nil {
+		return nil, fmt.Errorf("parse expiration: %w", err)
+	}
+
+	tkn.invokedAt, err = parse.OptionalTimestamp(m.Iat)
+	if err != nil {
+		return nil, fmt.Errorf("parse invokedAt: %w", err)
+	}
 
 	tkn.cause = m.Cause
 
