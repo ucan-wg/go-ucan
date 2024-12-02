@@ -60,8 +60,6 @@ func List[T any](l []T) (ipld.Node, error) {
 // Any creates an IPLD node from any value
 // If possible, use another dedicated function for your type for performance.
 func Any(v any) (res ipld.Node, err error) {
-	// TODO: handle uint overflow below
-
 	// some fast path
 	switch val := v.(type) {
 	case bool:
