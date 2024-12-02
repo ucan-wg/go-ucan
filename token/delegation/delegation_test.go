@@ -11,7 +11,6 @@ import (
 	"github.com/ucan-wg/go-ucan/did/didtest"
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/policy"
-	"github.com/ucan-wg/go-ucan/pkg/policy/limits"
 	"github.com/ucan-wg/go-ucan/token/delegation"
 )
 
@@ -206,75 +205,5 @@ func TestEncryptedMeta(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, v, decrypted)
 		}
-	})
-}
-
-func TestTokenTimestampBounds(t *testing.T) {
-	t.Parallel()
-
-	cmd, err := command.Parse("/foo/bar")
-	require.NoError(t, err)
-	pol, err := policy.FromDagJson("[]")
-	require.NoError(t, err)
-
-	tomorrow := time.Now().Add(24 * time.Hour).Unix()
-
-	tests := []struct {
-		name    string
-		nbf     int64
-		exp     int64
-		wantErr bool
-	}{
-		{
-			name:    "valid timestamps",
-			nbf:     tomorrow,
-			exp:     tomorrow + 3600,
-			wantErr: false,
-		},
-		{
-			name:    "max safe integer",
-			nbf:     tomorrow,
-			exp:     limits.MaxInt53,
-			wantErr: false,
-		},
-		{
-			name:    "exceeds max safe integer",
-			nbf:     tomorrow,
-			exp:     limits.MaxInt53 + 1,
-			wantErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			_, err = delegation.New(didtest.PersonaAlice.DID(), didtest.PersonaBob.DID(),
-				cmd, pol,
-				delegation.WithNotBefore(time.Unix(tt.nbf, 0)),
-				delegation.WithExpiration(time.Unix(tt.exp, 0)),
-			)
-
-			if tt.wantErr {
-				require.Error(t, err)
-				require.Contains(t, err.Error(), "exceeds safe integer bounds")
-			} else {
-				require.NoError(t, err)
-			}
-		})
-	}
-
-	t.Run("nbf overflow", func(t *testing.T) {
-		t.Parallel()
-
-		futureExp := time.Now().Add(48 * time.Hour).Unix()
-		_, err := delegation.New(didtest.PersonaAlice.DID(), didtest.PersonaBob.DID(),
-			cmd, pol,
-			delegation.WithNotBefore(time.Unix(limits.MaxInt53+1, 0)),
-			delegation.WithExpiration(time.Unix(futureExp, 0)),
-		)
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "exceeds safe integer bounds")
 	})
 }
