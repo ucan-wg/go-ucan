@@ -8,6 +8,7 @@ import (
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/printer"
 	"github.com/stretchr/testify/require"
+
 	"github.com/ucan-wg/go-ucan/pkg/policy/limits"
 )
 
@@ -295,14 +296,11 @@ func TestAnyAssembleIntegerOverflow(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			_, err := Any(tt.input)
 			if tt.shouldErr {
-				require.Panics(t, func() {
-					anyAssemble(tt.input)
-				})
+				require.Error(t, err)
 			} else {
-				require.NotPanics(t, func() {
-					anyAssemble(tt.input)
-				})
+				require.NoError(t, err)
 			}
 		})
 	}

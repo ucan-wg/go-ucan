@@ -10,6 +10,7 @@ import (
 	"github.com/ipld/go-ipld-prime/datamodel"
 	"github.com/ipld/go-ipld-prime/fluent/qp"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
+	"github.com/ucan-wg/go-ucan/pkg/policy/limits"
 )
 
 // Selector describes a UCAN policy selector, as specified here:
@@ -22,6 +23,10 @@ type Selector []segment
 //   - a resolutionerr error if not being able to resolve to a node
 //   - nil and no errors, if the selector couldn't match on an optional segment (with ?).
 func (s Selector) Select(subject ipld.Node) (ipld.Node, error) {
+	if err := limits.ValidateIntegerBoundsIPLD(subject); err != nil {
+		return nil, fmt.Errorf("node contains integer values outside safe bounds: %w", err)
+	}
+
 	return resolve(s, subject, nil)
 }
 

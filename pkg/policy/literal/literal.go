@@ -69,7 +69,11 @@ func Any(v any) (res ipld.Node, err error) {
 	case string:
 		return basicnode.NewString(val), nil
 	case int:
-		return basicnode.NewInt(int64(val)), nil
+		i := int64(val)
+		if i > limits.MaxInt53 || i < limits.MinInt53 {
+			return nil, fmt.Errorf("integer value %d exceeds safe integer bounds", i)
+		}
+		return basicnode.NewInt(i), nil
 	case int8:
 		return basicnode.NewInt(int64(val)), nil
 	case int16:
@@ -77,6 +81,9 @@ func Any(v any) (res ipld.Node, err error) {
 	case int32:
 		return basicnode.NewInt(int64(val)), nil
 	case int64:
+		if val > limits.MaxInt53 || val < limits.MinInt53 {
+			return nil, fmt.Errorf("integer value %d exceeds safe integer bounds", val)
+		}
 		return basicnode.NewInt(val), nil
 	case uint:
 		return basicnode.NewInt(int64(val)), nil
@@ -87,6 +94,9 @@ func Any(v any) (res ipld.Node, err error) {
 	case uint32:
 		return basicnode.NewInt(int64(val)), nil
 	case uint64:
+		if val > uint64(limits.MaxInt53) {
+			return nil, fmt.Errorf("unsigned integer value %d exceeds safe integer bounds", val)
+		}
 		return basicnode.NewInt(int64(val)), nil
 	case float32:
 		return basicnode.NewFloat(float64(val)), nil
