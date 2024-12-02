@@ -9,10 +9,15 @@ import (
 	"github.com/ipld/go-ipld-prime/must"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
 
+	"github.com/ucan-wg/go-ucan/pkg/policy/limits"
 	"github.com/ucan-wg/go-ucan/pkg/policy/selector"
 )
 
 func FromIPLD(node datamodel.Node) (Policy, error) {
+	if err := limits.ValidateIntegerBoundsIPLD(node); err != nil {
+		return nil, fmt.Errorf("policy contains integer values outside safe bounds: %w", err)
+	}
+
 	return statementsFromIPLD("/", node)
 }
 

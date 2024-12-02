@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/ucan-wg/go-ucan/pkg/args"
+	"github.com/ucan-wg/go-ucan/pkg/policy/limits"
 	"github.com/ucan-wg/go-ucan/pkg/policy/literal"
 )
 
@@ -183,6 +184,71 @@ func TestInclude(t *testing.T) {
 		"baz":      basicnode.NewInt(1234),
 		"otherkey": basicnode.NewInt(1234),
 	}, maps.Collect(a1.Iter()))
+}
+
+func TestArgsIntegerBounds(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		key     string
+		val     int64
+		wantErr string
+	}{
+		{
+			name: "valid int",
+			key:  "valid",
+			val:  42,
+		},
+		{
+			name: "max safe integer",
+			key:  "max",
+			val:  limits.MaxInt53,
+		},
+		{
+			name: "min safe integer",
+			key:  "min",
+			val:  limits.MinInt53,
+		},
+		{
+			name:    "exceeds max safe integer",
+			key:     "tooBig",
+			val:     limits.MaxInt53 + 1,
+			wantErr: "exceeds safe integer bounds",
+		},
+		{
+			name:    "below min safe integer",
+			key:     "tooSmall",
+			val:     limits.MinInt53 - 1,
+			wantErr: "exceeds safe integer bounds",
+		},
+		{
+			name:    "duplicate key",
+			key:     "duplicate",
+			val:     42,
+			wantErr: "duplicate key",
+		},
+	}
+
+	a := args.New()
+	require.NoError(t, a.Add("duplicate", 1)) // tests duplicate key
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := a.Add(tt.key, tt.val)
+			if tt.wantErr != "" {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.wantErr)
+			} else {
+				require.NoError(t, err)
+				val, err := a.GetNode(tt.key)
+				require.NoError(t, err)
+				i, err := val.AsInt()
+				require.NoError(t, err)
+				require.Equal(t, tt.val, i)
+			}
+		})
+	}
 }
 
 const (

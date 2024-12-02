@@ -215,8 +215,15 @@ func tokenFromModel(m tokenPayloadModel) (*Token, error) {
 
 	tkn.meta = m.Meta
 
-	tkn.notBefore = parse.OptionalTimestamp(m.Nbf)
-	tkn.expiration = parse.OptionalTimestamp(m.Exp)
+	tkn.notBefore, err = parse.OptionalTimestamp(m.Nbf)
+	if err != nil {
+		return nil, fmt.Errorf("parse notBefore: %w", err)
+	}
+
+	tkn.expiration, err = parse.OptionalTimestamp(m.Exp)
+	if err != nil {
+		return nil, fmt.Errorf("parse expiration: %w", err)
+	}
 
 	if err := tkn.validate(); err != nil {
 		return nil, err

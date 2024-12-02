@@ -1,10 +1,12 @@
 package selector
 
 import (
+	"fmt"
 	"math"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/ucan-wg/go-ucan/pkg/policy/limits"
 )
 
 func TestParse(t *testing.T) {
@@ -615,5 +617,24 @@ func TestParse(t *testing.T) {
 			require.Error(t, err, "field: %s", field)
 			require.Nil(t, sel)
 		}
+	})
+
+	t.Run("integer overflow", func(t *testing.T) {
+		sel, err := Parse(fmt.Sprintf(".[%d]", limits.MaxInt53+1))
+		require.Error(t, err)
+		require.Nil(t, sel)
+
+		sel, err = Parse(fmt.Sprintf(".[%d]", limits.MinInt53-1))
+		require.Error(t, err)
+		require.Nil(t, sel)
+
+		// Test slice overflow
+		sel, err = Parse(fmt.Sprintf(".[%d:42]", limits.MaxInt53+1))
+		require.Error(t, err)
+		require.Nil(t, sel)
+
+		sel, err = Parse(fmt.Sprintf(".[1:%d]", limits.MaxInt53+1))
+		require.Error(t, err)
+		require.Nil(t, sel)
 	})
 }

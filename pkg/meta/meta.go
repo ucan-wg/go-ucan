@@ -63,7 +63,7 @@ func (m *Meta) GetEncryptedString(key string, encryptionKey []byte) (string, err
 		return "", err
 	}
 
-	decrypted, err := crypto.DecryptStringWithAESKey(v, encryptionKey)
+	decrypted, err := crypto.DecryptStringWithKey(v, encryptionKey)
 	if err != nil {
 		return "", err
 	}
@@ -111,7 +111,7 @@ func (m *Meta) GetEncryptedBytes(key string, encryptionKey []byte) ([]byte, erro
 		return nil, err
 	}
 
-	decrypted, err := crypto.DecryptStringWithAESKey(v, encryptionKey)
+	decrypted, err := crypto.DecryptStringWithKey(v, encryptionKey)
 	if err != nil {
 		return nil, err
 	}
@@ -150,18 +150,19 @@ func (m *Meta) Add(key string, val any) error {
 // AddEncrypted adds a key/value pair in the meta set.
 // The value is encrypted with the given encryptionKey.
 // Accepted types for the value are: string, []byte.
+// The ciphertext will be 40 bytes larger than the plaintext due to encryption overhead.
 func (m *Meta) AddEncrypted(key string, val any, encryptionKey []byte) error {
 	var encrypted []byte
 	var err error
 
 	switch val := val.(type) {
 	case string:
-		encrypted, err = crypto.EncryptWithAESKey([]byte(val), encryptionKey)
+		encrypted, err = crypto.EncryptWithKey([]byte(val), encryptionKey)
 		if err != nil {
 			return err
 		}
 	case []byte:
-		encrypted, err = crypto.EncryptWithAESKey(val, encryptionKey)
+		encrypted, err = crypto.EncryptWithKey(val, encryptionKey)
 		if err != nil {
 			return err
 		}

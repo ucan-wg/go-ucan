@@ -16,6 +16,7 @@ import (
 	"github.com/ipld/go-ipld-prime/node/basicnode"
 	"github.com/ipld/go-ipld-prime/printer"
 
+	"github.com/ucan-wg/go-ucan/pkg/policy/limits"
 	"github.com/ucan-wg/go-ucan/pkg/policy/literal"
 )
 
@@ -60,6 +61,10 @@ func (a *Args) Add(key string, val any) error {
 	node, err := literal.Any(val)
 	if err != nil {
 		return err
+	}
+
+	if err := limits.ValidateIntegerBoundsIPLD(node); err != nil {
+		return fmt.Errorf("value for key %q: %w", key, err)
 	}
 
 	a.Values[key] = node
@@ -163,4 +168,15 @@ func (a *Args) Clone() *Args {
 		res.Values[k] = v
 	}
 	return res
+}
+
+// Validate checks that all values in the Args are valid according to UCAN specs
+func (a *Args) Validate() error {
+	for key, value := range a.Values {
+		if err := limits.ValidateIntegerBoundsIPLD(value); err != nil {
+			return fmt.Errorf("value for key %q: %w", key, err)
+		}
+	}
+
+	return nil
 }

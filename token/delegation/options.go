@@ -45,7 +45,8 @@ func WithMeta(key string, val any) Option {
 }
 
 // WithEncryptedMetaString adds a key/value pair in the "meta" field.
-// The string value is encrypted with the given aesKey.
+// The string value is encrypted with the given key.
+// The ciphertext will be 40 bytes larger than the plaintext due to encryption overhead.
 func WithEncryptedMetaString(key, val string, encryptionKey []byte) Option {
 	return func(t *Token) error {
 		return t.meta.AddEncrypted(key, val, encryptionKey)
@@ -53,7 +54,8 @@ func WithEncryptedMetaString(key, val string, encryptionKey []byte) Option {
 }
 
 // WithEncryptedMetaBytes adds a key/value pair in the "meta" field.
-// The []byte value is encrypted with the given aesKey.
+// The []byte value is encrypted with the given key.
+// The ciphertext will be 40 bytes larger than the plaintext due to encryption overhead.
 func WithEncryptedMetaBytes(key string, val, encryptionKey []byte) Option {
 	return func(t *Token) error {
 		return t.meta.AddEncrypted(key, val, encryptionKey)
