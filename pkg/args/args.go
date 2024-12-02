@@ -169,3 +169,14 @@ func (a *Args) Clone() *Args {
 	}
 	return res
 }
+
+// Validate checks that all values in the Args are valid according to UCAN specs
+func (a *Args) Validate() error {
+	for key, value := range a.Values {
+		if err := limits.ValidateIntegerBoundsIPLD(value); err != nil {
+			return fmt.Errorf("value for key %q: %w", key, err)
+		}
+	}
+
+	return nil
+}

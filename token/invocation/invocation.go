@@ -272,6 +272,10 @@ func tokenFromModel(m tokenPayloadModel) (*Token, error) {
 	tkn.nonce = m.Nonce
 
 	tkn.arguments = m.Args
+	if err := tkn.arguments.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid arguments: %w", err)
+	}
+
 	tkn.proof = m.Prf
 	tkn.meta = m.Meta
 
