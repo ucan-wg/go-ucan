@@ -12,6 +12,8 @@ import (
 	"github.com/ipld/go-ipld-prime/fluent/qp"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
+
+	"github.com/ucan-wg/go-ucan/pkg/policy/limits"
 )
 
 var Bool = basicnode.NewBool
@@ -58,8 +60,6 @@ func List[T any](l []T) (ipld.Node, error) {
 // Any creates an IPLD node from any value
 // If possible, use another dedicated function for your type for performance.
 func Any(v any) (res ipld.Node, err error) {
-	// TODO: handle uint overflow below
-
 	// some fast path
 	switch val := v.(type) {
 	case bool:
@@ -67,7 +67,11 @@ func Any(v any) (res ipld.Node, err error) {
 	case string:
 		return basicnode.NewString(val), nil
 	case int:
-		return basicnode.NewInt(int64(val)), nil
+		i := int64(val)
+		if i > limits.MaxInt53 || i < limits.MinInt53 {
+			return nil, fmt.Errorf("integer value %d exceeds safe integer bounds", i)
+		}
+		return basicnode.NewInt(i), nil
 	case int8:
 		return basicnode.NewInt(int64(val)), nil
 	case int16:
@@ -75,6 +79,9 @@ func Any(v any) (res ipld.Node, err error) {
 	case int32:
 		return basicnode.NewInt(int64(val)), nil
 	case int64:
+		if val > limits.MaxInt53 || val < limits.MinInt53 {
+			return nil, fmt.Errorf("integer value %d exceeds safe integer bounds", val)
+		}
 		return basicnode.NewInt(val), nil
 	case uint:
 		return basicnode.NewInt(int64(val)), nil
@@ -85,6 +92,9 @@ func Any(v any) (res ipld.Node, err error) {
 	case uint32:
 		return basicnode.NewInt(int64(val)), nil
 	case uint64:
+		if val > uint64(limits.MaxInt53) {
+			return nil, fmt.Errorf("unsigned integer value %d exceeds safe integer bounds", val)
+		}
 		return basicnode.NewInt(int64(val)), nil
 	case float32:
 		return basicnode.NewFloat(float64(val)), nil
@@ -168,9 +178,17 @@ func anyAssemble(val any) qp.Assemble {
 	case reflect.Bool:
 		return qp.Bool(rv.Bool())
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		return qp.Int(rv.Int())
+		i := rv.Int()
+		if i > limits.MaxInt53 || i < limits.MinInt53 {
+			panic(fmt.Sprintf("integer %d exceeds safe bounds", i))
+		}
+		return qp.Int(i)
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		return qp.Int(int64(rv.Uint()))
+		u := rv.Uint()
+		if u > limits.MaxInt53 {
+			panic(fmt.Sprintf("unsigned integer %d exceeds safe bounds", u))
+		}
+		return qp.Int(int64(u))
 	case reflect.Float32, reflect.Float64:
 		return qp.Float(rv.Float())
 	case reflect.String:

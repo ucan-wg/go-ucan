@@ -2,6 +2,7 @@ package selector
 
 import (
 	"errors"
+	"math"
 	"strings"
 	"testing"
 
@@ -355,4 +356,58 @@ func FuzzParseAndSelect(f *testing.F) {
 			t.Fatal(err)
 		}
 	})
+}
+
+func TestResolveSliceIndices(t *testing.T) {
+	tests := []struct {
+		name      string
+		slice     []int64
+		length    int64
+		wantStart int64
+		wantEnd   int64
+	}{
+		{
+			name:      "normal case",
+			slice:     []int64{1, 3},
+			length:    5,
+			wantStart: 1,
+			wantEnd:   3,
+		},
+		{
+			name:      "negative indices",
+			slice:     []int64{-2, -1},
+			length:    5,
+			wantStart: 3,
+			wantEnd:   4,
+		},
+		{
+			name:      "overflow protection negative start",
+			slice:     []int64{math.MinInt64, 3},
+			length:    5,
+			wantStart: 0,
+			wantEnd:   3,
+		},
+		{
+			name:      "overflow protection negative end",
+			slice:     []int64{0, math.MinInt64},
+			length:    5,
+			wantStart: 0,
+			wantEnd:   0,
+		},
+		{
+			name:      "max bounds",
+			slice:     []int64{0, math.MaxInt64},
+			length:    5,
+			wantStart: 0,
+			wantEnd:   5,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			start, end := resolveSliceIndices(tt.slice, tt.length)
+			require.Equal(t, tt.wantStart, start)
+			require.Equal(t, tt.wantEnd, end)
+		})
+	}
 }

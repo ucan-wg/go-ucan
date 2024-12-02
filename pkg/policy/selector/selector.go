@@ -266,19 +266,32 @@ func resolveSliceIndices(slice []int64, length int64) (start int64, end int64) {
 	case slice[0] == math.MinInt:
 		start = 0
 	case slice[0] < 0:
-		start = length + slice[0]
+		// Check for potential overflow before adding
+		if -slice[0] > length {
+			start = 0
+		} else {
+			start = length + slice[0]
+		}
 	}
+
 	switch {
 	case slice[1] == math.MaxInt:
 		end = length
 	case slice[1] < 0:
-		end = length + slice[1]
+		// Check for potential overflow before adding
+		if -slice[1] > length {
+			end = 0
+		} else {
+			end = length + slice[1]
+		}
 	}
 
 	// backward iteration is not allowed, shortcut to an empty result
 	if start >= end {
 		start, end = 0, 0
+		return
 	}
+
 	// clamp out of bound
 	if start < 0 {
 		start = 0
@@ -286,11 +299,14 @@ func resolveSliceIndices(slice []int64, length int64) (start int64, end int64) {
 	if start > length {
 		start = length
 	}
+	if end < 0 {
+		end = 0
+	}
 	if end > length {
 		end = length
 	}
 
-	return start, end
+	return
 }
 
 func kindString(n datamodel.Node) string {

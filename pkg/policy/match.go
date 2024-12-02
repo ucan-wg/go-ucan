@@ -3,6 +3,7 @@ package policy
 import (
 	"cmp"
 	"fmt"
+	"math"
 
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/datamodel"
@@ -249,10 +250,22 @@ func matchStatement(cur Statement, node ipld.Node) (_ matchResult, leafMost Stat
 	panic(fmt.Errorf("unimplemented statement kind: %s", cur.Kind()))
 }
 
+// isOrdered compares two IPLD nodes and returns true if they satisfy the given ordering function.
+// It supports comparison of integers and floats, returning false for:
+//   - Nodes of different or unsupported kinds
+//   - Integer values outside JavaScript's safe integer bounds (±2^53-1)
+//   - Non-finite floating point values (NaN or ±Inf)
+//
+// The satisfies parameter is a function that interprets the comparison result:
+//   - For ">" it returns true when order is 1
+//   - For ">=" it returns true when order is 0 or 1
+//   - For "<" it returns true when order is -1
+//   - For "<=" it returns true when order is -1 or 0
 func isOrdered(expected ipld.Node, actual ipld.Node, satisfies func(order int) bool) bool {
 	if expected.Kind() == ipld.Kind_Int && actual.Kind() == ipld.Kind_Int {
 		a := must.Int(actual)
 		b := must.Int(expected)
+
 		return satisfies(cmp.Compare(a, b))
 	}
 
@@ -265,6 +278,11 @@ func isOrdered(expected ipld.Node, actual ipld.Node, satisfies func(order int) b
 		if err != nil {
 			panic(fmt.Errorf("extracting selector float: %w", err))
 		}
+
+		if math.IsInf(a, 0) || math.IsNaN(a) || math.IsInf(b, 0) || math.IsNaN(b) {
+			return false
+		}
+
 		return satisfies(cmp.Compare(a, b))
 	}
 
