@@ -591,7 +591,7 @@ func TestParse(t *testing.T) {
 			".mixed_kebab-case",
 			".with$dollar",
 			".MIXED_Case_123",
-			".unicode⌘",
+			".unicodeø",
 		}
 
 		for _, field := range validFields {

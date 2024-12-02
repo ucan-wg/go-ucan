@@ -22,8 +22,7 @@ var (
 	// \p{Mn}\p{Mc} - combining marks and spacing combining marks
 	// \p{Nd} - decimal numbers
 	// \p{Pc} - connector punctuation (like underscore)
-	// \p{Sm}\p{So} - math symbols and other symbols
-	fieldRegex = regexp.MustCompile(`^\.[a-zA-Z_\p{L}][a-zA-Z$_\p{L}\p{Mn}\p{Mc}\p{Nd}\p{Pc}\p{Sm}\p{So}-]*?$`)
+	fieldRegex = regexp.MustCompile(`^\.[a-zA-Z_\p{L}][a-zA-Z$_\p{L}\p{Mn}\p{Mc}\p{Nd}\p{Pc}-]*?$`)
 )
 
 func Parse(str string) (Selector, error) {
