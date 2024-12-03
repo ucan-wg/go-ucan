@@ -13,7 +13,17 @@ import (
 var (
 	indexRegex = regexp.MustCompile(`^-?\d+$`)
 	sliceRegex = regexp.MustCompile(`^((\-?\d+:\-?\d*)|(\-?\d*:\-?\d+))$`)
-	fieldRegex = regexp.MustCompile(`^\.[a-zA-Z_-]*?$`)
+
+	// Field name requirements:
+	// - Must start with ASCII letter, Unicode letter, or underscore
+	// - Can contain:
+	//   - ASCII letters (a-z, A-Z)
+	//   - ASCII digits (0-9)
+	//   - Unicode letters (\p{L})
+	//   - Dollar sign ($)
+	//   - Underscore (_)
+	//   - Hyphen (-)
+	fieldRegex = regexp.MustCompile(`^\.[a-zA-Z_\p{L}][a-zA-Z0-9$_\p{L}\-]*$`)
 )
 
 func Parse(str string) (Selector, error) {
