@@ -214,6 +214,9 @@ func tokenFromModel(m tokenPayloadModel) (*Token, error) {
 	tkn.nonce = m.Nonce
 
 	tkn.meta = m.Meta
+	if tkn.meta == nil {
+		tkn.meta = meta.NewMeta()
+	}
 
 	tkn.notBefore, err = parse.OptionalTimestamp(m.Nbf)
 	if err != nil {
