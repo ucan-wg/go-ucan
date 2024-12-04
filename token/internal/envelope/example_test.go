@@ -41,18 +41,18 @@ const (
 var schemaBytes []byte
 
 var (
-	once sync.Once
-	ts   *schema.TypeSystem
-	err  error
+	once      sync.Once
+	ts        *schema.TypeSystem
+	errSchema error
 )
 
 func mustLoadSchema() *schema.TypeSystem {
 	once.Do(func() {
-		ts, err = ipld.LoadSchemaBytes(schemaBytes)
+		ts, errSchema = ipld.LoadSchemaBytes(schemaBytes)
 	})
 
-	if err != nil {
-		panic(fmt.Errorf("failed to load IPLD schema: %s", err))
+	if errSchema != nil {
+		panic(fmt.Errorf("failed to load IPLD schema: %s", errSchema))
 	}
 
 	return ts

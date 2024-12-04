@@ -129,3 +129,15 @@ func Personas() []Persona {
 		PersonaFrank,
 	}
 }
+
+// DidToName retrieve the persona's name from its DID.
+func DidToName(d did.DID) string {
+	return map[did.DID]string{
+		PersonaAlice.DID(): "Alice",
+		PersonaBob.DID():   "Bob",
+		PersonaCarol.DID(): "Carol",
+		PersonaDan.DID():   "Dan",
+		PersonaErin.DID():  "Erin",
+		PersonaFrank.DID(): "Frank",
+	}[d]
+}

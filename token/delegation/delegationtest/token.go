@@ -18,12 +18,12 @@ var (
 	// Execution of this command is generally prohibited in tests.
 	ExpandedCommand = command.MustParse("/expanded")
 
-	// NominalCommand is the command used for most test tokens and proof-
-	// chains.  Execution of this command is generally allowed in tests.
+	// NominalCommand is the command used for most test tokens and proof-chains.
+	// Execution of this command is generally allowed in tests.
 	NominalCommand = ExpandedCommand.Join("nominal")
 
-	// AttenuatedCommand is a sub-command of the NominalCommand.  Execution
-	// of this command is generally allowed in tests.
+	// AttenuatedCommand is a sub-command of the NominalCommand.
+	// Execution of this command is generally allowed in tests.
 	AttenuatedCommand = NominalCommand.Join("attenuated")
 )
 
@@ -35,21 +35,21 @@ const TokenDir = "data"
 //go:embed data
 var fs embed.FS
 
-var _ delegation.Loader = (*delegationLoader)(nil)
+var _ delegation.Loader = (*DelegationLoader)(nil)
 
-type delegationLoader struct {
-	tokens map[cid.Cid]*delegation.Token
+type DelegationLoader struct {
+	bundles map[cid.Cid]*delegation.Bundle
 }
 
 var (
 	once sync.Once
-	ldr  delegation.Loader
+	ldr  *DelegationLoader
 )
 
 // GetDelegationLoader returns a singleton instance of a test
 // DelegationLoader containing all the tokens present in the data/
 // directory.
-func GetDelegationLoader() delegation.Loader {
+func GetDelegationLoader() *DelegationLoader {
 	once.Do(func() {
 		var err error
 		ldr, err = loadDelegations()
@@ -61,22 +61,21 @@ func GetDelegationLoader() delegation.Loader {
 }
 
 // GetDelegation implements invocation.DelegationLoader.
-func (l *delegationLoader) GetDelegation(id cid.Cid) (*delegation.Token, error) {
-	tkn, ok := l.tokens[id]
+func (l *DelegationLoader) GetDelegation(id cid.Cid) (*delegation.Token, error) {
+	bundle, ok := l.bundles[id]
 	if !ok {
 		return nil, delegation.ErrDelegationNotFound
 	}
-
-	return tkn, nil
+	return bundle.Decoded, nil
 }
 
-func loadDelegations() (delegation.Loader, error) {
+func loadDelegations() (*DelegationLoader, error) {
 	dirEntries, err := fs.ReadDir(TokenDir)
 	if err != nil {
 		return nil, err
 	}
 
-	tkns := make(map[cid.Cid]*delegation.Token, len(dirEntries))
+	bundles := make(map[cid.Cid]*delegation.Bundle, len(dirEntries))
 
 	for _, dirEntry := range dirEntries {
 		data, err := fs.ReadFile(filepath.Join(TokenDir, dirEntry.Name()))
@@ -89,11 +88,11 @@ func loadDelegations() (delegation.Loader, error) {
 			return nil, err
 		}
 
-		tkns[id] = tkn
+		bundles[id] = &delegation.Bundle{Cid: id, Decoded: tkn, Sealed: data}
 	}
 
-	return &delegationLoader{
-		tokens: tkns,
+	return &DelegationLoader{
+		bundles: bundles,
 	}, nil
 }
 
@@ -103,10 +102,14 @@ func GetDelegation(id cid.Cid) (*delegation.Token, error) {
 	return GetDelegationLoader().GetDelegation(id)
 }
 
-func mustGetDelegation(id cid.Cid) *delegation.Token {
-	tkn, err := GetDelegation(id)
-	if err != nil {
-		panic(err)
+func CidToName(id cid.Cid) string {
+	return cidToName[id]
+}
+
+func mustGetBundle(id cid.Cid) *delegation.Bundle {
+	bundle, ok := GetDelegationLoader().bundles[id]
+	if !ok {
+		panic(delegation.ErrDelegationNotFound)
 	}
-	return tkn
+	return bundle
 }

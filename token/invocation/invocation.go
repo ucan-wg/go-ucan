@@ -277,7 +277,11 @@ func tokenFromModel(m tokenPayloadModel) (*Token, error) {
 	}
 
 	tkn.proof = m.Prf
+
 	tkn.meta = m.Meta
+	if tkn.meta == nil {
+		tkn.meta = meta.NewMeta()
+	}
 
 	tkn.expiration, err = parse.OptionalTimestamp(m.Exp)
 	if err != nil {
