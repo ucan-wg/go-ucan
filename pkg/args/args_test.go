@@ -257,17 +257,17 @@ const (
 )
 
 var (
-	once sync.Once
-	ts   *schema.TypeSystem
-	err  error
+	once      sync.Once
+	ts        *schema.TypeSystem
+	errSchema error
 )
 
 func argsType() schema.Type {
 	once.Do(func() {
-		ts, err = ipld.LoadSchemaBytes([]byte(argsSchema))
+		ts, errSchema = ipld.LoadSchemaBytes([]byte(argsSchema))
 	})
-	if err != nil {
-		panic(err)
+	if errSchema != nil {
+		panic(errSchema)
 	}
 
 	return ts.TypeByName(argsName)

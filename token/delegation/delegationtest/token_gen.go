@@ -2,122 +2,250 @@
 
 package delegationtest
 
-import "github.com/ipfs/go-cid"
+import (
+	"github.com/ipfs/go-cid"
 
-var (
-	TokenAliceBobCID = cid.MustParse("bafyreicidrwvmac5lvjypucgityrtjsknojraio7ujjli4r5eyby66wjzm")
-	TokenAliceBob    = mustGetDelegation(TokenAliceBobCID)
+	"github.com/ucan-wg/go-ucan/token/delegation"
 )
 
 var (
-	TokenBobCarolCID = cid.MustParse("bafyreihxv2uhq43oxllzs2xfvxst7wtvvvl7pohb2chcz6hjvfv2ntea5u")
-	TokenBobCarol    = mustGetDelegation(TokenBobCarolCID)
+	TokenAliceBobCID    = cid.MustParse("bafyreicidrwvmac5lvjypucgityrtjsknojraio7ujjli4r5eyby66wjzm")
+	TokenAliceBobSealed = mustGetBundle(TokenAliceBobCID).Sealed
+	TokenAliceBobBundle = mustGetBundle(TokenAliceBobCID)
+	TokenAliceBob       = mustGetBundle(TokenAliceBobCID).Decoded
 )
 
 var (
-	TokenCarolDanCID = cid.MustParse("bafyreihclsgiroazq3heqdswvj2cafwqbpboicq7immo65scl7ahktpsdq")
-	TokenCarolDan    = mustGetDelegation(TokenCarolDanCID)
+	TokenBobCarolCID    = cid.MustParse("bafyreihxv2uhq43oxllzs2xfvxst7wtvvvl7pohb2chcz6hjvfv2ntea5u")
+	TokenBobCarolSealed = mustGetBundle(TokenBobCarolCID).Sealed
+	TokenBobCarolBundle = mustGetBundle(TokenBobCarolCID)
+	TokenBobCarol       = mustGetBundle(TokenBobCarolCID).Decoded
 )
 
 var (
-	TokenDanErinCID = cid.MustParse("bafyreicja6ihewy64p3ake56xukotafjlkh4uqep2qhj52en46zzfwby3e")
-	TokenDanErin    = mustGetDelegation(TokenDanErinCID)
+	TokenCarolDanCID    = cid.MustParse("bafyreihclsgiroazq3heqdswvj2cafwqbpboicq7immo65scl7ahktpsdq")
+	TokenCarolDanSealed = mustGetBundle(TokenCarolDanCID).Sealed
+	TokenCarolDanBundle = mustGetBundle(TokenCarolDanCID)
+	TokenCarolDan       = mustGetBundle(TokenCarolDanCID).Decoded
 )
 
 var (
-	TokenErinFrankCID = cid.MustParse("bafyreicjlx3lobxm6hl5s4htd4ydwkkqeiou6rft4rnvulfdyoew565vka")
-	TokenErinFrank    = mustGetDelegation(TokenErinFrankCID)
+	TokenDanErinCID    = cid.MustParse("bafyreicja6ihewy64p3ake56xukotafjlkh4uqep2qhj52en46zzfwby3e")
+	TokenDanErinSealed = mustGetBundle(TokenDanErinCID).Sealed
+	TokenDanErinBundle = mustGetBundle(TokenDanErinCID)
+	TokenDanErin       = mustGetBundle(TokenDanErinCID).Decoded
 )
 
 var (
-	TokenCarolDan_InvalidExpandedCommandCID = cid.MustParse("bafyreid3m3pk53gqgp5rlzqhvpedbwsqbidqlp4yz64vknwbzj7bxrmsr4")
-	TokenCarolDan_InvalidExpandedCommand    = mustGetDelegation(TokenCarolDan_InvalidExpandedCommandCID)
+	TokenErinFrankCID    = cid.MustParse("bafyreicjlx3lobxm6hl5s4htd4ydwkkqeiou6rft4rnvulfdyoew565vka")
+	TokenErinFrankSealed = mustGetBundle(TokenErinFrankCID).Sealed
+	TokenErinFrankBundle = mustGetBundle(TokenErinFrankCID)
+	TokenErinFrank       = mustGetBundle(TokenErinFrankCID).Decoded
 )
 
 var (
-	TokenDanErin_InvalidExpandedCommandCID = cid.MustParse("bafyreifn4sy5onwajx3kqvot5mib6m6xarzrqjozqbzgmzpmc5ox3g2uzm")
-	TokenDanErin_InvalidExpandedCommand    = mustGetDelegation(TokenDanErin_InvalidExpandedCommandCID)
+	TokenCarolDan_InvalidExpandedCommandCID    = cid.MustParse("bafyreid3m3pk53gqgp5rlzqhvpedbwsqbidqlp4yz64vknwbzj7bxrmsr4")
+	TokenCarolDan_InvalidExpandedCommandSealed = mustGetBundle(TokenCarolDan_InvalidExpandedCommandCID).Sealed
+	TokenCarolDan_InvalidExpandedCommandBundle = mustGetBundle(TokenCarolDan_InvalidExpandedCommandCID)
+	TokenCarolDan_InvalidExpandedCommand       = mustGetBundle(TokenCarolDan_InvalidExpandedCommandCID).Decoded
 )
 
 var (
-	TokenErinFrank_InvalidExpandedCommandCID = cid.MustParse("bafyreidmpgd36jznmq42bs34o4qi3fcbrsh4idkg6ejahudejzwb76fwxe")
-	TokenErinFrank_InvalidExpandedCommand    = mustGetDelegation(TokenErinFrank_InvalidExpandedCommandCID)
+	TokenDanErin_InvalidExpandedCommandCID    = cid.MustParse("bafyreifn4sy5onwajx3kqvot5mib6m6xarzrqjozqbzgmzpmc5ox3g2uzm")
+	TokenDanErin_InvalidExpandedCommandSealed = mustGetBundle(TokenDanErin_InvalidExpandedCommandCID).Sealed
+	TokenDanErin_InvalidExpandedCommandBundle = mustGetBundle(TokenDanErin_InvalidExpandedCommandCID)
+	TokenDanErin_InvalidExpandedCommand       = mustGetBundle(TokenDanErin_InvalidExpandedCommandCID).Decoded
 )
 
 var (
-	TokenCarolDan_ValidAttenuatedCommandCID = cid.MustParse("bafyreiekhtm237vyapk3c6voeb5lnz54crebqdqi3x4wn4u4cbrrhzsqfe")
-	TokenCarolDan_ValidAttenuatedCommand    = mustGetDelegation(TokenCarolDan_ValidAttenuatedCommandCID)
+	TokenErinFrank_InvalidExpandedCommandCID    = cid.MustParse("bafyreidmpgd36jznmq42bs34o4qi3fcbrsh4idkg6ejahudejzwb76fwxe")
+	TokenErinFrank_InvalidExpandedCommandSealed = mustGetBundle(TokenErinFrank_InvalidExpandedCommandCID).Sealed
+	TokenErinFrank_InvalidExpandedCommandBundle = mustGetBundle(TokenErinFrank_InvalidExpandedCommandCID)
+	TokenErinFrank_InvalidExpandedCommand       = mustGetBundle(TokenErinFrank_InvalidExpandedCommandCID).Decoded
 )
 
 var (
-	TokenDanErin_ValidAttenuatedCommandCID = cid.MustParse("bafyreicrvzqferyy7rgo75l5rn6r2nl7zyeexxjmu3dm4ff7rn2coblj4y")
-	TokenDanErin_ValidAttenuatedCommand    = mustGetDelegation(TokenDanErin_ValidAttenuatedCommandCID)
+	TokenCarolDan_ValidAttenuatedCommandCID    = cid.MustParse("bafyreiekhtm237vyapk3c6voeb5lnz54crebqdqi3x4wn4u4cbrrhzsqfe")
+	TokenCarolDan_ValidAttenuatedCommandSealed = mustGetBundle(TokenCarolDan_ValidAttenuatedCommandCID).Sealed
+	TokenCarolDan_ValidAttenuatedCommandBundle = mustGetBundle(TokenCarolDan_ValidAttenuatedCommandCID)
+	TokenCarolDan_ValidAttenuatedCommand       = mustGetBundle(TokenCarolDan_ValidAttenuatedCommandCID).Decoded
 )
 
 var (
-	TokenErinFrank_ValidAttenuatedCommandCID = cid.MustParse("bafyreie6fhspk53kplcc2phla3e7z7fzldlbmmpuwk6nbow5q6s2zjmw2q")
-	TokenErinFrank_ValidAttenuatedCommand    = mustGetDelegation(TokenErinFrank_ValidAttenuatedCommandCID)
+	TokenDanErin_ValidAttenuatedCommandCID    = cid.MustParse("bafyreicrvzqferyy7rgo75l5rn6r2nl7zyeexxjmu3dm4ff7rn2coblj4y")
+	TokenDanErin_ValidAttenuatedCommandSealed = mustGetBundle(TokenDanErin_ValidAttenuatedCommandCID).Sealed
+	TokenDanErin_ValidAttenuatedCommandBundle = mustGetBundle(TokenDanErin_ValidAttenuatedCommandCID)
+	TokenDanErin_ValidAttenuatedCommand       = mustGetBundle(TokenDanErin_ValidAttenuatedCommandCID).Decoded
 )
 
 var (
-	TokenCarolDan_InvalidSubjectCID = cid.MustParse("bafyreifgksz6756if42tnc6rqsnbaa2u3fdrveo7ek44lnj2d64d5sw26u")
-	TokenCarolDan_InvalidSubject    = mustGetDelegation(TokenCarolDan_InvalidSubjectCID)
+	TokenErinFrank_ValidAttenuatedCommandCID    = cid.MustParse("bafyreie6fhspk53kplcc2phla3e7z7fzldlbmmpuwk6nbow5q6s2zjmw2q")
+	TokenErinFrank_ValidAttenuatedCommandSealed = mustGetBundle(TokenErinFrank_ValidAttenuatedCommandCID).Sealed
+	TokenErinFrank_ValidAttenuatedCommandBundle = mustGetBundle(TokenErinFrank_ValidAttenuatedCommandCID)
+	TokenErinFrank_ValidAttenuatedCommand       = mustGetBundle(TokenErinFrank_ValidAttenuatedCommandCID).Decoded
 )
 
 var (
-	TokenDanErin_InvalidSubjectCID = cid.MustParse("bafyreibdwew5nypsxrm4fq73wu6hw3lgwwiolj3bi33xdrbgcf3ogm6fty")
-	TokenDanErin_InvalidSubject    = mustGetDelegation(TokenDanErin_InvalidSubjectCID)
+	TokenCarolDan_InvalidSubjectCID    = cid.MustParse("bafyreifgksz6756if42tnc6rqsnbaa2u3fdrveo7ek44lnj2d64d5sw26u")
+	TokenCarolDan_InvalidSubjectSealed = mustGetBundle(TokenCarolDan_InvalidSubjectCID).Sealed
+	TokenCarolDan_InvalidSubjectBundle = mustGetBundle(TokenCarolDan_InvalidSubjectCID)
+	TokenCarolDan_InvalidSubject       = mustGetBundle(TokenCarolDan_InvalidSubjectCID).Decoded
 )
 
 var (
-	TokenErinFrank_InvalidSubjectCID = cid.MustParse("bafyreicr364mj3n7x4iyhcksxypelktcqkkw3ptg7ggxtqegw3p3mr6zc4")
-	TokenErinFrank_InvalidSubject    = mustGetDelegation(TokenErinFrank_InvalidSubjectCID)
+	TokenDanErin_InvalidSubjectCID    = cid.MustParse("bafyreibdwew5nypsxrm4fq73wu6hw3lgwwiolj3bi33xdrbgcf3ogm6fty")
+	TokenDanErin_InvalidSubjectSealed = mustGetBundle(TokenDanErin_InvalidSubjectCID).Sealed
+	TokenDanErin_InvalidSubjectBundle = mustGetBundle(TokenDanErin_InvalidSubjectCID)
+	TokenDanErin_InvalidSubject       = mustGetBundle(TokenDanErin_InvalidSubjectCID).Decoded
 )
 
 var (
-	TokenCarolDan_InvalidExpiredCID = cid.MustParse("bafyreici5ggrh6yyoqfqwfssks4737icit2exxrhhcsljpc6lniz64ejay")
-	TokenCarolDan_InvalidExpired    = mustGetDelegation(TokenCarolDan_InvalidExpiredCID)
+	TokenErinFrank_InvalidSubjectCID    = cid.MustParse("bafyreicr364mj3n7x4iyhcksxypelktcqkkw3ptg7ggxtqegw3p3mr6zc4")
+	TokenErinFrank_InvalidSubjectSealed = mustGetBundle(TokenErinFrank_InvalidSubjectCID).Sealed
+	TokenErinFrank_InvalidSubjectBundle = mustGetBundle(TokenErinFrank_InvalidSubjectCID)
+	TokenErinFrank_InvalidSubject       = mustGetBundle(TokenErinFrank_InvalidSubjectCID).Decoded
 )
 
 var (
-	TokenDanErin_InvalidExpiredCID = cid.MustParse("bafyreidnkdvkwhuoiwldua4z7mupuoaixktmuihd4h3gqff4nk4lfuoxlq")
-	TokenDanErin_InvalidExpired    = mustGetDelegation(TokenDanErin_InvalidExpiredCID)
+	TokenCarolDan_InvalidExpiredCID    = cid.MustParse("bafyreic7cpi2j65je6rwiyxzq233lpbljvl6ggs5ew53nnye3tc3jdltqm")
+	TokenCarolDan_InvalidExpiredSealed = mustGetBundle(TokenCarolDan_InvalidExpiredCID).Sealed
+	TokenCarolDan_InvalidExpiredBundle = mustGetBundle(TokenCarolDan_InvalidExpiredCID)
+	TokenCarolDan_InvalidExpired       = mustGetBundle(TokenCarolDan_InvalidExpiredCID).Decoded
 )
 
 var (
-	TokenErinFrank_InvalidExpiredCID = cid.MustParse("bafyreighom66dfg3scp26huljbiovkuuv2bh4izdqahccutrilqz46nz3e")
-	TokenErinFrank_InvalidExpired    = mustGetDelegation(TokenErinFrank_InvalidExpiredCID)
+	TokenDanErin_InvalidExpiredCID    = cid.MustParse("bafyreiguafxrlpncpjxxfuled2izocjp5s3kcclkdl4edpd22tr2gfcad4")
+	TokenDanErin_InvalidExpiredSealed = mustGetBundle(TokenDanErin_InvalidExpiredCID).Sealed
+	TokenDanErin_InvalidExpiredBundle = mustGetBundle(TokenDanErin_InvalidExpiredCID)
+	TokenDanErin_InvalidExpired       = mustGetBundle(TokenDanErin_InvalidExpiredCID).Decoded
 )
 
 var (
-	TokenCarolDan_InvalidInactiveCID = cid.MustParse("bafyreicea5y2nvlitvxijkupeavtg23i7ktjk3uejnaquguurzptiabk4u")
-	TokenCarolDan_InvalidInactive    = mustGetDelegation(TokenCarolDan_InvalidInactiveCID)
+	TokenErinFrank_InvalidExpiredCID    = cid.MustParse("bafyreid4blvceraqiz32vca4gwk2hcf7dqtu6ydpmq3xlbj5biiq46mo44")
+	TokenErinFrank_InvalidExpiredSealed = mustGetBundle(TokenErinFrank_InvalidExpiredCID).Sealed
+	TokenErinFrank_InvalidExpiredBundle = mustGetBundle(TokenErinFrank_InvalidExpiredCID)
+	TokenErinFrank_InvalidExpired       = mustGetBundle(TokenErinFrank_InvalidExpiredCID).Decoded
 )
 
 var (
-	TokenDanErin_InvalidInactiveCID = cid.MustParse("bafyreifsgqzkmxj2vexuts3z766mwcjreiisjg2jykyzf7tbj5sclutpvq")
-	TokenDanErin_InvalidInactive    = mustGetDelegation(TokenDanErin_InvalidInactiveCID)
+	TokenCarolDan_InvalidInactiveCID    = cid.MustParse("bafyreicea5y2nvlitvxijkupeavtg23i7ktjk3uejnaquguurzptiabk4u")
+	TokenCarolDan_InvalidInactiveSealed = mustGetBundle(TokenCarolDan_InvalidInactiveCID).Sealed
+	TokenCarolDan_InvalidInactiveBundle = mustGetBundle(TokenCarolDan_InvalidInactiveCID)
+	TokenCarolDan_InvalidInactive       = mustGetBundle(TokenCarolDan_InvalidInactiveCID).Decoded
 )
 
 var (
-	TokenErinFrank_InvalidInactiveCID = cid.MustParse("bafyreifbfegon24c6dndiqyktahzs65vhyasrygbw7nhsvojn6distsdre")
-	TokenErinFrank_InvalidInactive    = mustGetDelegation(TokenErinFrank_InvalidInactiveCID)
+	TokenDanErin_InvalidInactiveCID    = cid.MustParse("bafyreifsgqzkmxj2vexuts3z766mwcjreiisjg2jykyzf7tbj5sclutpvq")
+	TokenDanErin_InvalidInactiveSealed = mustGetBundle(TokenDanErin_InvalidInactiveCID).Sealed
+	TokenDanErin_InvalidInactiveBundle = mustGetBundle(TokenDanErin_InvalidInactiveCID)
+	TokenDanErin_InvalidInactive       = mustGetBundle(TokenDanErin_InvalidInactiveCID).Decoded
 )
 
 var (
-	TokenCarolDan_ValidExamplePolicyCID = cid.MustParse("bafyreibtfrp2njnkjrcuhxd4ebaecmpcql5knek2h2j2fjzu2sij2tv6ei")
-	TokenCarolDan_ValidExamplePolicy    = mustGetDelegation(TokenCarolDan_ValidExamplePolicyCID)
+	TokenErinFrank_InvalidInactiveCID    = cid.MustParse("bafyreifbfegon24c6dndiqyktahzs65vhyasrygbw7nhsvojn6distsdre")
+	TokenErinFrank_InvalidInactiveSealed = mustGetBundle(TokenErinFrank_InvalidInactiveCID).Sealed
+	TokenErinFrank_InvalidInactiveBundle = mustGetBundle(TokenErinFrank_InvalidInactiveCID)
+	TokenErinFrank_InvalidInactive       = mustGetBundle(TokenErinFrank_InvalidInactiveCID).Decoded
 )
 
 var (
-	TokenDanErin_ValidExamplePolicyCID = cid.MustParse("bafyreidxfwbkzujpu7ivulkc7b6ff4cpbzrkeklmxqvyhhmkmym5b45e2e")
-	TokenDanErin_ValidExamplePolicy    = mustGetDelegation(TokenDanErin_ValidExamplePolicyCID)
+	TokenCarolDan_ValidExamplePolicyCID    = cid.MustParse("bafyreibtfrp2njnkjrcuhxd4ebaecmpcql5knek2h2j2fjzu2sij2tv6ei")
+	TokenCarolDan_ValidExamplePolicySealed = mustGetBundle(TokenCarolDan_ValidExamplePolicyCID).Sealed
+	TokenCarolDan_ValidExamplePolicyBundle = mustGetBundle(TokenCarolDan_ValidExamplePolicyCID)
+	TokenCarolDan_ValidExamplePolicy       = mustGetBundle(TokenCarolDan_ValidExamplePolicyCID).Decoded
 )
 
 var (
-	TokenErinFrank_ValidExamplePolicyCID = cid.MustParse("bafyreiatkvtvgakqcrdk6vgrv7tbq5rbeiqct52ep4plcftp2agffjyvp4")
-	TokenErinFrank_ValidExamplePolicy    = mustGetDelegation(TokenErinFrank_ValidExamplePolicyCID)
+	TokenDanErin_ValidExamplePolicyCID    = cid.MustParse("bafyreidxfwbkzujpu7ivulkc7b6ff4cpbzrkeklmxqvyhhmkmym5b45e2e")
+	TokenDanErin_ValidExamplePolicySealed = mustGetBundle(TokenDanErin_ValidExamplePolicyCID).Sealed
+	TokenDanErin_ValidExamplePolicyBundle = mustGetBundle(TokenDanErin_ValidExamplePolicyCID)
+	TokenDanErin_ValidExamplePolicy       = mustGetBundle(TokenDanErin_ValidExamplePolicyCID).Decoded
 )
+
+var (
+	TokenErinFrank_ValidExamplePolicyCID    = cid.MustParse("bafyreiatkvtvgakqcrdk6vgrv7tbq5rbeiqct52ep4plcftp2agffjyvp4")
+	TokenErinFrank_ValidExamplePolicySealed = mustGetBundle(TokenErinFrank_ValidExamplePolicyCID).Sealed
+	TokenErinFrank_ValidExamplePolicyBundle = mustGetBundle(TokenErinFrank_ValidExamplePolicyCID)
+	TokenErinFrank_ValidExamplePolicy       = mustGetBundle(TokenErinFrank_ValidExamplePolicyCID).Decoded
+)
+
+var AllTokens = []*delegation.Token{
+	TokenAliceBob,
+	TokenBobCarol,
+	TokenCarolDan,
+	TokenDanErin,
+	TokenErinFrank,
+	TokenCarolDan_InvalidExpandedCommand,
+	TokenDanErin_InvalidExpandedCommand,
+	TokenErinFrank_InvalidExpandedCommand,
+	TokenCarolDan_ValidAttenuatedCommand,
+	TokenDanErin_ValidAttenuatedCommand,
+	TokenErinFrank_ValidAttenuatedCommand,
+	TokenCarolDan_InvalidSubject,
+	TokenDanErin_InvalidSubject,
+	TokenErinFrank_InvalidSubject,
+	TokenCarolDan_InvalidExpired,
+	TokenDanErin_InvalidExpired,
+	TokenErinFrank_InvalidExpired,
+	TokenCarolDan_InvalidInactive,
+	TokenDanErin_InvalidInactive,
+	TokenErinFrank_InvalidInactive,
+	TokenCarolDan_ValidExamplePolicy,
+	TokenDanErin_ValidExamplePolicy,
+	TokenErinFrank_ValidExamplePolicy,
+}
+
+var AllBundles = []*delegation.Bundle{
+	TokenAliceBobBundle,
+	TokenBobCarolBundle,
+	TokenCarolDanBundle,
+	TokenDanErinBundle,
+	TokenErinFrankBundle,
+	TokenCarolDan_InvalidExpandedCommandBundle,
+	TokenDanErin_InvalidExpandedCommandBundle,
+	TokenErinFrank_InvalidExpandedCommandBundle,
+	TokenCarolDan_ValidAttenuatedCommandBundle,
+	TokenDanErin_ValidAttenuatedCommandBundle,
+	TokenErinFrank_ValidAttenuatedCommandBundle,
+	TokenCarolDan_InvalidSubjectBundle,
+	TokenDanErin_InvalidSubjectBundle,
+	TokenErinFrank_InvalidSubjectBundle,
+	TokenCarolDan_InvalidExpiredBundle,
+	TokenDanErin_InvalidExpiredBundle,
+	TokenErinFrank_InvalidExpiredBundle,
+	TokenCarolDan_InvalidInactiveBundle,
+	TokenDanErin_InvalidInactiveBundle,
+	TokenErinFrank_InvalidInactiveBundle,
+	TokenCarolDan_ValidExamplePolicyBundle,
+	TokenDanErin_ValidExamplePolicyBundle,
+	TokenErinFrank_ValidExamplePolicyBundle,
+}
+
+var cidToName = map[cid.Cid]string{
+	TokenAliceBobCID: "TokenAliceBob",
+	TokenBobCarolCID: "TokenBobCarol",
+	TokenCarolDanCID: "TokenCarolDan",
+	TokenDanErinCID: "TokenDanErin",
+	TokenErinFrankCID: "TokenErinFrank",
+	TokenCarolDan_InvalidExpandedCommandCID: "TokenCarolDan_InvalidExpandedCommand",
+	TokenDanErin_InvalidExpandedCommandCID: "TokenDanErin_InvalidExpandedCommand",
+	TokenErinFrank_InvalidExpandedCommandCID: "TokenErinFrank_InvalidExpandedCommand",
+	TokenCarolDan_ValidAttenuatedCommandCID: "TokenCarolDan_ValidAttenuatedCommand",
+	TokenDanErin_ValidAttenuatedCommandCID: "TokenDanErin_ValidAttenuatedCommand",
+	TokenErinFrank_ValidAttenuatedCommandCID: "TokenErinFrank_ValidAttenuatedCommand",
+	TokenCarolDan_InvalidSubjectCID: "TokenCarolDan_InvalidSubject",
+	TokenDanErin_InvalidSubjectCID: "TokenDanErin_InvalidSubject",
+	TokenErinFrank_InvalidSubjectCID: "TokenErinFrank_InvalidSubject",
+	TokenCarolDan_InvalidExpiredCID: "TokenCarolDan_InvalidExpired",
+	TokenDanErin_InvalidExpiredCID: "TokenDanErin_InvalidExpired",
+	TokenErinFrank_InvalidExpiredCID: "TokenErinFrank_InvalidExpired",
+	TokenCarolDan_InvalidInactiveCID: "TokenCarolDan_InvalidInactive",
+	TokenDanErin_InvalidInactiveCID: "TokenDanErin_InvalidInactive",
+	TokenErinFrank_InvalidInactiveCID: "TokenErinFrank_InvalidInactive",
+	TokenCarolDan_ValidExamplePolicyCID: "TokenCarolDan_ValidExamplePolicy",
+	TokenDanErin_ValidExamplePolicyCID: "TokenDanErin_ValidExamplePolicy",
+	TokenErinFrank_ValidExamplePolicyCID: "TokenErinFrank_ValidExamplePolicy",
+}
 
 var ProofAliceBob = []cid.Cid{
 	TokenAliceBobCID,
