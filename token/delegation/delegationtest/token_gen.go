@@ -107,21 +107,21 @@ var (
 )
 
 var (
-	TokenCarolDan_InvalidExpiredCID    = cid.MustParse("bafyreic7cpi2j65je6rwiyxzq233lpbljvl6ggs5ew53nnye3tc3jdltqm")
+	TokenCarolDan_InvalidExpiredCID    = cid.MustParse("bafyreigvdcarp6426e5aenal3q3c4uyhncwfbmt3fsmb4qzspkpjy57gti")
 	TokenCarolDan_InvalidExpiredSealed = mustGetBundle(TokenCarolDan_InvalidExpiredCID).Sealed
 	TokenCarolDan_InvalidExpiredBundle = mustGetBundle(TokenCarolDan_InvalidExpiredCID)
 	TokenCarolDan_InvalidExpired       = mustGetBundle(TokenCarolDan_InvalidExpiredCID).Decoded
 )
 
 var (
-	TokenDanErin_InvalidExpiredCID    = cid.MustParse("bafyreiguafxrlpncpjxxfuled2izocjp5s3kcclkdl4edpd22tr2gfcad4")
+	TokenDanErin_InvalidExpiredCID    = cid.MustParse("bafyreifa265mung4nfpjjuiir5nytzgbrhfl66ye2dqmbq4p6dm7bzp4he")
 	TokenDanErin_InvalidExpiredSealed = mustGetBundle(TokenDanErin_InvalidExpiredCID).Sealed
 	TokenDanErin_InvalidExpiredBundle = mustGetBundle(TokenDanErin_InvalidExpiredCID)
 	TokenDanErin_InvalidExpired       = mustGetBundle(TokenDanErin_InvalidExpiredCID).Decoded
 )
 
 var (
-	TokenErinFrank_InvalidExpiredCID    = cid.MustParse("bafyreid4blvceraqiz32vca4gwk2hcf7dqtu6ydpmq3xlbj5biiq46mo44")
+	TokenErinFrank_InvalidExpiredCID    = cid.MustParse("bafyreicde2per7ynjruvstuae67dxzdg2iepid3nonrmgr6tvodzpbqomu")
 	TokenErinFrank_InvalidExpiredSealed = mustGetBundle(TokenErinFrank_InvalidExpiredCID).Sealed
 	TokenErinFrank_InvalidExpiredBundle = mustGetBundle(TokenErinFrank_InvalidExpiredCID)
 	TokenErinFrank_InvalidExpired       = mustGetBundle(TokenErinFrank_InvalidExpiredCID).Decoded
@@ -222,29 +222,29 @@ var AllBundles = []*delegation.Bundle{
 }
 
 var cidToName = map[cid.Cid]string{
-	TokenAliceBobCID: "TokenAliceBob",
-	TokenBobCarolCID: "TokenBobCarol",
-	TokenCarolDanCID: "TokenCarolDan",
-	TokenDanErinCID: "TokenDanErin",
-	TokenErinFrankCID: "TokenErinFrank",
-	TokenCarolDan_InvalidExpandedCommandCID: "TokenCarolDan_InvalidExpandedCommand",
-	TokenDanErin_InvalidExpandedCommandCID: "TokenDanErin_InvalidExpandedCommand",
+	TokenAliceBobCID:                         "TokenAliceBob",
+	TokenBobCarolCID:                         "TokenBobCarol",
+	TokenCarolDanCID:                         "TokenCarolDan",
+	TokenDanErinCID:                          "TokenDanErin",
+	TokenErinFrankCID:                        "TokenErinFrank",
+	TokenCarolDan_InvalidExpandedCommandCID:  "TokenCarolDan_InvalidExpandedCommand",
+	TokenDanErin_InvalidExpandedCommandCID:   "TokenDanErin_InvalidExpandedCommand",
 	TokenErinFrank_InvalidExpandedCommandCID: "TokenErinFrank_InvalidExpandedCommand",
-	TokenCarolDan_ValidAttenuatedCommandCID: "TokenCarolDan_ValidAttenuatedCommand",
-	TokenDanErin_ValidAttenuatedCommandCID: "TokenDanErin_ValidAttenuatedCommand",
+	TokenCarolDan_ValidAttenuatedCommandCID:  "TokenCarolDan_ValidAttenuatedCommand",
+	TokenDanErin_ValidAttenuatedCommandCID:   "TokenDanErin_ValidAttenuatedCommand",
 	TokenErinFrank_ValidAttenuatedCommandCID: "TokenErinFrank_ValidAttenuatedCommand",
-	TokenCarolDan_InvalidSubjectCID: "TokenCarolDan_InvalidSubject",
-	TokenDanErin_InvalidSubjectCID: "TokenDanErin_InvalidSubject",
-	TokenErinFrank_InvalidSubjectCID: "TokenErinFrank_InvalidSubject",
-	TokenCarolDan_InvalidExpiredCID: "TokenCarolDan_InvalidExpired",
-	TokenDanErin_InvalidExpiredCID: "TokenDanErin_InvalidExpired",
-	TokenErinFrank_InvalidExpiredCID: "TokenErinFrank_InvalidExpired",
-	TokenCarolDan_InvalidInactiveCID: "TokenCarolDan_InvalidInactive",
-	TokenDanErin_InvalidInactiveCID: "TokenDanErin_InvalidInactive",
-	TokenErinFrank_InvalidInactiveCID: "TokenErinFrank_InvalidInactive",
-	TokenCarolDan_ValidExamplePolicyCID: "TokenCarolDan_ValidExamplePolicy",
-	TokenDanErin_ValidExamplePolicyCID: "TokenDanErin_ValidExamplePolicy",
-	TokenErinFrank_ValidExamplePolicyCID: "TokenErinFrank_ValidExamplePolicy",
+	TokenCarolDan_InvalidSubjectCID:          "TokenCarolDan_InvalidSubject",
+	TokenDanErin_InvalidSubjectCID:           "TokenDanErin_InvalidSubject",
+	TokenErinFrank_InvalidSubjectCID:         "TokenErinFrank_InvalidSubject",
+	TokenCarolDan_InvalidExpiredCID:          "TokenCarolDan_InvalidExpired",
+	TokenDanErin_InvalidExpiredCID:           "TokenDanErin_InvalidExpired",
+	TokenErinFrank_InvalidExpiredCID:         "TokenErinFrank_InvalidExpired",
+	TokenCarolDan_InvalidInactiveCID:         "TokenCarolDan_InvalidInactive",
+	TokenDanErin_InvalidInactiveCID:          "TokenDanErin_InvalidInactive",
+	TokenErinFrank_InvalidInactiveCID:        "TokenErinFrank_InvalidInactive",
+	TokenCarolDan_ValidExamplePolicyCID:      "TokenCarolDan_ValidExamplePolicy",
+	TokenDanErin_ValidExamplePolicyCID:       "TokenDanErin_ValidExamplePolicy",
+	TokenErinFrank_ValidExamplePolicyCID:     "TokenErinFrank_ValidExamplePolicy",
 }
 
 var ProofAliceBob = []cid.Cid{
