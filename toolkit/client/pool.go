@@ -1,7 +1,8 @@
 package client
 
 import (
-	"math"
+	"iter"
+	"sync"
 	"time"
 
 	"github.com/ipfs/go-cid"
@@ -11,6 +12,7 @@ import (
 )
 
 type Pool struct {
+	mu   sync.RWMutex
 	dlgs map[cid.Cid]*delegation.Bundle
 }
 
@@ -19,106 +21,45 @@ func NewPool() *Pool {
 }
 
 func (p *Pool) AddBundle(bundle *delegation.Bundle) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
 	p.dlgs[bundle.Cid] = bundle
 }
 
+func (p *Pool) AddBundles(bundles iter.Seq[*delegation.Bundle]) {
+	for bundle := range bundles {
+		p.AddBundle(bundle)
+	}
+}
+
 // FindProof find in the pool the best (shortest, smallest in bytes) chain of delegation(s) matching the given invocation parameters.
-// - issuer: the DID of the client, also the issuer of the invocation token
-// - audience: the DID of the resource to operate on, also the audience (or subject if defined) of the invocation token
 // - cmd: the command to execute
-// - args: the args to execute
+// - issuer: the DID of the client, also the issuer of the invocation token
+// - audience: the DID of the resource to operate on, also the subject (or audience if defined) of the invocation token
+// Note: the returned delegation(s) don't have to match exactly the parameters, as long as they allow them.
 // Note: the implemented algorithm won't perform well with a large number of delegations.
-func (p *Pool) FindProof(iss did.DID, aud did.DID, cmd command.Command) []cid.Cid {
+func (p *Pool) FindProof(cmd command.Command, iss did.DID, aud did.DID) []cid.Cid {
 	p.trim()
 
-	// Find the possible leaf delegations, directly matching the invocation parameters
-	var candidateLeaf []*delegation.Bundle
+	p.mu.RLock()
+	defer p.mu.RUnlock()
 
-	for _, bundle := range p.dlgs {
-		dlg := bundle.Decoded
-
-		// The Subject of each delegation must equal the invocation's Audience field. - 4f
-		if dlg.Subject() != aud {
-			continue
-		}
-		// The first proof must be issued to the Invoker (audience DID). - 4c
-		// The Issuer of each delegation must be the Audience in the next one. - 4d
-		if dlg.Audience() != iss {
-			continue
-		}
-		// The command of each delegation must "allow" the one before it. - 4g
-		if !dlg.Command().Covers(cmd) {
-			continue
-		}
-		// Time bound - 3b, 3c
-		if !dlg.IsValidNow() {
-			continue
-		}
-
-		// graph.WriteString("[*] --> " + bundle.Cid.String() + "\n")
-		candidateLeaf = append(candidateLeaf, bundle)
-	}
-
-	type state struct {
-		bundle *delegation.Bundle
-		path   []cid.Cid
-		size   int
-	}
-
-	var bestSize = math.MaxInt
-	var bestProof []cid.Cid
-
-	// Perform a depth-first search on the DAG of connected delegations, for each of our candidates
-	for _, leaf := range candidateLeaf {
-		var stack = []state{{bundle: leaf, path: []cid.Cid{leaf.Cid}, size: len(leaf.Sealed)}}
-
-		for len(stack) > 0 {
-			// dequeue a delegation
-			cur := stack[len(stack)-1]
-			stack = stack[:len(stack)-1]
-			at := cur.bundle
-
-			// if it's a root delegation, we found a valid proof
-			if at.Decoded.Issuer() == at.Decoded.Subject() {
-				if len(bestProof) == 0 || len(cur.path) < len(bestProof) || len(cur.path) == len(bestProof) && cur.size < bestSize {
-					bestProof = append([]cid.Cid{}, cur.path...) // make a copy
-					bestSize = cur.size
-					continue
+	return FindProof(func() iter.Seq[*delegation.Bundle] {
+		return func(yield func(*delegation.Bundle) bool) {
+			for _, bundle := range p.dlgs {
+				if !yield(bundle) {
+					return
 				}
 			}
-
-			// find parent delegation for our current delegation
-			for _, candidate := range p.dlgs {
-				// The Subject of each delegation must equal the invocation's Audience field. - 4f
-				if candidate.Decoded.Subject() != aud {
-					continue
-				}
-				// The first proof must be issued to the Invoker (audience DID). - 4c
-				// The Issuer of each delegation must be the Audience in the next one. - 4d
-				if candidate.Decoded.Audience() != at.Decoded.Issuer() {
-					continue
-				}
-				// The command of each delegation must "allow" the one before it. - 4g
-				if !candidate.Decoded.Command().Covers(at.Decoded.Command()) {
-					continue
-				}
-				// Time bound - 3b, 3c
-				if !candidate.Decoded.IsValidNow() {
-					continue
-				}
-
-				newPath := append([]cid.Cid{}, cur.path...) // make copy
-				newPath = append(newPath, candidate.Cid)
-				stack = append(stack, state{bundle: candidate, path: newPath, size: cur.size + len(candidate.Sealed)})
-			}
 		}
-	}
-
-	return bestProof
+	}, cmd, iss, aud)
 }
 
 // trim removes expired tokens
 func (p *Pool) trim() {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
 	now := time.Now()
 	for c, bundle := range p.dlgs {
 		if bundle.Decoded.Expiration() != nil && bundle.Decoded.Expiration().Before(now) {
