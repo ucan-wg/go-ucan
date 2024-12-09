@@ -1,6 +1,7 @@
 package client
 
 import (
+	"fmt"
 	"iter"
 	"sync"
 	"time"
@@ -39,6 +40,7 @@ func (p *Pool) AddBundles(bundles iter.Seq[*delegation.Bundle]) {
 // Note: the returned delegation(s) don't have to match exactly the parameters, as long as they allow them.
 // Note: the implemented algorithm won't perform well with a large number of delegations.
 func (p *Pool) FindProof(cmd command.Command, iss did.DID, aud did.DID) []cid.Cid {
+	// TODO: move to some kind of background trim job?
 	p.trim()
 
 	p.mu.RLock()
@@ -53,6 +55,24 @@ func (p *Pool) FindProof(cmd command.Command, iss did.DID, aud did.DID) []cid.Ci
 			}
 		}
 	}, cmd, iss, aud)
+}
+
+func (p *Pool) GetBundles(cids []cid.Cid) iter.Seq2[*delegation.Bundle, error] {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+
+	return func(yield func(*delegation.Bundle, error) bool) {
+		for _, c := range cids {
+			if b, ok := p.dlgs[c]; ok {
+				if !yield(b, nil) {
+					return
+				}
+			} else {
+				yield(nil, fmt.Errorf("bundle not found"))
+				return
+			}
+		}
+	}
 }
 
 // trim removes expired tokens
