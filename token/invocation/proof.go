@@ -40,7 +40,7 @@ import (
 //     c. The first proof must be issued to the Invoker (audience DID).
 //     d. The Issuer of each delegation must be the Audience in the next one.
 //     e. The last token must be a root delegation.
-//     f. The Subject of each delegation must equal the invocation's Audience field.
+//     f. The Subject of each delegation must equal the invocation's Subject (or Audience if defined)
 //     g. The command of each delegation must "allow" the one before it.
 //
 //  5. If steps 1-4 pass:
@@ -58,18 +58,18 @@ func (t *Token) verifyProofs(delegations []*delegation.Token) error {
 
 	cmd := t.command
 	iss := t.issuer
-	aud := t.audience
-	if !aud.Defined() {
-		aud = t.subject
+	sub := t.subject
+	if t.audience.Defined() {
+		sub = t.audience
 	}
 
 	// control from the invocation to the root
 	for i, dlgCid := range t.proof {
 		dlg := delegations[i]
 
-		// The Subject of each delegation must equal the invocation's Audience field. - 4f
-		if dlg.Subject() != aud {
-			return fmt.Errorf("%w: delegation %s, expected %s, got %s", ErrWrongSub, dlgCid, aud, dlg.Subject())
+		// The Subject of each delegation must equal the invocation's Subject (or Audience if defined). - 4f
+		if dlg.Subject() != sub {
+			return fmt.Errorf("%w: delegation %s, expected %s, got %s", ErrWrongSub, dlgCid, sub, dlg.Subject())
 		}
 
 		// The first proof must be issued to the Invoker (audience DID). - 4c
