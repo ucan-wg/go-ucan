@@ -38,11 +38,15 @@ func WithArguments(args *args.Args) Option {
 
 // WithAudience sets the Token's audience to the provided did.DID.
 //
+// This can be used if the resource on which the token operates on is different
+// from the subject. In that situation, the subject is akin to the "service" and
+// the audience is akin to the resource.
+//
 // If the provided did.DID is the same as the Token's subject, the
 // audience is not set.
 func WithAudience(aud did.DID) Option {
 	return func(t *Token) error {
-		if t.subject.String() != aud.String() {
+		if t.subject != aud {
 			t.audience = aud
 		}
 

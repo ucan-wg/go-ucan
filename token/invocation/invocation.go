@@ -67,7 +67,9 @@ type Token struct {
 //
 // With the exception of the WithMeta option, all others will overwrite
 // the previous contents of their target field.
-func New(iss, sub did.DID, cmd command.Command, prf []cid.Cid, opts ...Option) (*Token, error) {
+//
+// You can read it as "(Issuer - I) executes (command) on (subject)".
+func New(iss did.DID, cmd command.Command, sub did.DID, prf []cid.Cid, opts ...Option) (*Token, error) {
 	iat := time.Now()
 
 	tkn := Token{

@@ -129,7 +129,7 @@ func TestToken_ExecutionAllowed(t *testing.T) {
 		testFails(t, invocation.ErrWrongSub, didtest.PersonaFrank, delegationtest.ExpandedCommand, emptyArguments, delegationtest.ProofAliceBobCarolDanErinFrank_InvalidSubject)
 	})
 
-	t.Run("passes - arguments satify example policy", func(t *testing.T) {
+	t.Run("passes - arguments satisfy example policy", func(t *testing.T) {
 		t.Parallel()
 
 		testFails(t, invocation.ErrPolicyNotSatisfied, didtest.PersonaFrank, delegationtest.NominalCommand, policytest.SpecInvalidArguments, delegationtest.ProofAliceBobCarolDanErinFrank_ValidExamplePolicy)
@@ -142,7 +142,7 @@ func test(t *testing.T, persona didtest.Persona, cmd command.Command, args *args
 
 	opts = append(opts, invocation.WithArguments(args))
 
-	tkn, err := invocation.New(persona.DID(), didtest.PersonaAlice.DID(), cmd, prf, opts...)
+	tkn, err := invocation.New(persona.DID(), cmd, didtest.PersonaAlice.DID(), prf, opts...)
 	require.NoError(t, err)
 
 	return tkn.ExecutionAllowed(delegationtest.GetDelegationLoader())

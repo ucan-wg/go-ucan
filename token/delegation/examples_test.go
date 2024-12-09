@@ -41,8 +41,7 @@ func ExampleNew() {
 		)),
 	)
 
-	tkn, err := delegation.New(didtest.PersonaBob.DID(), didtest.PersonaCarol.DID(), cmd, pol,
-		delegation.WithSubject(didtest.PersonaAlice.DID()),
+	tkn, err := delegation.New(didtest.PersonaBob.DID(), didtest.PersonaCarol.DID(), cmd, pol, didtest.PersonaAlice.DID(),
 		delegation.WithExpirationIn(time.Hour),
 		delegation.WithNotBeforeIn(time.Minute),
 		delegation.WithMeta("foo", "bar"),
