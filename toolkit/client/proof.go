@@ -17,33 +17,39 @@ import (
 // Note: the returned delegation(s) don't have to match exactly the parameters, as long as they allow them.
 // Note: the implemented algorithm won't perform well with a large number of delegations.
 func FindProof(dlgs func() iter.Seq[*delegation.Bundle], cmd command.Command, iss did.DID, aud did.DID) []cid.Cid {
-	// Find the possible leaf delegations, directly matching the invocation parameters
-	var candidateLeaf []*delegation.Bundle
-
-	for bundle := range dlgs() {
-		dlg := bundle.Decoded
-
+	// TODO: maybe that should be part of delegation.Token directly?
+	dlgMatch := func(dlg *delegation.Token, cmd command.Command, aud, iss did.DID) bool {
 		// The Subject of each delegation must equal the invocation's Audience field. - 4f
 		if dlg.Subject() != aud {
-			continue
+			return false
 		}
 		// The first proof must be issued to the Invoker (audience DID). - 4c
 		// The Issuer of each delegation must be the Audience in the next one. - 4d
 		if dlg.Audience() != iss {
-			continue
+			return false
 		}
 		// The command of each delegation must "allow" the one before it. - 4g
 		if !dlg.Command().Covers(cmd) {
-			continue
+			return false
 		}
 		// Time bound - 3b, 3c
 		if !dlg.IsValidNow() {
+			return false
+		}
+		return true
+	}
+
+	// STEP 1: Find the possible leaf delegations, directly matching the invocation parameters
+	var candidateLeaf []*delegation.Bundle
+
+	for bundle := range dlgs() {
+		if dlgMatch(bundle.Decoded, cmd, iss, aud) {
 			continue
 		}
-
 		candidateLeaf = append(candidateLeaf, bundle)
 	}
 
+	// STEP 2: Perform a depth-first search on the DAG of connected delegations, for each of our candidates
 	type state struct {
 		bundle *delegation.Bundle
 		path   []cid.Cid
@@ -53,7 +59,6 @@ func FindProof(dlgs func() iter.Seq[*delegation.Bundle], cmd command.Command, is
 	var bestSize = math.MaxInt
 	var bestProof []cid.Cid
 
-	// Perform a depth-first search on the DAG of connected delegations, for each of our candidates
 	for _, leaf := range candidateLeaf {
 		var stack = []state{{bundle: leaf, path: []cid.Cid{leaf.Cid}, size: len(leaf.Sealed)}}
 
@@ -74,21 +79,7 @@ func FindProof(dlgs func() iter.Seq[*delegation.Bundle], cmd command.Command, is
 
 			// find parent delegation for our current delegation
 			for candidate := range dlgs() {
-				// The Subject of each delegation must equal the invocation's Audience field. - 4f
-				if candidate.Decoded.Subject() != aud {
-					continue
-				}
-				// The first proof must be issued to the Invoker (audience DID). - 4c
-				// The Issuer of each delegation must be the Audience in the next one. - 4d
-				if candidate.Decoded.Audience() != at.Decoded.Issuer() {
-					continue
-				}
-				// The command of each delegation must "allow" the one before it. - 4g
-				if !candidate.Decoded.Command().Covers(at.Decoded.Command()) {
-					continue
-				}
-				// Time bound - 3b, 3c
-				if !candidate.Decoded.IsValidNow() {
+				if !dlgMatch(candidate.Decoded, at.Decoded.Command(), aud, at.Decoded.Issuer()) {
 					continue
 				}
 
