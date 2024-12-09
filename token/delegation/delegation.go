@@ -44,16 +44,15 @@ type Token struct {
 	expiration *time.Time
 }
 
-// New creates a validated Token from the provided parameters and options.
+// New creates a validated delegation Token from the provided parameters and options.
+// This is typically used to delegate a given power to another agent.
 //
-// When creating a delegated token, the Issuer's (iss) DID is assembled
-// using the public key associated with the private key sent as the first
-// parameter.
-func New(iss, aud did.DID, cmd command.Command, pol policy.Policy, opts ...Option) (*Token, error) {
+// You can read it as "(issuer) allows (audience) to perform (cmd+pol) on (subject)".
+func New(iss did.DID, aud did.DID, cmd command.Command, pol policy.Policy, sub did.DID, opts ...Option) (*Token, error) {
 	tkn := &Token{
 		issuer:   iss,
 		audience: aud,
-		subject:  did.Undef,
+		subject:  sub,
 		command:  cmd,
 		policy:   pol,
 		meta:     meta.NewMeta(),
@@ -81,16 +80,27 @@ func New(iss, aud did.DID, cmd command.Command, pol policy.Policy, opts ...Optio
 	return tkn, nil
 }
 
-// Root creates a validated UCAN delegation Token from the provided
-// parameters and options.
+// Root creates a validated UCAN delegation Token from the provided parameters and options.
+// This is typically used to create and give a power to an agent.
 //
-// When creating a root token, both the Issuer's (iss) and Subject's
-// (sub) DIDs are assembled from the public key associated with the
-// private key passed as the first argument.
-func Root(iss, aud did.DID, cmd command.Command, pol policy.Policy, opts ...Option) (*Token, error) {
-	opts = append(opts, WithSubject(iss))
+// You can read it as "(issuer) allows (audience) to perform (cmd+pol) on itself".
+func Root(iss did.DID, aud did.DID, cmd command.Command, pol policy.Policy, opts ...Option) (*Token, error) {
+	return New(iss, aud, cmd, pol, iss, opts...)
+}
 
-	return New(iss, aud, cmd, pol, opts...)
+// Powerline creates a validated UCAN delegation Token from the provided parameters and options.
+//
+// Powerline is a pattern for automatically delegating all future delegations to another agent regardless of Subject.
+// This is a very powerful pattern, use it only if you understand it.
+// Powerline delegations MUST NOT be used as the root delegation to a resource
+//
+// A very common use case for Powerline is providing a stable DID across multiple agents (e.g. representing a user with
+// multiple devices). This enables the automatic sharing of authority across their devices without needing to share keys
+// or set up a threshold scheme. It is also flexible, since a Powerline delegation MAY be revoked.
+//
+// You can read it as "(issuer) allows (audience) to perform (cmd+pol) on anything".
+func Powerline(iss did.DID, aud did.DID, cmd command.Command, pol policy.Policy, opts ...Option) (*Token, error) {
+	return New(iss, aud, cmd, pol, did.Undef, opts...)
 }
 
 // Issuer returns the did.DID representing the Token's issuer.
