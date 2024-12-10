@@ -102,6 +102,9 @@ func (d DID) PubKey() (crypto.PubKey, error) {
 
 // String formats the decentralized identity document (DID) as a string.
 func (d DID) String() string {
+	if d == Undef {
+		return "(undefined)"
+	}
 	key, _ := mbase.Encode(mbase.Base58BTC, []byte(d.bytes))
 	return "did:key:" + key
 }

@@ -10,8 +10,10 @@ package delegation
 // TODO: change the "delegation" link above when the specification is merged
 
 import (
+	"encoding/base64"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/ucan-wg/go-ucan/did"
@@ -168,6 +170,32 @@ func (t *Token) IsValidAt(ti time.Time) bool {
 		return false
 	}
 	return true
+}
+
+func (t *Token) String() string {
+	var res strings.Builder
+
+	var kind string
+	switch {
+	case t.issuer == t.subject:
+		kind = " (root delegation)"
+	case t.subject == did.Undef:
+		kind = " (powerline delegation)"
+	default:
+		kind = " (normal delegation)"
+	}
+
+	res.WriteString(fmt.Sprintf("Issuer: %s\n", t.Issuer()))
+	res.WriteString(fmt.Sprintf("Audience: %s\n", t.Audience()))
+	res.WriteString(fmt.Sprintf("Subject: %s%s\n", t.Subject(), kind))
+	res.WriteString(fmt.Sprintf("Command: %s\n", t.Command()))
+	res.WriteString(fmt.Sprintf("Policy: %s\n", t.Policy()))
+	res.WriteString(fmt.Sprintf("Nonce: %s\n", base64.StdEncoding.EncodeToString(t.Nonce())))
+	res.WriteString(fmt.Sprintf("Meta: %s\n", t.Meta()))
+	res.WriteString(fmt.Sprintf("NotBefore: %v\n", t.NotBefore()))
+	res.WriteString(fmt.Sprintf("Expiration: %v", t.Expiration()))
+
+	return res.String()
 }
 
 func (t *Token) validate() error {
