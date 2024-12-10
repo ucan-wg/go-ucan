@@ -107,21 +107,21 @@ var (
 )
 
 var (
-	TokenCarolDan_InvalidExpiredCID    = cid.MustParse("bafyreigvdcarp6426e5aenal3q3c4uyhncwfbmt3fsmb4qzspkpjy57gti")
+	TokenCarolDan_InvalidExpiredCID    = cid.MustParse("bafyreifyzm5jkx2sfu5awyndg3dn5zlg7sq5hssgfatafk62kiiilapnqe")
 	TokenCarolDan_InvalidExpiredSealed = mustGetBundle(TokenCarolDan_InvalidExpiredCID).Sealed
 	TokenCarolDan_InvalidExpiredBundle = mustGetBundle(TokenCarolDan_InvalidExpiredCID)
 	TokenCarolDan_InvalidExpired       = mustGetBundle(TokenCarolDan_InvalidExpiredCID).Decoded
 )
 
 var (
-	TokenDanErin_InvalidExpiredCID    = cid.MustParse("bafyreifa265mung4nfpjjuiir5nytzgbrhfl66ye2dqmbq4p6dm7bzp4he")
+	TokenDanErin_InvalidExpiredCID    = cid.MustParse("bafyreihhnisabmkofuk3qaw37leijxqjaz5or6v2cufjxwzdkvuvv2dzbq")
 	TokenDanErin_InvalidExpiredSealed = mustGetBundle(TokenDanErin_InvalidExpiredCID).Sealed
 	TokenDanErin_InvalidExpiredBundle = mustGetBundle(TokenDanErin_InvalidExpiredCID)
 	TokenDanErin_InvalidExpired       = mustGetBundle(TokenDanErin_InvalidExpiredCID).Decoded
 )
 
 var (
-	TokenErinFrank_InvalidExpiredCID    = cid.MustParse("bafyreicde2per7ynjruvstuae67dxzdg2iepid3nonrmgr6tvodzpbqomu")
+	TokenErinFrank_InvalidExpiredCID    = cid.MustParse("bafyreigeokaziviwm5kzmkpwesj3gta5k7zrd62x4a746fnrnkhvatwbna")
 	TokenErinFrank_InvalidExpiredSealed = mustGetBundle(TokenErinFrank_InvalidExpiredCID).Sealed
 	TokenErinFrank_InvalidExpiredBundle = mustGetBundle(TokenErinFrank_InvalidExpiredCID)
 	TokenErinFrank_InvalidExpired       = mustGetBundle(TokenErinFrank_InvalidExpiredCID).Decoded
