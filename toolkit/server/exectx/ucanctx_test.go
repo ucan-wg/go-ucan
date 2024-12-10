@@ -20,7 +20,7 @@ import (
 	"github.com/ucan-wg/go-ucan/token/delegation"
 	"github.com/ucan-wg/go-ucan/token/invocation"
 
-	exectx2 "github.com/INFURA/go-ucan-toolkit/server/exectx"
+	"github.com/INFURA/go-ucan-toolkit/server/exectx"
 )
 
 func ExampleContext() {
@@ -52,7 +52,7 @@ func ExampleContext() {
 
 	// INVOCATION: the user leverages the delegation (power) to make a request.
 
-	inv, _ := invocation.New(user.DID(), service.DID(), cmd, []cid.Cid{dlgCid},
+	inv, _ := invocation.New(user.DID(), cmd, service.DID(), []cid.Cid{dlgCid},
 		invocation.WithExpirationIn(10*time.Minute),
 		invocation.WithArgument("myarg", "hello"), // we can specify invocation parameters
 	)
@@ -84,10 +84,10 @@ func ExampleContext() {
 			// Note: if an error occur, we'll want to return an HTTP 401 Unauthorized
 			data := bytes.TrimPrefix([]byte(r.Header.Get("Authorization")), []byte("Bearer "))
 			cont, _ := container.FromCborBase64(data)
-			ucanCtx, _ := exectx2.FromContainer(cont)
+			ucanCtx, _ := exectx.FromContainer(cont)
 
 			// insert into the go context
-			req = req.WithContext(exectx2.AddUcanCtxToContext(req.Context(), ucanCtx))
+			req = req.WithContext(exectx.AddUcanCtxToContext(req.Context(), ucanCtx))
 
 			next.ServeHTTP(w, req)
 		})
@@ -97,7 +97,7 @@ func ExampleContext() {
 
 	httpMw := func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ucanCtx, _ := exectx2.FromContext(req.Context())
+			ucanCtx, _ := exectx.FromContext(req.Context())
 
 			err := ucanCtx.VerifyHttp(r)
 			if err != nil {
@@ -114,7 +114,7 @@ func ExampleContext() {
 
 	jsonrpcMw := func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ucanCtx, _ := exectx2.FromContext(req.Context())
+			ucanCtx, _ := exectx.FromContext(req.Context())
 
 			var jrpc jsonrpc.Request
 			_ = json.NewDecoder(r.Body).Decode(&jrpc)
@@ -131,7 +131,7 @@ func ExampleContext() {
 	// SERVER: final handler
 
 	handler := func(w http.ResponseWriter, r *http.Request) {
-		ucanCtx, _ := exectx2.FromContext(req.Context())
+		ucanCtx, _ := exectx.FromContext(req.Context())
 
 		if err := ucanCtx.ExecutionAllowed(); err != nil {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
@@ -148,15 +148,15 @@ func ExampleContext() {
 func TestGoCtx(t *testing.T) {
 	ctx := context.Background()
 
-	ucanCtx, ok := exectx2.FromContext(ctx)
+	ucanCtx, ok := exectx.FromContext(ctx)
 	require.False(t, ok)
 	require.Nil(t, ucanCtx)
 
-	expected := &exectx2.UcanCtx{}
+	expected := &exectx.UcanCtx{}
 
-	ctx = exectx2.AddUcanCtxToContext(ctx, expected)
+	ctx = exectx.AddUcanCtxToContext(ctx, expected)
 
-	got, ok := exectx2.FromContext(ctx)
+	got, ok := exectx.FromContext(ctx)
 	require.True(t, ok)
 	require.Equal(t, expected, got)
 }

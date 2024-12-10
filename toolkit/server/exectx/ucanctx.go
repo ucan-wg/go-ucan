@@ -16,7 +16,7 @@ import (
 	"github.com/ucan-wg/go-ucan/token/delegation"
 	"github.com/ucan-wg/go-ucan/token/invocation"
 
-	bearer2 "github.com/INFURA/go-ucan-toolkit/server/bearer"
+	"github.com/INFURA/go-ucan-toolkit/server/bearer"
 )
 
 var _ delegation.Loader = UcanCtx{}
@@ -32,8 +32,8 @@ type UcanCtx struct {
 	meta     *meta.Meta    // all meta combined, with no overwriting
 
 	// argument sources
-	http    *bearer2.HttpBearer
-	jsonrpc *bearer2.JsonRpcBearer
+	http    *bearer.HttpBearer
+	jsonrpc *bearer.JsonRpcBearer
 }
 
 func FromContainer(cont container.Reader) (*UcanCtx, error) {
@@ -105,7 +105,7 @@ func (ctn UcanCtx) VerifyHttp(req *http.Request) error {
 	if ctn.http == nil {
 		panic("only use once per request context")
 	}
-	ctn.http = bearer2.NewHttpBearer(ctn.policies, ctn.inv.Arguments(), req)
+	ctn.http = bearer.NewHttpBearer(ctn.policies, ctn.inv.Arguments(), req)
 	return ctn.http.Verify()
 }
 
@@ -116,7 +116,7 @@ func (ctn UcanCtx) VerifyJsonRpc(req *jsonrpc.Request) error {
 	if ctn.jsonrpc != nil {
 		panic("only use once per request context")
 	}
-	ctn.jsonrpc = bearer2.NewJsonRpcBearer(ctn.policies, ctn.inv.Arguments(), req)
+	ctn.jsonrpc = bearer.NewJsonRpcBearer(ctn.policies, ctn.inv.Arguments(), req)
 	return ctn.jsonrpc.Verify()
 }
 
