@@ -8,8 +8,10 @@
 package invocation
 
 import (
+	"encoding/base64"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/ipfs/go-cid"
@@ -67,7 +69,9 @@ type Token struct {
 //
 // With the exception of the WithMeta option, all others will overwrite
 // the previous contents of their target field.
-func New(iss, sub did.DID, cmd command.Command, prf []cid.Cid, opts ...Option) (*Token, error) {
+//
+// You can read it as "(Issuer - I) executes (command) on (subject)".
+func New(iss did.DID, cmd command.Command, sub did.DID, prf []cid.Cid, opts ...Option) (*Token, error) {
 	iat := time.Now()
 
 	tkn := Token{
@@ -210,6 +214,24 @@ func (t *Token) IsValidAt(ti time.Time) bool {
 		return false
 	}
 	return true
+}
+
+func (t *Token) String() string {
+	var res strings.Builder
+
+	res.WriteString(fmt.Sprintf("Issuer: %s\n", t.Issuer()))
+	res.WriteString(fmt.Sprintf("Audience: %s\n", t.Audience()))
+	res.WriteString(fmt.Sprintf("Subject: %v\n", t.Subject()))
+	res.WriteString(fmt.Sprintf("Command: %s\n", t.Command()))
+	res.WriteString(fmt.Sprintf("Args: %s\n", t.Arguments()))
+	res.WriteString(fmt.Sprintf("Proof: %v\n", t.Proof()))
+	res.WriteString(fmt.Sprintf("Nonce: %s\n", base64.StdEncoding.EncodeToString(t.Nonce())))
+	res.WriteString(fmt.Sprintf("Meta: %s\n", t.Meta()))
+	res.WriteString(fmt.Sprintf("Expiration: %v\n", t.Expiration()))
+	res.WriteString(fmt.Sprintf("Invoked At: %v\n", t.InvokedAt()))
+	res.WriteString(fmt.Sprintf("Cause: %v", t.Cause()))
+
+	return res.String()
 }
 
 func (t *Token) validate() error {

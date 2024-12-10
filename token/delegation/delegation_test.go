@@ -56,9 +56,6 @@ const (
 ]
 `
 
-	newCID  = "zdpuAwa4qv3ncMDPeDoqVxjZy3JoyWsbqUzm94rdA1AvRFkkw"
-	rootCID = "zdpuAkgGmUp5JrXvehGuuw9JA8DLQKDaxtK3R8brDQQVC2i5X"
-
 	aesKey = "xQklMmNTnVrmaPBq/0pwV5fEwuv/iClF5HWak9MsgI8="
 )
 
@@ -75,9 +72,8 @@ func TestConstructors(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("New", func(t *testing.T) {
-		tkn, err := delegation.New(didtest.PersonaAlice.DID(), didtest.PersonaBob.DID(), cmd, pol,
+		tkn, err := delegation.New(didtest.PersonaAlice.DID(), didtest.PersonaBob.DID(), cmd, pol, didtest.PersonaCarol.DID(),
 			delegation.WithNonce([]byte(nonce)),
-			delegation.WithSubject(didtest.PersonaAlice.DID()),
 			delegation.WithExpiration(exp),
 			delegation.WithMeta("foo", "fooo"),
 			delegation.WithMeta("bar", "barr"),
@@ -105,6 +101,23 @@ func TestConstructors(t *testing.T) {
 		require.NoError(t, err)
 
 		golden.Assert(t, string(data), "root.dagjson")
+	})
+
+	t.Run("Powerline", func(t *testing.T) {
+		t.Parallel()
+
+		tkn, err := delegation.Powerline(didtest.PersonaAlice.DID(), didtest.PersonaBob.DID(), cmd, pol,
+			delegation.WithNonce([]byte(nonce)),
+			delegation.WithExpiration(exp),
+			delegation.WithMeta("foo", "fooo"),
+			delegation.WithMeta("bar", "barr"),
+		)
+		require.NoError(t, err)
+
+		data, err := tkn.ToDagJson(didtest.PersonaAlice.PrivKey())
+		require.NoError(t, err)
+
+		golden.Assert(t, string(data), "powerline.dagjson")
 	})
 }
 
@@ -153,7 +166,7 @@ func TestEncryptedMeta(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			tkn, err := delegation.New(didtest.PersonaAlice.DID(), didtest.PersonaBob.DID(), cmd, pol,
+			tkn, err := delegation.Root(didtest.PersonaAlice.DID(), didtest.PersonaBob.DID(), cmd, pol,
 				delegation.WithEncryptedMetaString(tt.key, tt.value, encryptionKey),
 			)
 			require.NoError(t, err)
@@ -191,7 +204,7 @@ func TestEncryptedMeta(t *testing.T) {
 		}
 
 		// Create token with multiple encrypted values
-		tkn, err := delegation.New(didtest.PersonaAlice.DID(), didtest.PersonaBob.DID(), cmd, pol, opts...)
+		tkn, err := delegation.Root(didtest.PersonaAlice.DID(), didtest.PersonaBob.DID(), cmd, pol, opts...)
 		require.NoError(t, err)
 
 		data, err := tkn.ToDagCbor(didtest.PersonaAlice.PrivKey())

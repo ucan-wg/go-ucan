@@ -3,8 +3,6 @@ package delegation
 import (
 	"fmt"
 	"time"
-
-	"github.com/ucan-wg/go-ucan/did"
 )
 
 // Option is a type that allows optional fields to be set during the
@@ -81,20 +79,6 @@ func WithNotBeforeIn(nbf time.Duration) Option {
 	return func(t *Token) error {
 		nbfTime := time.Now().Add(nbf)
 		t.notBefore = &nbfTime
-		return nil
-	}
-}
-
-// WithSubject sets the Tokens's optional "subject" field to the value of
-// provided did.DID.
-//
-// This Option should only be used with the New constructor - since
-// Subject is a required parameter when creating a Token via the Root
-// constructor, any value provided via this Option will be silently
-// overwritten.
-func WithSubject(sub did.DID) Option {
-	return func(t *Token) error {
-		t.subject = sub
 		return nil
 	}
 }

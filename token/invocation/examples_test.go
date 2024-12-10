@@ -27,7 +27,7 @@ func ExampleNew() {
 		return
 	}
 
-	inv, err := invocation.New(iss, sub, cmd, prf,
+	inv, err := invocation.New(iss, cmd, sub, prf,
 		invocation.WithArgument("uri", args["uri"]),
 		invocation.WithArgument("headers", args["headers"]),
 		invocation.WithArgument("payload", args["payload"]),

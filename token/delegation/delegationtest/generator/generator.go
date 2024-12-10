@@ -30,10 +30,11 @@ const (
 var constantNonce = []byte{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b}
 
 type newDelegationParams struct {
-	privKey crypto.PrivKey
+	privKey crypto.PrivKey // iss
 	aud     did.DID
 	cmd     command.Command
 	pol     policy.Policy
+	sub     did.DID
 	opts    []delegation.Option
 }
 
@@ -89,8 +90,8 @@ func (g *generator) chainPersonas(personas []didtest.Persona, acc acc, vari vari
 		aud:     personas[1].DID(),
 		cmd:     delegationtest.NominalCommand,
 		pol:     policytest.EmptyPolicy,
+		sub:     didtest.PersonaAlice.DID(),
 		opts: []delegation.Option{
-			delegation.WithSubject(didtest.PersonaAlice.DID()),
 			delegation.WithNonce(constantNonce),
 		},
 	}
@@ -117,7 +118,7 @@ func (g *generator) chainPersonas(personas []didtest.Persona, acc acc, vari vari
 				p.cmd = delegationtest.AttenuatedCommand
 			}},
 			{name: "InvalidSubject", variant: func(p *newDelegationParams) {
-				p.opts = append(p.opts, delegation.WithSubject(didtest.PersonaBob.DID()))
+				p.sub = didtest.PersonaBob.DID()
 			}},
 			{name: "InvalidExpired", variant: func(p *newDelegationParams) {
 				// Note: this makes the generator not deterministic
@@ -161,7 +162,7 @@ func (g *generator) createDelegation(params newDelegationParams, name string, va
 		return cid.Undef, err
 	}
 
-	tkn, err := delegation.New(issDID, params.aud, params.cmd, params.pol, params.opts...)
+	tkn, err := delegation.New(issDID, params.aud, params.cmd, params.pol, params.sub, params.opts...)
 	if err != nil {
 		return cid.Undef, err
 	}

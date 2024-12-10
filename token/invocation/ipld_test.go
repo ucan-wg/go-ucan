@@ -16,7 +16,7 @@ func TestSealUnsealRoundtrip(t *testing.T) {
 	privKey, iss, sub, cmd, args, prf, meta, err := setupExampleNew()
 	require.NoError(t, err)
 
-	tkn1, err := invocation.New(iss, sub, cmd, prf,
+	tkn1, err := invocation.New(iss, cmd, sub, prf,
 		invocation.WithArgument("uri", args["uri"]),
 		invocation.WithArgument("headers", args["headers"]),
 		invocation.WithArgument("payload", args["payload"]),

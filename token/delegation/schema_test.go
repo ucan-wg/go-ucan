@@ -33,9 +33,12 @@ func TestSchemaRoundTrip(t *testing.T) {
 		p1, err := delegation.FromDagJson(delegationJson)
 		require.NoError(t, err)
 
+		_, newCID, err := p1.ToSealed(privKey)
+		require.NoError(t, err)
+
 		cborBytes, id, err := p1.ToSealed(privKey)
 		require.NoError(t, err)
-		assert.Equal(t, newCID, envelope.CIDToBase58BTC(id))
+		assert.Equal(t, envelope.CIDToBase58BTC(newCID), envelope.CIDToBase58BTC(id))
 
 		p2, c2, err := delegation.FromSealed(cborBytes)
 		require.NoError(t, err)
@@ -58,10 +61,13 @@ func TestSchemaRoundTrip(t *testing.T) {
 		p1, err := delegation.FromDagJsonReader(buf)
 		require.NoError(t, err)
 
+		_, newCID, err := p1.ToSealed(privKey)
+		require.NoError(t, err)
+
 		cborBytes := &bytes.Buffer{}
 		id, err := p1.ToSealedWriter(cborBytes, privKey)
 		require.NoError(t, err)
-		assert.Equal(t, newCID, envelope.CIDToBase58BTC(id))
+		assert.Equal(t, envelope.CIDToBase58BTC(newCID), envelope.CIDToBase58BTC(id))
 
 		// buf = bytes.NewBuffer(cborBytes.Bytes())
 		p2, c2, err := delegation.FromSealedReader(cborBytes)
