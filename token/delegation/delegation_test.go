@@ -56,7 +56,7 @@ const (
 ]
 `
 
-	newCID  = "zdpuAwa4qv3ncMDPeDoqVxjZy3JoyWsbqUzm94rdA1AvRFkkw"
+	newCID  = "zdpuAnaCA4uaSJyuthxdu6sRkgTeUt1fbGqzb1CsRxiBygjty"
 	rootCID = "zdpuAkgGmUp5JrXvehGuuw9JA8DLQKDaxtK3R8brDQQVC2i5X"
 
 	aesKey = "xQklMmNTnVrmaPBq/0pwV5fEwuv/iClF5HWak9MsgI8="
