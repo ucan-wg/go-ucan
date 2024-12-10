@@ -18,16 +18,16 @@ func TestFindProof(t *testing.T) {
 	}
 
 	require.Equal(t, delegationtest.ProofAliceBob,
-		FindProof(dlgs, delegationtest.NominalCommand, didtest.PersonaBob.DID(), didtest.PersonaAlice.DID()))
+		FindProof(dlgs, didtest.PersonaBob.DID(), delegationtest.NominalCommand, didtest.PersonaAlice.DID()))
 	require.Equal(t, delegationtest.ProofAliceBobCarol,
-		FindProof(dlgs, delegationtest.NominalCommand, didtest.PersonaCarol.DID(), didtest.PersonaAlice.DID()))
+		FindProof(dlgs, didtest.PersonaCarol.DID(), delegationtest.NominalCommand, didtest.PersonaAlice.DID()))
 	require.Equal(t, delegationtest.ProofAliceBobCarolDan,
-		FindProof(dlgs, delegationtest.NominalCommand, didtest.PersonaDan.DID(), didtest.PersonaAlice.DID()))
+		FindProof(dlgs, didtest.PersonaDan.DID(), delegationtest.NominalCommand, didtest.PersonaAlice.DID()))
 	require.Equal(t, delegationtest.ProofAliceBobCarolDanErin,
-		FindProof(dlgs, delegationtest.NominalCommand, didtest.PersonaErin.DID(), didtest.PersonaAlice.DID()))
+		FindProof(dlgs, didtest.PersonaErin.DID(), delegationtest.NominalCommand, didtest.PersonaAlice.DID()))
 	require.Equal(t, delegationtest.ProofAliceBobCarolDanErinFrank,
-		FindProof(dlgs, delegationtest.NominalCommand, didtest.PersonaFrank.DID(), didtest.PersonaAlice.DID()))
+		FindProof(dlgs, didtest.PersonaFrank.DID(), delegationtest.NominalCommand, didtest.PersonaAlice.DID()))
 
 	// wrong command
-	require.Empty(t, FindProof(dlgs, command.New("foo"), didtest.PersonaBob.DID(), didtest.PersonaAlice.DID()))
+	require.Empty(t, FindProof(dlgs, didtest.PersonaBob.DID(), command.New("foo"), didtest.PersonaAlice.DID()))
 }

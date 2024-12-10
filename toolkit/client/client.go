@@ -38,9 +38,9 @@ func (c *Client) PrepareInvoke(ctx context.Context, cmd command.Command, subject
 	var proof []cid.Cid
 
 	// do we already have a valid proof?
-	if proof = c.pool.FindProof(cmd, c.did, subject); len(proof) == 0 {
+	if proof = c.pool.FindProof(c.did, cmd, subject); len(proof) == 0 {
 		// we need to request a new proof
-		proofBundles, err := c.requester.RequestDelegation(ctx, cmd, c.did, subject)
+		proofBundles, err := c.requester.RequestDelegation(ctx, c.did, cmd, subject)
 		if err != nil {
 			return nil, fmt.Errorf("requesting delegation: %w", err)
 		}
@@ -55,7 +55,7 @@ func (c *Client) PrepareInvoke(ctx context.Context, cmd command.Command, subject
 		}
 	}
 
-	inv, err := invocation.New(c.did, subject, cmd, proof, opts...)
+	inv, err := invocation.New(c.did, cmd, subject, proof, opts...)
 	if err != nil {
 		return nil, err
 	}

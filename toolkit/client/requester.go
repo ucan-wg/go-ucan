@@ -3,7 +3,9 @@ package client
 import (
 	"context"
 	"iter"
+	"time"
 
+	"github.com/avast/retry-go/v4"
 	"github.com/ucan-wg/go-ucan/did"
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/token/delegation"
@@ -12,8 +14,37 @@ import (
 type DelegationRequester interface {
 	// RequestDelegation retrieve a delegation or chain of delegation for the given parameters.
 	// - cmd: the command to execute
-	// - issuer: the DID of the client, also the issuer of the invocation token
-	// - audience: the DID of the resource to operate on, also the subject (or audience if defined) of the invocation token
+	// - audience: the DID of the client, also the issuer of the invocation token
+	// - subject: the DID of the resource to operate on, also the subject (or audience if defined) of the invocation token
+	// Note: you can read it as "(audience) wants to do (cmd) on (subject)".
 	// Note: the returned delegation(s) don't have to match exactly the parameters, as long as they allow them.
-	RequestDelegation(ctx context.Context, cmd command.Command, audience did.DID, subject did.DID) (iter.Seq2[*delegation.Bundle, error], error)
+	RequestDelegation(ctx context.Context, audience did.DID, cmd command.Command, subject did.DID) (iter.Seq2[*delegation.Bundle, error], error)
+}
+
+var _ DelegationRequester = &withRetry{}
+
+type withRetry struct {
+	requester    DelegationRequester
+	initialDelay time.Duration
+	maxAttempts  uint
+}
+
+// RequesterWithRetry wraps a DelegationRequester to perform exponential backoff,
+// with an initial delay and a maximum attempt count.
+func RequesterWithRetry(requester DelegationRequester, initialDelay time.Duration, maxAttempt uint) DelegationRequester {
+	return &withRetry{
+		requester:    requester,
+		initialDelay: initialDelay,
+		maxAttempts:  maxAttempt,
+	}
+}
+
+func (w withRetry) RequestDelegation(ctx context.Context, audience did.DID, cmd command.Command, subject did.DID) (iter.Seq2[*delegation.Bundle, error], error) {
+	return retry.DoWithData(func() (iter.Seq2[*delegation.Bundle, error], error) {
+		return w.requester.RequestDelegation(ctx, audience, cmd, subject)
+	},
+		retry.Context(ctx),
+		retry.Delay(w.initialDelay),
+		retry.Attempts(w.maxAttempts),
+	)
 }

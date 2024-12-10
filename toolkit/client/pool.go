@@ -34,12 +34,13 @@ func (p *Pool) AddBundles(bundles iter.Seq[*delegation.Bundle]) {
 }
 
 // FindProof find in the pool the best (shortest, smallest in bytes) chain of delegation(s) matching the given invocation parameters.
-// - cmd: the command to execute
 // - issuer: the DID of the client, also the issuer of the invocation token
-// - audience: the DID of the resource to operate on, also the subject (or audience if defined) of the invocation token
+// - cmd: the command to execute
+// - subject: the DID of the resource to operate on, also the subject (or audience if defined) of the invocation token
+// Note: you can read it as "(issuer) wants to do (cmd) on (subject)".
 // Note: the returned delegation(s) don't have to match exactly the parameters, as long as they allow them.
 // Note: the implemented algorithm won't perform well with a large number of delegations.
-func (p *Pool) FindProof(cmd command.Command, iss did.DID, aud did.DID) []cid.Cid {
+func (p *Pool) FindProof(issuer did.DID, cmd command.Command, subject did.DID) []cid.Cid {
 	// TODO: move to some kind of background trim job?
 	p.trim()
 
@@ -54,7 +55,7 @@ func (p *Pool) FindProof(cmd command.Command, iss did.DID, aud did.DID) []cid.Ci
 				}
 			}
 		}
-	}, cmd, iss, aud)
+	}, issuer, cmd, subject)
 }
 
 func (p *Pool) GetBundles(cids []cid.Cid) iter.Seq2[*delegation.Bundle, error] {
