@@ -75,7 +75,7 @@ func TestConstructors(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("New", func(t *testing.T) {
-		tkn, err := delegation.New(didtest.PersonaAlice.DID(), didtest.PersonaBob.DID(), cmd, pol, didtest.PersonaAlice.DID(),
+		tkn, err := delegation.New(didtest.PersonaAlice.DID(), didtest.PersonaBob.DID(), cmd, pol, didtest.PersonaCarol.DID(),
 			delegation.WithNonce([]byte(nonce)),
 			delegation.WithExpiration(exp),
 			delegation.WithMeta("foo", "fooo"),
