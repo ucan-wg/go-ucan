@@ -53,13 +53,13 @@ func (ctn Writer) ToCborWriter(w io.Writer) error {
 }
 
 // ToCborBase64 encode the container into a base64 encoded DAG-CBOR binary format.
-func (ctn Writer) ToCborBase64() ([]byte, error) {
+func (ctn Writer) ToCborBase64() (string, error) {
 	var buf bytes.Buffer
 	err := ctn.ToCborBase64Writer(&buf)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	return buf.Bytes(), nil
+	return buf.String(), nil
 }
 
 // ToCborBase64Writer is the same as ToCborBase64, but with an io.Writer.
@@ -91,13 +91,13 @@ func (ctn Writer) ToCarWriter(w io.Writer) error {
 }
 
 // ToCarBase64 encode the container into a base64 encoded CAR file.
-func (ctn Writer) ToCarBase64() ([]byte, error) {
+func (ctn Writer) ToCarBase64() (string, error) {
 	var buf bytes.Buffer
 	err := ctn.ToCarBase64Writer(&buf)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	return buf.Bytes(), nil
+	return buf.String(), nil
 }
 
 // ToCarBase64Writer is the same as ToCarBase64, but with an io.Writer.

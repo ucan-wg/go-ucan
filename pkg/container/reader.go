@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"iter"
+	"strings"
 
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime"
@@ -151,8 +152,8 @@ func FromCborReader(r io.Reader) (Reader, error) {
 }
 
 // FromCborBase64 decodes a base64 DAG-CBOR encoded container.
-func FromCborBase64(data []byte) (Reader, error) {
-	return FromCborBase64Reader(bytes.NewReader(data))
+func FromCborBase64(data string) (Reader, error) {
+	return FromCborBase64Reader(strings.NewReader(data))
 }
 
 // FromCborBase64Reader is the same as FromCborBase64, but with an io.Reader.
@@ -189,8 +190,8 @@ func FromCarReader(r io.Reader) (Reader, error) {
 }
 
 // FromCarBase64 decodes a base64 CAR file encoded container.
-func FromCarBase64(data []byte) (Reader, error) {
-	return FromCarReader(bytes.NewReader(data))
+func FromCarBase64(data string) (Reader, error) {
+	return FromCarReader(strings.NewReader(data))
 }
 
 // FromCarBase64Reader is the same as FromCarBase64, but with an io.Reader.
