@@ -44,7 +44,7 @@ func FindProof(dlgs func() iter.Seq[*delegation.Bundle], issuer did.DID, cmd com
 	var candidateLeaf []*delegation.Bundle
 
 	for bundle := range dlgs() {
-		if dlgMatch(bundle.Decoded, issuer, cmd, subject) {
+		if !dlgMatch(bundle.Decoded, issuer, cmd, subject) {
 			continue
 		}
 		candidateLeaf = append(candidateLeaf, bundle)
