@@ -14,6 +14,10 @@ func (r ReadOnly) GetNode(key string) (ipld.Node, error) {
 	return r.args.GetNode(key)
 }
 
+func (r ReadOnly) Len() int {
+	return r.args.Len()
+}
+
 func (r ReadOnly) Iter() iter.Seq2[string, ipld.Node] {
 	return r.args.Iter()
 }

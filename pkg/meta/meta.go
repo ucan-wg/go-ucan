@@ -192,6 +192,11 @@ func (m *Meta) Include(other Iterator) {
 	}
 }
 
+// Len returns the number of key/values.
+func (m *Meta) Len() int {
+	return len(m.Values)
+}
+
 // Iter iterates over the meta key/values
 func (m *Meta) Iter() iter.Seq2[string, ipld.Node] {
 	return func(yield func(string, ipld.Node) bool) {

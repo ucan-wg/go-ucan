@@ -92,6 +92,11 @@ func (a *Args) Include(other Iterator) {
 	}
 }
 
+// Len return the number of arguments.
+func (a *Args) Len() int {
+	return len(a.Keys)
+}
+
 // Iter iterates over the args key/values
 func (a *Args) Iter() iter.Seq2[string, ipld.Node] {
 	return func(yield func(string, ipld.Node) bool) {
