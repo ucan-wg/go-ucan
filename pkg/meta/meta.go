@@ -10,8 +10,8 @@ import (
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/printer"
 
-	"github.com/ucan-wg/go-ucan/pkg/meta/internal/crypto"
 	"github.com/ucan-wg/go-ucan/pkg/policy/literal"
+	"github.com/ucan-wg/go-ucan/pkg/secretbox"
 )
 
 var ErrNotFound = errors.New("key not found in meta")
@@ -63,7 +63,7 @@ func (m *Meta) GetEncryptedString(key string, encryptionKey []byte) (string, err
 		return "", err
 	}
 
-	decrypted, err := crypto.DecryptStringWithKey(v, encryptionKey)
+	decrypted, err := secretbox.DecryptStringWithKey(v, encryptionKey)
 	if err != nil {
 		return "", err
 	}
@@ -111,7 +111,7 @@ func (m *Meta) GetEncryptedBytes(key string, encryptionKey []byte) ([]byte, erro
 		return nil, err
 	}
 
-	decrypted, err := crypto.DecryptStringWithKey(v, encryptionKey)
+	decrypted, err := secretbox.DecryptStringWithKey(v, encryptionKey)
 	if err != nil {
 		return nil, err
 	}
@@ -157,12 +157,12 @@ func (m *Meta) AddEncrypted(key string, val any, encryptionKey []byte) error {
 
 	switch val := val.(type) {
 	case string:
-		encrypted, err = crypto.EncryptWithKey([]byte(val), encryptionKey)
+		encrypted, err = secretbox.EncryptWithKey([]byte(val), encryptionKey)
 		if err != nil {
 			return err
 		}
 	case []byte:
-		encrypted, err = crypto.EncryptWithKey(val, encryptionKey)
+		encrypted, err = secretbox.EncryptWithKey(val, encryptionKey)
 		if err != nil {
 			return err
 		}
@@ -190,6 +190,11 @@ func (m *Meta) Include(other Iterator) {
 		m.Values[key] = value
 		m.Keys = append(m.Keys, key)
 	}
+}
+
+// Len returns the number of key/values.
+func (m *Meta) Len() int {
+	return len(m.Values)
 }
 
 // Iter iterates over the meta key/values

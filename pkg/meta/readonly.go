@@ -43,6 +43,10 @@ func (r ReadOnly) GetNode(key string) (ipld.Node, error) {
 	return r.meta.GetNode(key)
 }
 
+func (r ReadOnly) Len() int {
+	return r.meta.Len()
+}
+
 func (r ReadOnly) Iter() iter.Seq2[string, ipld.Node] {
 	return r.meta.Iter()
 }

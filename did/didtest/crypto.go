@@ -5,10 +5,8 @@ package didtest
 
 import (
 	"fmt"
-	"testing"
 
 	"github.com/libp2p/go-libp2p/core/crypto"
-	"github.com/stretchr/testify/require"
 
 	"github.com/ucan-wg/go-ucan/did"
 )
@@ -92,6 +90,14 @@ func (p Persona) PrivKey() crypto.PrivKey {
 	return res
 }
 
+func (p Persona) PrivKeyConfig() string {
+	res, ok := privKeyB64()[p]
+	if !ok {
+		panic(fmt.Sprintf("Unknown persona: %v", p))
+	}
+	return res
+}
+
 // PubKey returns the Ed25519 public key for the Persona.
 func (p Persona) PubKey() crypto.PubKey {
 	return p.PrivKey().GetPublic()
@@ -99,10 +105,11 @@ func (p Persona) PubKey() crypto.PubKey {
 
 // PubKeyConfig returns the marshaled and encoded Ed25519 public key
 // for the Persona.
-func (p Persona) PubKeyConfig(t *testing.T) string {
+func (p Persona) PubKeyConfig() string {
 	pubKeyMar, err := crypto.MarshalPublicKey(p.PrivKey().GetPublic())
-	require.NoError(t, err)
-
+	if err != nil {
+		panic(err)
+	}
 	return crypto.ConfigEncodeKey(pubKeyMar)
 }
 
