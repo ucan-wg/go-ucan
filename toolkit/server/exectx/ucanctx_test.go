@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -82,7 +83,7 @@ func ExampleContext() {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Note: we obviously want something more robust, this is an example
 			// Note: if an error occur, we'll want to return an HTTP 401 Unauthorized
-			data := bytes.TrimPrefix([]byte(r.Header.Get("Authorization")), []byte("Bearer "))
+			data := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
 			cont, _ := container.FromCborBase64(data)
 			ucanCtx, _ := exectx.FromContainer(cont)
 
