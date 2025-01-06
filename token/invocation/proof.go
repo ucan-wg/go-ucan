@@ -37,9 +37,9 @@ import (
 //  4. When the proof chain is being validated (verifyProofs below):
 //     a. There must be at least one delegation in the proof chain.
 //     b. All referenced delegations must be available.
-//     c. The first proof must be issued to the Invoker (audience DID).
-//     d. The Issuer of each delegation must be the Audience in the next one.
-//     e. The last token must be a root delegation.
+//     c. The first proof must be issued to the Invoker.
+//     d. The Issuer of each delegation must be the Audience in the parent delegation.
+//     e. The chain must terminate with a root delegation.
 //     f. The Subject of each delegation must equal the invocation's Subject (or Audience if defined)
 //     g. The command of each delegation must "allow" the one before it.
 //
@@ -72,7 +72,7 @@ func (t *Token) verifyProofs(delegations []*delegation.Token) error {
 			return fmt.Errorf("%w: delegation %s, expected %s, got %s", ErrWrongSub, dlgCid, sub, dlg.Subject())
 		}
 
-		// The first proof must be issued to the Invoker (audience DID). - 4c
+		// The first proof must be issued to the Invoker. - 4c
 		// The Issuer of each delegation must be the Audience in the next one. - 4d
 		if dlg.Audience() != iss {
 			return fmt.Errorf("%w: delegation %s, expected %s, got %s", ErrBrokenChain, dlgCid, iss, dlg.Audience())

@@ -172,6 +172,25 @@ func (t *Token) IsValidAt(ti time.Time) bool {
 	return true
 }
 
+// Covers indicate if this token has the power to allow the given sub-delegation.
+// This function only verifies the principals alignment
+func (t *Token) Covers(subDelegation *Token) bool {
+	// The Subject of each delegation must equal the invocation's Subject (or Audience if defined). - 4f
+	if t.Subject() != sub {
+		return fmt.Errorf("%w: delegation %s, expected %s, got %s", ErrWrongSub, dlgCid, sub, dlg.Subject())
+	}
+
+	// The Issuer of each delegation must be the Audience in the next one. - 4d
+	if t.Audience() != subDelegation.Issuer() {
+		return fmt.Errorf("%w: delegation %s, expected %s, got %s", ErrBrokenChain, dlgCid, iss, dlg.Audience())
+	}
+
+	// The command of each delegation must "allow" the one before it. - 4g
+	if !dlg.Command().Covers(cmd) {
+		return fmt.Errorf("%w: delegation %s, %s doesn't cover %s", ErrCommandNotCovered, dlgCid, dlg.Command(), cmd)
+	}
+}
+
 func (t *Token) String() string {
 	var res strings.Builder
 
