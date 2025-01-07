@@ -7,7 +7,7 @@ import (
 
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime"
-	"github.com/ipld/go-ipld-prime/codec/dagcbor"
+	"github.com/ipld/go-ipld-prime/codec/cbor"
 	"github.com/ipld/go-ipld-prime/datamodel"
 	"github.com/ipld/go-ipld-prime/fluent/qp"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
@@ -27,7 +27,7 @@ func (ctn Writer) AddSealed(cid cid.Cid, data []byte) {
 
 const currentContainerVersion = "ctn-v1"
 
-// ToCbor encode the container into a DAG-CBOR binary format.
+// ToCbor encode the container into a CBOR binary format.
 func (ctn Writer) ToCbor() ([]byte, error) {
 	var buf bytes.Buffer
 	err := ctn.ToCborWriter(&buf)
@@ -49,10 +49,10 @@ func (ctn Writer) ToCborWriter(w io.Writer) error {
 	if err != nil {
 		return err
 	}
-	return ipld.EncodeStreaming(w, node, dagcbor.Encode)
+	return ipld.EncodeStreaming(w, node, cbor.Encode)
 }
 
-// ToCborBase64 encode the container into a base64 encoded DAG-CBOR binary format.
+// ToCborBase64 encode the container into a base64 encoded CBOR binary format.
 func (ctn Writer) ToCborBase64() (string, error) {
 	var buf bytes.Buffer
 	err := ctn.ToCborBase64Writer(&buf)

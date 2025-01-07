@@ -11,7 +11,7 @@ import (
 
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime"
-	"github.com/ipld/go-ipld-prime/codec/dagcbor"
+	"github.com/ipld/go-ipld-prime/codec/cbor"
 	"github.com/ipld/go-ipld-prime/datamodel"
 
 	"github.com/ucan-wg/go-ucan/token"
@@ -102,7 +102,7 @@ func FromCbor(data []byte) (Reader, error) {
 
 // FromCborReader is the same as FromCbor, but with an io.Reader.
 func FromCborReader(r io.Reader) (Reader, error) {
-	n, err := ipld.DecodeStreaming(r, dagcbor.Decode)
+	n, err := ipld.DecodeStreaming(r, cbor.Decode)
 	if err != nil {
 		return nil, err
 	}
