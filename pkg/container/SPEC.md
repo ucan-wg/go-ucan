@@ -52,14 +52,14 @@ The following base encoding combination are REQUIRED to be supported:
 
 The CBOR bytes MUST be prepended by a single byte header to indicate the selection combination of base encoding and compression. This header value MUST be set according to the following table:
 
-| Header as hex | Header as ASCII | Base encoding            | Compression    |
-|---------------|-----------------|--------------------------|----------------|
-| 0x40          | @               | raw bytes                | no compression | 
-| 0x42          | B               | base64 std padding       | no compression | 
-| 0x43          | C               | base64 url               | no compression | 
-| 0x4D          | M               | raw bytes                | gzip           | 
-| 0x4F          | O               | base64 std padding       | gzip           | 
-| 0x50          | P               | base64 url               | gzip           | 
+| Header as hex | Header as ASCII | Base encoding           | Compression    |
+|---------------|-----------------|-------------------------|----------------|
+| 0x40          | @               | raw bytes               | no compression | 
+| 0x42          | B               | base64 std padding      | no compression | 
+| 0x43          | C               | base64 url (no padding) | no compression | 
+| 0x4D          | M               | raw bytes               | gzip           | 
+| 0x4F          | O               | base64 std padding      | gzip           | 
+| 0x50          | P               | base64 url (no padding) | gzip           | 
 
 # 3 FAQ
 

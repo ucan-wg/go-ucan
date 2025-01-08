@@ -2,7 +2,6 @@ package container
 
 import (
 	"bytes"
-	"encoding/base64"
 	"io"
 
 	"github.com/ipfs/go-cid"
@@ -25,22 +24,92 @@ func (ctn Writer) AddSealed(cid cid.Cid, data []byte) {
 	ctn[cid] = data
 }
 
-const currentContainerVersion = "ctn-v1"
+// ToBytes encode the container into raw bytes.
+func (ctn Writer) ToBytes() ([]byte, error) {
+	return ctn.toBytes(headerRawBytes)
+}
 
-// ToCbor encode the container into a CBOR binary format.
-func (ctn Writer) ToCbor() ([]byte, error) {
+// ToBytesWriter is the same as ToBytes, but with an io.Writer.
+func (ctn Writer) ToBytesWriter(w io.Writer) error {
+	return ctn.toWriter(headerRawBytes, w)
+}
+
+// ToBytesGzipped encode the container into gzipped bytes.
+func (ctn Writer) ToBytesGzipped() ([]byte, error) {
+	return ctn.toBytes(headerRawBytesGzip)
+}
+
+// ToBytesGzippedWriter is the same as ToBytesGzipped, but with an io.Writer.
+func (ctn Writer) ToBytesGzippedWriter(w io.Writer) error {
+	return ctn.toWriter(headerRawBytesGzip, w)
+}
+
+// ToBase64StdPadding encode the container into a base64 string, with standard encoding and padding.
+func (ctn Writer) ToBase64StdPadding() (string, error) {
+	return ctn.toString(headerBase64StdPadding)
+}
+
+// ToBase64StdPaddingWriter is the same as ToBase64StdPadding, but with an io.Writer.
+func (ctn Writer) ToBase64StdPaddingWriter(w io.Writer) error {
+	return ctn.toWriter(headerBase64StdPadding, w)
+}
+
+// ToBase64StdPaddingGzipped encode the container into a pre-gzipped base64 string, with standard encoding and padding.
+func (ctn Writer) ToBase64StdPaddingGzipped() (string, error) {
+	return ctn.toString(headerBase64StdPaddingGzip)
+}
+
+// ToBase64StdPaddingGzippedWriter is the same as ToBase64StdPaddingGzipped, but with an io.Writer.
+func (ctn Writer) ToBase64StdPaddingGzippedWriter(w io.Writer) error {
+	return ctn.toWriter(headerBase64StdPaddingGzip, w)
+}
+
+// ToBase64URL encode the container into base64 string, with URL-safe encoding and no padding.
+func (ctn Writer) ToBase64URL() (string, error) {
+	return ctn.toString(headerBase64URL)
+}
+
+// ToBase64URLWriter is the same as ToBase64URL, but with an io.Writer.
+func (ctn Writer) ToBase64URLWriter(w io.Writer) error {
+	return ctn.toWriter(headerBase64URL, w)
+}
+
+// ToBase64URL encode the container into pre-gzipped base64 string, with URL-safe encoding and no padding.
+func (ctn Writer) ToBase64URLGzip() (string, error) {
+	return ctn.toString(headerBase64URLGzip)
+}
+
+// ToBase64URLWriter is the same as ToBase64URL, but with an io.Writer.
+func (ctn Writer) ToBase64URLGzipWriter(w io.Writer) error {
+	return ctn.toWriter(headerBase64URLGzip, w)
+}
+
+func (ctn Writer) toBytes(header header) ([]byte, error) {
 	var buf bytes.Buffer
-	err := ctn.ToCborWriter(&buf)
+	err := ctn.toWriter(header, &buf)
 	if err != nil {
 		return nil, err
 	}
 	return buf.Bytes(), nil
 }
 
-// ToCborWriter is the same as ToCbor, but with an io.Writer.
-func (ctn Writer) ToCborWriter(w io.Writer) error {
+func (ctn Writer) toString(header header) (string, error) {
+	var buf bytes.Buffer
+	err := ctn.toWriter(header, &buf)
+	if err != nil {
+		return "", err
+	}
+	return buf.String(), nil
+}
+
+func (ctn Writer) toWriter(header header, w io.Writer) (err error) {
+	encoder := header.encoder(w)
+
+	defer func() {
+		err = encoder.Close()
+	}()
 	node, err := qp.BuildMap(basicnode.Prototype.Any, 1, func(ma datamodel.MapAssembler) {
-		qp.MapEntry(ma, currentContainerVersion, qp.List(int64(len(ctn)), func(la datamodel.ListAssembler) {
+		qp.MapEntry(ma, containerVersionTag, qp.List(int64(len(ctn)), func(la datamodel.ListAssembler) {
 			for _, data := range ctn {
 				qp.ListEntry(la, qp.Bytes(data))
 			}
@@ -49,60 +118,6 @@ func (ctn Writer) ToCborWriter(w io.Writer) error {
 	if err != nil {
 		return err
 	}
-	return ipld.EncodeStreaming(w, node, cbor.Encode)
-}
 
-// ToCborBase64 encode the container into a base64 encoded CBOR binary format.
-func (ctn Writer) ToCborBase64() (string, error) {
-	var buf bytes.Buffer
-	err := ctn.ToCborBase64Writer(&buf)
-	if err != nil {
-		return "", err
-	}
-	return buf.String(), nil
-}
-
-// ToCborBase64Writer is the same as ToCborBase64, but with an io.Writer.
-func (ctn Writer) ToCborBase64Writer(w io.Writer) error {
-	w2 := base64.NewEncoder(base64.StdEncoding, w)
-	defer w2.Close()
-	return ctn.ToCborWriter(w2)
-}
-
-// ToCar encode the container into a CAR file.
-func (ctn Writer) ToCar() ([]byte, error) {
-	var buf bytes.Buffer
-	err := ctn.ToCarWriter(&buf)
-	if err != nil {
-		return nil, err
-	}
-	return buf.Bytes(), nil
-}
-
-// ToCarWriter is the same as ToCar, but with an io.Writer.
-func (ctn Writer) ToCarWriter(w io.Writer) error {
-	return writeCar(w, nil, func(yield func(carBlock, error) bool) {
-		for c, data := range ctn {
-			if !yield(carBlock{c: c, data: data}, nil) {
-				return
-			}
-		}
-	})
-}
-
-// ToCarBase64 encode the container into a base64 encoded CAR file.
-func (ctn Writer) ToCarBase64() (string, error) {
-	var buf bytes.Buffer
-	err := ctn.ToCarBase64Writer(&buf)
-	if err != nil {
-		return "", err
-	}
-	return buf.String(), nil
-}
-
-// ToCarBase64Writer is the same as ToCarBase64, but with an io.Writer.
-func (ctn Writer) ToCarBase64Writer(w io.Writer) error {
-	w2 := base64.NewEncoder(base64.StdEncoding, w)
-	defer w2.Close()
-	return ctn.ToCarWriter(w2)
+	return ipld.EncodeStreaming(encoder, node, cbor.Encode)
 }
