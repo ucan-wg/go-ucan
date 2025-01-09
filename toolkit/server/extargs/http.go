@@ -1,4 +1,4 @@
-package bearer
+package extargs
 
 import (
 	"bytes"
@@ -21,7 +21,7 @@ import (
 // - in the final args to be evaluated against the policies, holds the args derived from the HTTP request
 const HttpArgsKey = "http"
 
-type HttpBearer struct {
+type HttpExtArgs struct {
 	pol          policy.Policy
 	originalArgs args.ReadOnly
 	req          *http.Request
@@ -31,44 +31,44 @@ type HttpBearer struct {
 	argsIpld ipld.Node
 }
 
-func NewHttpBearer(pol policy.Policy, originalArgs args.ReadOnly, req *http.Request) *HttpBearer {
-	return &HttpBearer{pol: pol, originalArgs: originalArgs, req: req}
+func NewHttpExtArgs(pol policy.Policy, originalArgs args.ReadOnly, req *http.Request) *HttpExtArgs {
+	return &HttpExtArgs{pol: pol, originalArgs: originalArgs, req: req}
 }
 
-func (hc *HttpBearer) Verify() error {
-	if err := hc.makeArgs(); err != nil {
+func (hea *HttpExtArgs) Verify() error {
+	if err := hea.makeArgs(); err != nil {
 		return err
 	}
 
-	if err := hc.verifyHash(); err != nil {
+	if err := hea.verifyHash(); err != nil {
 		return err
 	}
 
-	ok, leaf := hc.pol.PartialMatch(hc.argsIpld)
+	ok, leaf := hea.pol.PartialMatch(hea.argsIpld)
 	if !ok {
 		return fmt.Errorf("the following UCAN policy is not satisfied: %v", leaf.String())
 	}
 	return nil
 }
 
-func (hc *HttpBearer) Args() (*args.Args, error) {
-	if err := hc.makeArgs(); err != nil {
+func (hea *HttpExtArgs) Args() (*args.Args, error) {
+	if err := hea.makeArgs(); err != nil {
 		return nil, err
 	}
-	return hc.args, nil
+	return hea.args, nil
 }
 
-func (hc *HttpBearer) makeArgs() error {
+func (hea *HttpExtArgs) makeArgs() error {
 	var outerErr error
-	hc.once.Do(func() {
+	hea.once.Do(func() {
 		var err error
-		hc.args, err = makeHttpArgs(hc.req)
+		hea.args, err = makeHttpArgs(hea.req)
 		if err != nil {
 			outerErr = err
 			return
 		}
 
-		hc.argsIpld, err = hc.args.ToIPLD()
+		hea.argsIpld, err = hea.args.ToIPLD()
 		if err != nil {
 			outerErr = err
 			return
@@ -77,8 +77,8 @@ func (hc *HttpBearer) makeArgs() error {
 	return outerErr
 }
 
-func (hc *HttpBearer) verifyHash() error {
-	n, err := hc.originalArgs.GetNode(HttpArgsKey)
+func (hea *HttpExtArgs) verifyHash() error {
+	n, err := hea.originalArgs.GetNode(HttpArgsKey)
 	if err != nil {
 		// no hash found, nothing to verify
 		return nil
@@ -89,7 +89,7 @@ func (hc *HttpBearer) verifyHash() error {
 		return fmt.Errorf("http args hash should be a string")
 	}
 
-	data, err := ipld.Encode(hc.argsIpld, dagcbor.Encode)
+	data, err := ipld.Encode(hea.argsIpld, dagcbor.Encode)
 	if err != nil {
 		return fmt.Errorf("can't encode derived args in dag-cbor: %w", err)
 	}

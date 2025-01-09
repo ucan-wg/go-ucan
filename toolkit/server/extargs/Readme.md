@@ -1,6 +1,6 @@
 ## Motivations
 
-UCAN is normally a pure RPC construct, when the entirety of the request's parameters are part of the invocation, in the form of `args`. Those `args` are evaluated against the delegation's [policy](https://github.com/ucan-wg/delegation/tree/v1_ipld?tab=readme-ov-file#policy) to determine if the request is allowed or not, then the request handling happens purely based on those args and the `command`. In that setup, the service would have a single entry point.
+UCAN is normally a pure RPC construct, when the entirety of the request's parameters is part of the invocation, in the form of `args`. Those `args` are evaluated against the delegation's [policy](https://github.com/ucan-wg/delegation/tree/v1_ipld?tab=readme-ov-file#policy) to determine if the request is allowed or not, then the request handling happens purely based on those args and the `command`. In that setup, the service would have a single entry point.
 
 Unfortunately, we live in a world of REST APIs, or JSON-RPC. Some adaptations or concessions need to be made.
 

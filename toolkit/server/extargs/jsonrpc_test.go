@@ -1,4 +1,4 @@
-package bearer
+package extargs
 
 import (
 	"testing"
@@ -97,7 +97,7 @@ func TestJsonRpc(t *testing.T) {
 			// we don't test the args hash here
 			emptyArgs := args.New().ReadOnly()
 
-			ctx := NewJsonRpcBearer(tc.pol, emptyArgs, tc.req)
+			ctx := NewJsonRpcExtArgs(tc.pol, emptyArgs, tc.req)
 
 			_, err := ctx.Args()
 			require.NoError(t, err)
@@ -152,7 +152,7 @@ func TestJsonRpcHash(t *testing.T) {
 			err := invArgs.Add(JsonRpcArgsKey, tc.hash)
 			require.NoError(t, err)
 
-			ctx := NewJsonRpcBearer(pol, invArgs.ReadOnly(), req)
+			ctx := NewJsonRpcExtArgs(pol, invArgs.ReadOnly(), req)
 
 			if tc.expected {
 				require.NoError(t, ctx.Verify())

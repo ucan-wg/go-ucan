@@ -1,4 +1,4 @@
-package bearer
+package extargs
 
 import (
 	"bytes"
@@ -23,7 +23,7 @@ import (
 // - in the final args to be evaluated against the policies, holds the args derived from the JsonRpc request
 const JsonRpcArgsKey = "jsonrpc"
 
-type JsonRpcBearer struct {
+type JsonRpcExtArgs struct {
 	pol          policy.Policy
 	originalArgs args.ReadOnly
 	req          *jsonrpc.Request
@@ -33,44 +33,44 @@ type JsonRpcBearer struct {
 	argsIpld ipld.Node
 }
 
-func NewJsonRpcBearer(pol policy.Policy, originalArgs args.ReadOnly, req *jsonrpc.Request) *JsonRpcBearer {
-	return &JsonRpcBearer{pol: pol, originalArgs: originalArgs, req: req}
+func NewJsonRpcExtArgs(pol policy.Policy, originalArgs args.ReadOnly, req *jsonrpc.Request) *JsonRpcExtArgs {
+	return &JsonRpcExtArgs{pol: pol, originalArgs: originalArgs, req: req}
 }
 
-func (jrc *JsonRpcBearer) Verify() error {
-	if err := jrc.makeArgs(); err != nil {
+func (jrea *JsonRpcExtArgs) Verify() error {
+	if err := jrea.makeArgs(); err != nil {
 		return err
 	}
 
-	if err := jrc.verifyHash(); err != nil {
+	if err := jrea.verifyHash(); err != nil {
 		return err
 	}
 
-	ok, leaf := jrc.pol.PartialMatch(jrc.argsIpld)
+	ok, leaf := jrea.pol.PartialMatch(jrea.argsIpld)
 	if !ok {
 		return fmt.Errorf("the following UCAN policy is not satisfied: %v", leaf.String())
 	}
 	return nil
 }
 
-func (jrc *JsonRpcBearer) Args() (*args.Args, error) {
-	if err := jrc.makeArgs(); err != nil {
+func (jrea *JsonRpcExtArgs) Args() (*args.Args, error) {
+	if err := jrea.makeArgs(); err != nil {
 		return nil, err
 	}
-	return jrc.args, nil
+	return jrea.args, nil
 }
 
-func (jrc *JsonRpcBearer) makeArgs() error {
+func (jrea *JsonRpcExtArgs) makeArgs() error {
 	var outerErr error
-	jrc.once.Do(func() {
+	jrea.once.Do(func() {
 		var err error
-		jrc.args, err = makeJsonRpcArgs(jrc.req)
+		jrea.args, err = makeJsonRpcArgs(jrea.req)
 		if err != nil {
 			outerErr = err
 			return
 		}
 
-		jrc.argsIpld, err = jrc.args.ToIPLD()
+		jrea.argsIpld, err = jrea.args.ToIPLD()
 		if err != nil {
 			outerErr = err
 			return
@@ -79,8 +79,8 @@ func (jrc *JsonRpcBearer) makeArgs() error {
 	return outerErr
 }
 
-func (jrc *JsonRpcBearer) verifyHash() error {
-	n, err := jrc.originalArgs.GetNode(JsonRpcArgsKey)
+func (jrea *JsonRpcExtArgs) verifyHash() error {
+	n, err := jrea.originalArgs.GetNode(JsonRpcArgsKey)
 	if err != nil {
 		// no hash found, nothing to verify
 		return nil
@@ -91,7 +91,7 @@ func (jrc *JsonRpcBearer) verifyHash() error {
 		return fmt.Errorf("jsonrpc args hash should be a string")
 	}
 
-	data, err := ipld.Encode(jrc.argsIpld, dagcbor.Encode)
+	data, err := ipld.Encode(jrea.argsIpld, dagcbor.Encode)
 	if err != nil {
 		return fmt.Errorf("can't encode derived args in dag-cbor: %w", err)
 	}

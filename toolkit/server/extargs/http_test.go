@@ -1,4 +1,4 @@
-package bearer
+package extargs
 
 import (
 	"net/http"
@@ -107,7 +107,7 @@ func TestHttp(t *testing.T) {
 				// we don't test the args hash here
 				emptyArgs := args.New().ReadOnly()
 
-				ctx := NewHttpBearer(pol, emptyArgs, r)
+				ctx := NewHttpExtArgs(pol, emptyArgs, r)
 
 				_, err := ctx.Args()
 				require.NoError(t, err)
@@ -173,7 +173,7 @@ func TestHttpHash(t *testing.T) {
 			err := invArgs.Add(HttpArgsKey, tc.hash)
 			require.NoError(t, err)
 
-			ctx := NewHttpBearer(pol, invArgs.ReadOnly(), req)
+			ctx := NewHttpExtArgs(pol, invArgs.ReadOnly(), req)
 
 			if tc.expected {
 				require.NoError(t, ctx.Verify())
