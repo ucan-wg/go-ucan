@@ -64,7 +64,7 @@ func ExampleContext() {
 	cont := container.NewWriter()
 	cont.AddSealed(dlgCid, dlgBytes)
 	cont.AddSealed(invCid, invBytes)
-	contBytes, _ := cont.ToCborBase64()
+	contBytes, _ := cont.ToBase64StdPadding()
 
 	// MAKING A REQUEST: we pass the container in the Bearer HTTP header
 
@@ -84,7 +84,7 @@ func ExampleContext() {
 			// Note: we obviously want something more robust, this is an example
 			// Note: if an error occur, we'll want to return an HTTP 401 Unauthorized
 			data := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
-			cont, _ := container.FromCborBase64(data)
+			cont, _ := container.FromString(data)
 			ucanCtx, _ := exectx.FromContainer(cont)
 
 			// insert into the go context

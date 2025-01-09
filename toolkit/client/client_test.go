@@ -36,10 +36,10 @@ func ExampleNewClient() {
 	handleError(err)
 
 	// this container holds the invocation and all the delegation proofs
-	b64, err := cont.ToCborBase64()
+	b64, err := cont.ToBase64StdPadding()
 	handleError(err)
 
-	fmt.Println(string(b64))
+	fmt.Println(b64)
 }
 
 func handleError(err error) {
