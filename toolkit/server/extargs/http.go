@@ -1,3 +1,4 @@
+// Package extargs adds external arguments to the invocation's arguments before the policy is evaluated.
 package extargs
 
 import (
