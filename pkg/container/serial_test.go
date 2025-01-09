@@ -22,14 +22,22 @@ import (
 
 func TestContainerRoundTrip(t *testing.T) {
 	for _, tc := range []struct {
-		name   string
-		writer func(ctn Writer, w io.Writer) error
-		reader func(io.Reader) (Reader, error)
+		name           string
+		expectedHeader header
+		writer         any
 	}{
-		{"car", Writer.ToCarWriter, FromCarReader},
-		{"carBase64", Writer.ToCarBase64Writer, FromCarBase64Reader},
-		{"cbor", Writer.ToCborWriter, FromCborReader},
-		{"cborBase64", Writer.ToCborBase64Writer, FromCborBase64Reader},
+		{"Bytes", headerRawBytes, Writer.ToBytes},
+		{"BytesWriter", headerRawBytes, Writer.ToBytesWriter},
+		{"BytesGzipped", headerRawBytesGzip, Writer.ToBytesGzipped},
+		{"BytesGzippedWriter", headerRawBytesGzip, Writer.ToBytesGzippedWriter},
+		{"Base64StdPadding", headerBase64StdPadding, Writer.ToBase64StdPadding},
+		{"Base64StdPaddingWriter", headerBase64StdPadding, Writer.ToBase64StdPaddingWriter},
+		{"Base64StdPaddingGzipped", headerBase64StdPaddingGzip, Writer.ToBase64StdPaddingGzipped},
+		{"Base64StdPaddingGzippedWriter", headerBase64StdPaddingGzip, Writer.ToBase64StdPaddingGzippedWriter},
+		{"Base64URL", headerBase64URL, Writer.ToBase64URL},
+		{"Base64URLWriter", headerBase64URL, Writer.ToBase64URLWriter},
+		{"Base64URLGzip", headerBase64URLGzip, Writer.ToBase64URLGzip},
+		{"Base64URLGzipWriter", headerBase64URLGzip, Writer.ToBase64URLGzipWriter},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			tokens := make(map[cid.Cid]*delegation.Token)
@@ -44,16 +52,48 @@ func TestContainerRoundTrip(t *testing.T) {
 				dataSize += len(data)
 			}
 
-			buf := bytes.NewBuffer(nil)
+			var reader Reader
+			var serialLen int
 
-			err := tc.writer(writer, buf)
-			require.NoError(t, err)
+			switch fn := tc.writer.(type) {
+			case func(ctn Writer, w io.Writer) error:
+				buf := bytes.NewBuffer(nil)
+				err := fn(writer, buf)
+				require.NoError(t, err)
+				serialLen = buf.Len()
 
-			t.Logf("data size %d", dataSize)
-			t.Logf("container overhead: %d%%, %d bytes", int(float32(buf.Len()-dataSize)/float32(dataSize)*100.0), buf.Len()-dataSize)
+				h, err := buf.ReadByte()
+				require.NoError(t, err)
+				require.Equal(t, byte(tc.expectedHeader), h)
+				err = buf.UnreadByte()
+				require.NoError(t, err)
 
-			reader, err := tc.reader(bytes.NewReader(buf.Bytes()))
-			require.NoError(t, err)
+				reader, err = FromReader(bytes.NewReader(buf.Bytes()))
+				require.NoError(t, err)
+
+			case func(ctn Writer) ([]byte, error):
+				b, err := fn(writer)
+				require.NoError(t, err)
+				serialLen = len(b)
+
+				require.Equal(t, byte(tc.expectedHeader), b[0])
+
+				reader, err = FromBytes(b)
+				require.NoError(t, err)
+
+			case func(ctn Writer) (string, error):
+				s, err := fn(writer)
+				require.NoError(t, err)
+				serialLen = len(s)
+
+				require.Equal(t, byte(tc.expectedHeader), s[0])
+
+				reader, err = FromString(s)
+				require.NoError(t, err)
+			}
+
+			t.Logf("data size %d, container size %d, overhead: %d%%, %d bytes",
+				dataSize, serialLen, int(float32(serialLen-dataSize)/float32(dataSize)*100.0), serialLen-dataSize)
 
 			for c, dlg := range tokens {
 				tknRead, err := reader.GetToken(c)
@@ -98,10 +138,12 @@ func BenchmarkContainerSerialisation(b *testing.B) {
 		writer func(ctn Writer, w io.Writer) error
 		reader func(io.Reader) (Reader, error)
 	}{
-		{"car", Writer.ToCarWriter, FromCarReader},
-		{"carBase64", Writer.ToCarBase64Writer, FromCarBase64Reader},
-		{"cbor", Writer.ToCborWriter, FromCborReader},
-		{"cborBase64", Writer.ToCborBase64Writer, FromCborBase64Reader},
+		{"Bytes", Writer.ToBytesWriter, FromReader},
+		{"BytesGzipped", Writer.ToBytesGzippedWriter, FromReader},
+		{"Base64StdPadding", Writer.ToBase64StdPaddingWriter, FromReader},
+		{"Base64StdPaddingGzipped", Writer.ToBase64StdPaddingGzippedWriter, FromReader},
+		{"Base64URL", Writer.ToBase64URLWriter, FromReader},
+		{"Base64URLGzip", Writer.ToBase64URLGzipWriter, FromReader},
 	} {
 		writer := NewWriter()
 
@@ -184,7 +226,7 @@ func FuzzContainerRead(f *testing.F) {
 			_, c, data := randToken()
 			writer.AddSealed(c, data)
 		}
-		data, err := writer.ToCbor()
+		data, err := writer.ToBytes()
 		require.NoError(f, err)
 
 		f.Add(data)
@@ -194,7 +236,7 @@ func FuzzContainerRead(f *testing.F) {
 		start := time.Now()
 
 		// search for panics
-		_, _ = FromCbor(data)
+		_, _ = FromBytes(data)
 
 		if time.Since(start) > 100*time.Millisecond {
 			panic("too long")

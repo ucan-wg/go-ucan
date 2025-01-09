@@ -2,7 +2,6 @@ package container
 
 import (
 	"bytes"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
@@ -11,7 +10,7 @@ import (
 
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime"
-	"github.com/ipld/go-ipld-prime/codec/dagcbor"
+	"github.com/ipld/go-ipld-prime/codec/cbor"
 	"github.com/ipld/go-ipld-prime/datamodel"
 
 	"github.com/ucan-wg/go-ucan/token"
@@ -24,6 +23,72 @@ var ErrMultipleInvocations = fmt.Errorf("multiple invocations")
 
 // Reader is a token container reader. It exposes the tokens conveniently decoded.
 type Reader map[cid.Cid]token.Token
+
+// FromBytes decodes a container from a []byte
+func FromBytes(data []byte) (Reader, error) {
+	return FromReader(bytes.NewReader(data))
+}
+
+// FromString decodes a container from a string
+func FromString(s string) (Reader, error) {
+	return FromReader(strings.NewReader(s))
+}
+
+// FromReader decodes a container from an io.Reader.
+func FromReader(r io.Reader) (Reader, error) {
+	payload, err := decodePayload(r)
+	if err != nil {
+		return nil, err
+	}
+
+	n, err := ipld.DecodeStreaming(payload, cbor.Decode)
+	if err != nil {
+		return nil, err
+	}
+	if n.Kind() != datamodel.Kind_Map {
+		return nil, fmt.Errorf("invalid container format: expected map")
+	}
+	if n.Length() != 1 {
+		return nil, fmt.Errorf("invalid container format: expected single version key")
+	}
+
+	// get the first (and only) key-value pair
+	it := n.MapIterator()
+	key, tokensNode, err := it.Next()
+	if err != nil {
+		return nil, err
+	}
+
+	version, err := key.AsString()
+	if err != nil {
+		return nil, fmt.Errorf("invalid container format: version must be string")
+	}
+	if version != containerVersionTag {
+		return nil, fmt.Errorf("unsupported container version: %s", version)
+	}
+
+	if tokensNode.Kind() != datamodel.Kind_List {
+		return nil, fmt.Errorf("invalid container format: tokens must be a list")
+	}
+
+	ctn := make(Reader, tokensNode.Length())
+	it2 := tokensNode.ListIterator()
+	for !it2.Done() {
+		_, val, err := it2.Next()
+		if err != nil {
+			return nil, err
+		}
+		data, err := val.AsBytes()
+		if err != nil {
+			return nil, err
+		}
+		err = ctn.addToken(data)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return ctn, nil
+}
 
 // GetToken returns an arbitrary decoded token, from its CID.
 // If not found, ErrNotFound is returned.
@@ -65,7 +130,7 @@ func (ctn Reader) GetAllDelegations() iter.Seq2[cid.Cid, *delegation.Token] {
 
 // GetInvocation returns a single invocation.Token.
 // If none are found, ErrNotFound is returned.
-// If more than one invocation exist, ErrMultipleInvocations is returned.
+// If more than one invocation exists, ErrMultipleInvocations is returned.
 func (ctn Reader) GetInvocation() (*invocation.Token, error) {
 	var res *invocation.Token
 	for _, t := range ctn {
@@ -93,110 +158,6 @@ func (ctn Reader) GetAllInvocations() iter.Seq2[cid.Cid, *invocation.Token] {
 			}
 		}
 	}
-}
-
-// FromCbor decodes a DAG-CBOR encoded container.
-func FromCbor(data []byte) (Reader, error) {
-	return FromCborReader(bytes.NewReader(data))
-}
-
-// FromCborReader is the same as FromCbor, but with an io.Reader.
-func FromCborReader(r io.Reader) (Reader, error) {
-	n, err := ipld.DecodeStreaming(r, dagcbor.Decode)
-	if err != nil {
-		return nil, err
-	}
-	if n.Kind() != datamodel.Kind_Map {
-		return nil, fmt.Errorf("invalid container format: expected map")
-	}
-	if n.Length() != 1 {
-		return nil, fmt.Errorf("invalid container format: expected single version key")
-	}
-
-	// get the first (and only) key-value pair
-	it := n.MapIterator()
-	key, tokensNode, err := it.Next()
-	if err != nil {
-		return nil, err
-	}
-
-	version, err := key.AsString()
-	if err != nil {
-		return nil, fmt.Errorf("invalid container format: version must be string")
-	}
-	if version != currentContainerVersion {
-		return nil, fmt.Errorf("unsupported container version: %s", version)
-	}
-
-	if tokensNode.Kind() != datamodel.Kind_List {
-		return nil, fmt.Errorf("invalid container format: tokens must be a list")
-	}
-
-	ctn := make(Reader, tokensNode.Length())
-	it2 := tokensNode.ListIterator()
-	for !it2.Done() {
-		_, val, err := it2.Next()
-		if err != nil {
-			return nil, err
-		}
-		data, err := val.AsBytes()
-		if err != nil {
-			return nil, err
-		}
-		err = ctn.addToken(data)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return ctn, nil
-}
-
-// FromCborBase64 decodes a base64 DAG-CBOR encoded container.
-func FromCborBase64(data string) (Reader, error) {
-	return FromCborBase64Reader(strings.NewReader(data))
-}
-
-// FromCborBase64Reader is the same as FromCborBase64, but with an io.Reader.
-func FromCborBase64Reader(r io.Reader) (Reader, error) {
-	return FromCborReader(base64.NewDecoder(base64.StdEncoding, r))
-}
-
-// FromCar decodes a CAR file encoded container.
-func FromCar(data []byte) (Reader, error) {
-	return FromCarReader(bytes.NewReader(data))
-}
-
-// FromCarReader is the same as FromCar, but with an io.Reader.
-func FromCarReader(r io.Reader) (Reader, error) {
-	_, it, err := readCar(r)
-	if err != nil {
-		return nil, err
-	}
-
-	ctn := make(Reader)
-
-	for block, err := range it {
-		if err != nil {
-			return nil, err
-		}
-
-		err = ctn.addToken(block.data)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return ctn, nil
-}
-
-// FromCarBase64 decodes a base64 CAR file encoded container.
-func FromCarBase64(data string) (Reader, error) {
-	return FromCarReader(strings.NewReader(data))
-}
-
-// FromCarBase64Reader is the same as FromCarBase64, but with an io.Reader.
-func FromCarBase64Reader(r io.Reader) (Reader, error) {
-	return FromCarReader(base64.NewDecoder(base64.StdEncoding, r))
 }
 
 func (ctn Reader) addToken(data []byte) error {
