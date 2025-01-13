@@ -2,7 +2,6 @@ package invocation_test
 
 import (
 	"bytes"
-	"fmt"
 	"testing"
 
 	"github.com/libp2p/go-libp2p/core/crypto"
@@ -38,18 +37,13 @@ func TestSchemaRoundTrip(t *testing.T) {
 		cborBytes, id, err := p1.ToSealed(privKey)
 		require.NoError(t, err)
 		assert.Equal(t, newCID, envelope.CIDToBase58BTC(id))
-		fmt.Println("cborBytes length", len(cborBytes))
-		fmt.Println("cbor", string(cborBytes))
 
 		p2, c2, err := invocation.FromSealed(cborBytes)
 		require.NoError(t, err)
 		assert.Equal(t, id, c2)
-		fmt.Println("read Cbor", p2)
 
 		readJson, err := p2.ToDagJson(privKey)
 		require.NoError(t, err)
-		fmt.Println("readJson length", len(readJson))
-		fmt.Println("json: ", string(readJson))
 
 		assert.JSONEq(t, string(invocationJson), string(readJson))
 	})

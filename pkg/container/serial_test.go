@@ -47,7 +47,7 @@ func TestContainerRoundTrip(t *testing.T) {
 
 			for i := 0; i < 10; i++ {
 				dlg, c, data := randToken()
-				writer.AddSealed(c, data)
+				writer.AddSealed(data)
 				tokens[c] = dlg
 				dataSize += len(data)
 			}
@@ -148,8 +148,8 @@ func BenchmarkContainerSerialisation(b *testing.B) {
 		writer := NewWriter()
 
 		for i := 0; i < 10; i++ {
-			_, c, data := randToken()
-			writer.AddSealed(c, data)
+			_, _, data := randToken()
+			writer.AddSealed(data)
 		}
 
 		buf := bytes.NewBuffer(nil)
@@ -223,8 +223,8 @@ func FuzzContainerRead(f *testing.F) {
 	for tokenCount := 0; tokenCount < 10; tokenCount++ {
 		writer := NewWriter()
 		for i := 0; i < tokenCount; i++ {
-			_, c, data := randToken()
-			writer.AddSealed(c, data)
+			_, _, data := randToken()
+			writer.AddSealed(data)
 		}
 		data, err := writer.ToBytes()
 		require.NoError(f, err)

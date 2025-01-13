@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"io"
 
-	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/codec/cbor"
 	"github.com/ipld/go-ipld-prime/datamodel"
@@ -13,15 +12,15 @@ import (
 )
 
 // Writer is a token container writer. It provides a convenient way to aggregate and serialize tokens together.
-type Writer map[cid.Cid][]byte
+type Writer map[string]struct{}
 
 func NewWriter() Writer {
 	return make(Writer)
 }
 
 // AddSealed includes a "sealed" token (serialized with a ToSealed* function) in the container.
-func (ctn Writer) AddSealed(cid cid.Cid, data []byte) {
-	ctn[cid] = data
+func (ctn Writer) AddSealed(data []byte) {
+	ctn[string(data)] = struct{}{}
 }
 
 // ToBytes encode the container into raw bytes.
@@ -110,8 +109,8 @@ func (ctn Writer) toWriter(header header, w io.Writer) (err error) {
 	}()
 	node, err := qp.BuildMap(basicnode.Prototype.Any, 1, func(ma datamodel.MapAssembler) {
 		qp.MapEntry(ma, containerVersionTag, qp.List(int64(len(ctn)), func(la datamodel.ListAssembler) {
-			for _, data := range ctn {
-				qp.ListEntry(la, qp.Bytes(data))
+			for data, _ := range ctn {
+				qp.ListEntry(la, qp.Bytes([]byte(data)))
 			}
 		}))
 	})
