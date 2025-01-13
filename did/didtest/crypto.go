@@ -28,7 +28,7 @@ type Persona int
 //
 // [table]: https://en.wikipedia.org/wiki/Alice_and_Bob#Cryptographic_systems
 const (
-	PersonaAlice Persona = iota
+	PersonaAlice Persona = iota + 1
 	PersonaBob
 	PersonaCarol
 	PersonaDan
