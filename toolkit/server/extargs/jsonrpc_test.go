@@ -97,15 +97,15 @@ func TestJsonRpc(t *testing.T) {
 			// we don't test the args hash here
 			emptyArgs := args.New().ReadOnly()
 
-			ctx := NewJsonRpcExtArgs(tc.pol, emptyArgs, tc.req)
+			extArgs := NewJsonRpcExtArgs(tc.pol, emptyArgs, tc.req)
 
-			_, err := ctx.Args()
+			_, err := extArgs.Args()
 			require.NoError(t, err)
 
 			if tc.expected {
-				require.NoError(t, ctx.Verify())
+				require.NoError(t, extArgs.Verify())
 			} else {
-				require.Error(t, ctx.Verify())
+				require.Error(t, extArgs.Verify())
 			}
 		})
 	}
@@ -152,12 +152,12 @@ func TestJsonRpcHash(t *testing.T) {
 			err := invArgs.Add(JsonRpcArgsKey, tc.hash)
 			require.NoError(t, err)
 
-			ctx := NewJsonRpcExtArgs(pol, invArgs.ReadOnly(), req)
+			extArgs := NewJsonRpcExtArgs(pol, invArgs.ReadOnly(), req)
 
 			if tc.expected {
-				require.NoError(t, ctx.Verify())
+				require.NoError(t, extArgs.Verify())
 			} else {
-				require.Error(t, ctx.Verify())
+				require.Error(t, extArgs.Verify())
 			}
 		})
 	}

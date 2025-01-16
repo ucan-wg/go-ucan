@@ -8,6 +8,7 @@ import (
 
 	"github.com/INFURA/go-ethlibs/jsonrpc"
 	"github.com/ipfs/go-cid"
+	"github.com/ipld/go-ipld-prime/datamodel"
 	"github.com/ucan-wg/go-ucan/pkg/args"
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/container"
@@ -34,6 +35,7 @@ type UcanCtx struct {
 	// argument sources
 	http    *extargs.HttpExtArgs
 	jsonrpc *extargs.JsonRpcExtArgs
+	infura  *extargs.InfuraExtArgs
 }
 
 func FromContainer(cont container.Reader) (*UcanCtx, error) {
@@ -99,6 +101,7 @@ func (ctn UcanCtx) Meta() meta.ReadOnly {
 }
 
 // VerifyHttp verify the delegation's policies against arguments constructed from the HTTP request.
+// These arguments will be set in the `.http` argument key, at the root.
 // This function can only be called once per context.
 // After being used, those constructed arguments will be used in ExecutionAllowed as well.
 func (ctn UcanCtx) VerifyHttp(req *http.Request) error {
@@ -110,6 +113,7 @@ func (ctn UcanCtx) VerifyHttp(req *http.Request) error {
 }
 
 // VerifyJsonRpc verify the delegation's policies against arguments constructed from the JsonRpc request.
+// These arguments will be set in the `.jsonrpc` argument key, at the root.
 // This function can only be called once per context.
 // After being used, those constructed arguments will be used in ExecutionAllowed as well.
 func (ctn UcanCtx) VerifyJsonRpc(req *jsonrpc.Request) error {
@@ -118,6 +122,18 @@ func (ctn UcanCtx) VerifyJsonRpc(req *jsonrpc.Request) error {
 	}
 	ctn.jsonrpc = extargs.NewJsonRpcExtArgs(ctn.policies, ctn.inv.Arguments(), req)
 	return ctn.jsonrpc.Verify()
+}
+
+// VerifyInfura verify the delegation's policies against arbitrary arguments provider through an IPLD MapAssembler.
+// These arguments will be set in the `.inf` argument key, at the root.
+// This function can only be called once per context.
+// After being used, those constructed arguments will be used in ExecutionAllowed as well.
+func (ctn UcanCtx) VerifyInfura(assembler func(ma datamodel.MapAssembler)) error {
+	if ctn.infura != nil {
+		panic("only use once per request context")
+	}
+	ctn.infura = extargs.NewInfuraExtArgs(ctn.policies, assembler)
+	return ctn.infura.Verify()
 }
 
 // ExecutionAllowed does the final verification of the invocation.
@@ -139,6 +155,13 @@ func (ctn UcanCtx) ExecutionAllowed() error {
 				return nil, err
 			}
 			newArgs.Include(jsonRpcArgs)
+		}
+		if ctn.infura != nil {
+			infuraArgs, err := ctn.infura.Args()
+			if err != nil {
+				return nil, err
+			}
+			newArgs.Include(infuraArgs)
 		}
 
 		return newArgs, nil
