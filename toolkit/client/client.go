@@ -60,18 +60,18 @@ func (c *Client) PrepareInvoke(ctx context.Context, cmd command.Command, subject
 		return nil, err
 	}
 
-	invSealed, invCid, err := inv.ToSealed(c.privKey)
+	invSealed, _, err := inv.ToSealed(c.privKey)
 	if err != nil {
 		return nil, err
 	}
 
 	cont := container.NewWriter()
-	cont.AddSealed(invCid, invSealed)
+	cont.AddSealed(invSealed)
 	for bundle, err := range c.pool.GetBundles(proof) {
 		if err != nil {
 			return nil, err
 		}
-		cont.AddSealed(bundle.Cid, bundle.Sealed)
+		cont.AddSealed(bundle.Sealed)
 	}
 
 	return cont, nil

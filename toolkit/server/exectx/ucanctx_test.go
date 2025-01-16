@@ -57,13 +57,13 @@ func ExampleContext() {
 		invocation.WithExpirationIn(10*time.Minute),
 		invocation.WithArgument("myarg", "hello"), // we can specify invocation parameters
 	)
-	invBytes, invCid, _ := inv.ToSealed(user.PrivKey())
+	invBytes, _, _ := inv.ToSealed(user.PrivKey())
 
 	// PACKAGING: no obligation for the transport, but the user needs to give the service the invocation
 	// and all the proof delegations. We can use a container for that.
 	cont := container.NewWriter()
-	cont.AddSealed(dlgCid, dlgBytes)
-	cont.AddSealed(invCid, invBytes)
+	cont.AddSealed(dlgBytes)
+	cont.AddSealed(invBytes)
 	contBytes, _ := cont.ToBase64StdPadding()
 
 	// MAKING A REQUEST: we pass the container in the Bearer HTTP header

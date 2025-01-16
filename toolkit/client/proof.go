@@ -14,6 +14,8 @@ import (
 // - issuer: the DID of the client, also the issuer of the invocation token
 // - cmd: the command to execute
 // - subject: the DID of the resource to operate on, also the subject (or audience if defined) of the invocation token
+// The returned delegation chain is ordered starting from the leaf (the one matching the invocation) to the root
+// (the one given by the service).
 // Note: you can read it as "(issuer) wants to do (cmd) on (subject)".
 // Note: the returned delegation(s) don't have to match exactly the parameters, as long as they allow them.
 // Note: the implemented algorithm won't perform well with a large number of delegations.

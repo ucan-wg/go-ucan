@@ -38,6 +38,9 @@ type UcanCtx struct {
 	infura  *extargs.InfuraExtArgs
 }
 
+// FromContainer prepare a UcanCtx from a UCAN container, for further evaluation in a server pipeline.
+// It is expected that the container holds a single invocation and the matching delegations. If not,
+// an error is returned.
 func FromContainer(cont container.Reader) (*UcanCtx, error) {
 	inv, err := cont.GetInvocation()
 	if err != nil {
@@ -95,7 +98,7 @@ func (ctn UcanCtx) Policies() policy.Policy {
 }
 
 // Meta returns all the meta values from the delegations.
-// They are accumulated from the root delegation to the leaf delegation, with no overwrite.
+// They are accumulated from the root delegation to the leaf delegation, with no overwriting.
 func (ctn UcanCtx) Meta() meta.ReadOnly {
 	return ctn.meta.ReadOnly()
 }

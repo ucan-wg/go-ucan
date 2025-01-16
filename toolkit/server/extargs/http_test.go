@@ -107,15 +107,15 @@ func TestHttp(t *testing.T) {
 				// we don't test the args hash here
 				emptyArgs := args.New().ReadOnly()
 
-				extArgs := NewHttpExtArgs(pol, emptyArgs, r)
+				ctx := NewHttpExtArgs(pol, emptyArgs, r)
 
-				_, err := extArgs.Args()
+				_, err := ctx.Args()
 				require.NoError(t, err)
 
 				if tc.expected {
-					require.NoError(t, extArgs.Verify())
+					require.NoError(t, ctx.Verify())
 				} else {
-					require.Error(t, extArgs.Verify())
+					require.Error(t, ctx.Verify())
 				}
 			}
 
@@ -173,12 +173,12 @@ func TestHttpHash(t *testing.T) {
 			err := invArgs.Add(HttpArgsKey, tc.hash)
 			require.NoError(t, err)
 
-			extArgs := NewHttpExtArgs(pol, invArgs.ReadOnly(), req)
+			ctx := NewHttpExtArgs(pol, invArgs.ReadOnly(), req)
 
 			if tc.expected {
-				require.NoError(t, extArgs.Verify())
+				require.NoError(t, ctx.Verify())
 			} else {
-				require.Error(t, extArgs.Verify())
+				require.Error(t, ctx.Verify())
 			}
 		})
 	}
