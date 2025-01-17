@@ -4,14 +4,16 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/INFURA/go-ethlibs/jsonrpc"
 	"github.com/ipfs/go-cid"
+	"github.com/ipld/go-ipld-prime/datamodel"
+	"github.com/ipld/go-ipld-prime/fluent/qp"
 	"github.com/stretchr/testify/require"
 	"github.com/ucan-wg/go-ucan/did/didtest"
 	"github.com/ucan-wg/go-ucan/pkg/command"
@@ -24,7 +26,11 @@ import (
 	"github.com/INFURA/go-ucan-toolkit/server/exectx"
 )
 
-func ExampleContext() {
+const (
+	network = "eth-mainnet"
+)
+
+func TestCtx(t *testing.T) {
 	// let's use some pre-made DID+privkey.
 	// use go-ucan/did to generate or parse them.
 	service := didtest.PersonaAlice
@@ -44,35 +50,47 @@ func ExampleContext() {
 			policy.Like(".jsonrpc.method", "eth_*"),
 			policy.Equal(".jsonrpc.method", literal.String("debug_traceCall")),
 		),
+		// some infura constraints
+		// Network
+		policy.Equal(".inf.ntwk", literal.String(network)),
+		// Quota
+		policy.LessThanOrEqual(".inf.quota.ur", literal.Int(1234)),
 	)
 
-	dlg, _ := delegation.Root(service.DID(), user.DID(), cmd, pol,
+	dlg, err := delegation.Root(service.DID(), user.DID(), cmd, pol,
 		delegation.WithExpirationIn(24*time.Hour),
 	)
-	dlgBytes, dlgCid, _ := dlg.ToSealed(service.PrivKey())
+	require.NoError(t, err)
+	dlgBytes, dlgCid, err := dlg.ToSealed(service.PrivKey())
+	require.NoError(t, err)
 
 	// INVOCATION: the user leverages the delegation (power) to make a request.
 
-	inv, _ := invocation.New(user.DID(), cmd, service.DID(), []cid.Cid{dlgCid},
+	inv, err := invocation.New(user.DID(), cmd, service.DID(), []cid.Cid{dlgCid},
 		invocation.WithExpirationIn(10*time.Minute),
 		invocation.WithArgument("myarg", "hello"), // we can specify invocation parameters
 	)
-	invBytes, _, _ := inv.ToSealed(user.PrivKey())
+	require.NoError(t, err)
+	invBytes, _, err := inv.ToSealed(user.PrivKey())
+	require.NoError(t, err)
 
 	// PACKAGING: no obligation for the transport, but the user needs to give the service the invocation
 	// and all the proof delegations. We can use a container for that.
 	cont := container.NewWriter()
 	cont.AddSealed(dlgBytes)
 	cont.AddSealed(invBytes)
-	contBytes, _ := cont.ToBase64StdPadding()
+	contBytes, err := cont.ToBase64StdPadding()
+	require.NoError(t, err)
 
 	// MAKING A REQUEST: we pass the container in the Bearer HTTP header
 
 	jrpc := jsonrpc.NewRequest()
 	jrpc.Method = "eth_call"
 	jrpc.Params = jsonrpc.MustParams("0x599784", true)
-	jrpcBytes, _ := jrpc.MarshalJSON()
-	req, _ := http.NewRequest(http.MethodGet, "/foo/bar", bytes.NewReader(jrpcBytes))
+	jrpcBytes, err := jrpc.MarshalJSON()
+	require.NoError(t, err)
+	req, err := http.NewRequest(http.MethodGet, "/foo/bar", bytes.NewReader(jrpcBytes))
+	require.NoError(t, err)
 	req.Header.Set("Authorization", "Bearer "+string(contBytes))
 
 	// SERVER: Auth middleware
@@ -84,13 +102,15 @@ func ExampleContext() {
 			// Note: we obviously want something more robust, this is an example
 			// Note: if an error occur, we'll want to return an HTTP 401 Unauthorized
 			data := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
-			cont, _ := container.FromString(data)
-			ucanCtx, _ := exectx.FromContainer(cont)
+			cont, err := container.FromString(data)
+			require.NoError(t, err)
+			ucanCtx, err := exectx.FromContainer(cont)
+			require.NoError(t, err)
 
 			// insert into the go context
-			req = req.WithContext(exectx.AddUcanCtxToContext(req.Context(), ucanCtx))
+			r = r.WithContext(exectx.AddUcanCtxToContext(r.Context(), ucanCtx))
 
-			next.ServeHTTP(w, req)
+			next.ServeHTTP(w, r)
 		})
 	}
 
@@ -98,7 +118,8 @@ func ExampleContext() {
 
 	httpMw := func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ucanCtx, _ := exectx.FromContext(req.Context())
+			ucanCtx, ok := exectx.FromContext(r.Context())
+			require.True(t, ok)
 
 			err := ucanCtx.VerifyHttp(r)
 			if err != nil {
@@ -115,12 +136,14 @@ func ExampleContext() {
 
 	jsonrpcMw := func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ucanCtx, _ := exectx.FromContext(req.Context())
+			ucanCtx, ok := exectx.FromContext(r.Context())
+			require.True(t, ok)
 
 			var jrpc jsonrpc.Request
-			_ = json.NewDecoder(r.Body).Decode(&jrpc)
+			err := json.NewDecoder(r.Body).Decode(&jrpc)
+			require.NoError(t, err)
 
-			err := ucanCtx.VerifyJsonRpc(&jrpc)
+			err = ucanCtx.VerifyJsonRpc(&jrpc)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusUnauthorized)
 				return
@@ -129,21 +152,42 @@ func ExampleContext() {
 		})
 	}
 
+	// SERVER: custom infura checks
+
+	infuraMw := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ucanCtx, ok := exectx.FromContext(r.Context())
+			require.True(t, ok)
+			err := ucanCtx.VerifyInfura(func(ma datamodel.MapAssembler) {
+				qp.MapEntry(ma, "ntwk", qp.String(network))
+				qp.MapEntry(ma, "quota", qp.Map(1, func(ma datamodel.MapAssembler) {
+					qp.MapEntry(ma, "ur", qp.Int(1234))
+				}))
+			})
+			require.NoError(t, err)
+			next.ServeHTTP(w, r)
+		})
+	}
+
 	// SERVER: final handler
 
 	handler := func(w http.ResponseWriter, r *http.Request) {
-		ucanCtx, _ := exectx.FromContext(req.Context())
+		ucanCtx, ok := exectx.FromContext(r.Context())
+		require.True(t, ok)
 
 		if err := ucanCtx.ExecutionAllowed(); err != nil {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}
 
-		_, _ = fmt.Fprintln(w, "Success!")
+		w.WriteHeader(http.StatusOK)
 	}
 
-	// Ready to go!
-	_ = http.ListenAndServe("", authMw(httpMw(jsonrpcMw(http.HandlerFunc(handler)))))
+	sut := authMw(httpMw(jsonrpcMw(infuraMw(http.HandlerFunc(handler)))))
+
+	rec := httptest.NewRecorder()
+	sut.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusOK, rec.Code)
 }
 
 func TestGoCtx(t *testing.T) {
