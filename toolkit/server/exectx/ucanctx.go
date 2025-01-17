@@ -20,7 +20,7 @@ import (
 	"github.com/INFURA/go-ucan-toolkit/server/extargs"
 )
 
-var _ delegation.Loader = UcanCtx{}
+var _ delegation.Loader = &UcanCtx{}
 
 // UcanCtx is a UCAN execution context meant to be inserted in the go context while handling a request.
 // It allows to handle the control of the execution in multiple steps across different middlewares,
@@ -74,18 +74,18 @@ func FromContainer(cont container.Reader) (*UcanCtx, error) {
 }
 
 // Command returns the command triggered by the invocation.
-func (ctn UcanCtx) Command() command.Command {
+func (ctn *UcanCtx) Command() command.Command {
 	return ctn.inv.Command()
 }
 
 // Invocation returns the invocation.Token.
-func (ctn UcanCtx) Invocation() *invocation.Token {
+func (ctn *UcanCtx) Invocation() *invocation.Token {
 	return ctn.inv
 }
 
 // GetDelegation returns the delegation.Token matching the given CID.
 // If not found, delegation.ErrDelegationNotFound is returned.
-func (ctn UcanCtx) GetDelegation(cid cid.Cid) (*delegation.Token, error) {
+func (ctn *UcanCtx) GetDelegation(cid cid.Cid) (*delegation.Token, error) {
 	if dlg, ok := ctn.dlgs[cid]; ok {
 		return dlg, nil
 	}
@@ -93,13 +93,13 @@ func (ctn UcanCtx) GetDelegation(cid cid.Cid) (*delegation.Token, error) {
 }
 
 // Policies return the full set of policy statements to satisfy.
-func (ctn UcanCtx) Policies() policy.Policy {
+func (ctn *UcanCtx) Policies() policy.Policy {
 	return ctn.policies
 }
 
 // Meta returns all the meta values from the delegations.
 // They are accumulated from the root delegation to the leaf delegation, with no overwriting.
-func (ctn UcanCtx) Meta() meta.ReadOnly {
+func (ctn *UcanCtx) Meta() meta.ReadOnly {
 	return ctn.meta.ReadOnly()
 }
 
@@ -107,8 +107,8 @@ func (ctn UcanCtx) Meta() meta.ReadOnly {
 // These arguments will be set in the `.http` argument key, at the root.
 // This function can only be called once per context.
 // After being used, those constructed arguments will be used in ExecutionAllowed as well.
-func (ctn UcanCtx) VerifyHttp(req *http.Request) error {
-	if ctn.http == nil {
+func (ctn *UcanCtx) VerifyHttp(req *http.Request) error {
+	if ctn.http != nil {
 		panic("only use once per request context")
 	}
 	ctn.http = extargs.NewHttpExtArgs(ctn.policies, ctn.inv.Arguments(), req)
@@ -119,7 +119,7 @@ func (ctn UcanCtx) VerifyHttp(req *http.Request) error {
 // These arguments will be set in the `.jsonrpc` argument key, at the root.
 // This function can only be called once per context.
 // After being used, those constructed arguments will be used in ExecutionAllowed as well.
-func (ctn UcanCtx) VerifyJsonRpc(req *jsonrpc.Request) error {
+func (ctn *UcanCtx) VerifyJsonRpc(req *jsonrpc.Request) error {
 	if ctn.jsonrpc != nil {
 		panic("only use once per request context")
 	}
@@ -131,7 +131,7 @@ func (ctn UcanCtx) VerifyJsonRpc(req *jsonrpc.Request) error {
 // These arguments will be set in the `.inf` argument key, at the root.
 // This function can only be called once per context.
 // After being used, those constructed arguments will be used in ExecutionAllowed as well.
-func (ctn UcanCtx) VerifyInfura(assembler func(ma datamodel.MapAssembler)) error {
+func (ctn *UcanCtx) VerifyInfura(assembler func(ma datamodel.MapAssembler)) error {
 	if ctn.infura != nil {
 		panic("only use once per request context")
 	}
@@ -141,7 +141,7 @@ func (ctn UcanCtx) VerifyInfura(assembler func(ma datamodel.MapAssembler)) error
 
 // ExecutionAllowed does the final verification of the invocation.
 // If VerifyHttp or VerifyJsonRpc has been used, those arguments are part of the verification.
-func (ctn UcanCtx) ExecutionAllowed() error {
+func (ctn *UcanCtx) ExecutionAllowed() error {
 	return ctn.inv.ExecutionAllowedWithArgsHook(ctn, func(args args.ReadOnly) (*args.Args, error) {
 		newArgs := args.WriteableClone()
 
