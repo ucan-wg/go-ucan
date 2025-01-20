@@ -45,7 +45,7 @@ func (h header) encoder(w io.Writer) *payloadWriter {
 	return res
 }
 
-func decodePayload(r io.Reader) (io.Reader, error) {
+func payloadDecoder(r io.Reader) (io.Reader, error) {
 	headerBuf := make([]byte, 1)
 	_, err := r.Read(headerBuf)
 	if err != nil {

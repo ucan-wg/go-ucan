@@ -35,7 +35,7 @@ func FromString(s string) (Reader, error) {
 
 // FromReader decodes a container from an io.Reader.
 func FromReader(r io.Reader) (Reader, error) {
-	payload, err := decodePayload(r)
+	payload, err := payloadDecoder(r)
 	if err != nil {
 		return nil, err
 	}
