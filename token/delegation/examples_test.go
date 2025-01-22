@@ -272,12 +272,14 @@ func ExampleFromSealed() {
 	// Policy (pol): [
 	//   ["==", ".status", "draft"],
 	//   ["all", ".reviewer",
-	//     ["like", ".email", "*@example.com"]],
+	//     ["like", ".email", "*@example.com"]
+	//   ],
 	//   ["any", ".tags",
 	//     ["or", [
 	//       ["==", ".", "news"],
-	//       ["==", ".", "press"]]]
-	//     ]
+	//       ["==", ".", "press"]
+	//     ]]
+	//   ]
 	// ]
 	// Nonce (nonce): 000102030405060708090a0b
 	// Meta (meta): {}

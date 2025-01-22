@@ -28,12 +28,14 @@ func ExamplePolicy() {
 	// [
 	//   ["==", ".status", "draft"],
 	//   ["all", ".reviewer",
-	//     ["like", ".email", "*@example.com"]],
+	//     ["like", ".email", "*@example.com"]
+	//   ],
 	//   ["any", ".tags",
 	//     ["or", [
 	//       ["==", ".", "news"],
-	//       ["==", ".", "press"]]]
-	//     ]
+	//       ["==", ".", "press"]
+	//     ]]
+	//   ]
 	// ]
 }
 
@@ -59,12 +61,14 @@ func ExamplePolicy_accumulate() {
 	// [
 	//   ["==", ".status", "draft"],
 	//   ["all", ".reviewer",
-	//     ["like", ".email", "*@example.com"]],
+	//     ["like", ".email", "*@example.com"]
+	//   ],
 	//   ["any", ".tags",
 	//     ["or", [
 	//       ["==", ".", "news"],
-	//       ["==", ".", "press"]]]
-	//     ]
+	//       ["==", ".", "press"]
+	//     ]]
+	//   ]
 	// ]
 }
 

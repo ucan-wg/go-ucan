@@ -82,6 +82,17 @@ func matchStatement(cur Statement, node ipld.Node) (_ matchResult, leafMost Stat
 			}
 			return boolToRes(datamodel.DeepEqual(s.value, res))
 		}
+	case KindNotEqual:
+		if s, ok := cur.(equality); ok {
+			res, err := s.selector.Select(node)
+			if err != nil {
+				return matchResultNoData, cur
+			}
+			if res == nil { // optional selector didn't match
+				return matchResultOptionalNoData, nil
+			}
+			return boolToRes(!datamodel.DeepEqual(s.value, res))
+		}
 	case KindGreaterThan:
 		if s, ok := cur.(equality); ok {
 			res, err := s.selector.Select(node)

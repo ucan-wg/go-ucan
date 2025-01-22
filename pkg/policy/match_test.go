@@ -16,7 +16,7 @@ import (
 
 func TestMatch(t *testing.T) {
 	t.Run("equality", func(t *testing.T) {
-		t.Run("string", func(t *testing.T) {
+		t.Run("eq string", func(t *testing.T) {
 			nd := literal.String("test")
 
 			pol := MustConstruct(Equal(".", literal.String("test")))
@@ -35,7 +35,7 @@ func TestMatch(t *testing.T) {
 			require.Equal(t, pol[0], leaf)
 		})
 
-		t.Run("int", func(t *testing.T) {
+		t.Run("eq int", func(t *testing.T) {
 			nd := literal.Int(138)
 
 			pol := MustConstruct(Equal(".", literal.Int(138)))
@@ -54,7 +54,7 @@ func TestMatch(t *testing.T) {
 			require.Equal(t, pol[0], leaf)
 		})
 
-		t.Run("float", func(t *testing.T) {
+		t.Run("eq float", func(t *testing.T) {
 			nd := literal.Float(1.138)
 
 			pol := MustConstruct(Equal(".", literal.Float(1.138)))
@@ -73,7 +73,7 @@ func TestMatch(t *testing.T) {
 			require.Equal(t, pol[0], leaf)
 		})
 
-		t.Run("IPLD Link", func(t *testing.T) {
+		t.Run("eq IPLD Link", func(t *testing.T) {
 			l0 := cidlink.Link{Cid: cid.MustParse("bafybeif4owy5gno5lwnixqm52rwqfodklf76hsetxdhffuxnplvijskzqq")}
 			l1 := cidlink.Link{Cid: cid.MustParse("bafkreifau35r7vi37tvbvfy3hdwvgb4tlflqf7zcdzeujqcjk3rsphiwte")}
 
@@ -95,7 +95,7 @@ func TestMatch(t *testing.T) {
 			require.Equal(t, pol[0], leaf)
 		})
 
-		t.Run("string in map", func(t *testing.T) {
+		t.Run("eq string in map", func(t *testing.T) {
 			nd, _ := literal.Map(map[string]any{
 				"foo": "bar",
 			})
@@ -121,7 +121,7 @@ func TestMatch(t *testing.T) {
 			require.Equal(t, pol[0], leaf)
 		})
 
-		t.Run("string in list", func(t *testing.T) {
+		t.Run("eq string in list", func(t *testing.T) {
 			nd, _ := literal.List([]any{"foo"})
 
 			pol := MustConstruct(Equal(".[0]", literal.String("foo")))
@@ -133,6 +133,129 @@ func TestMatch(t *testing.T) {
 			ok, leaf = pol.Match(nd)
 			require.False(t, ok)
 			require.Equal(t, pol[0], leaf)
+		})
+
+		// ------------
+
+		t.Run("neq string", func(t *testing.T) {
+			nd := literal.String("test")
+
+			pol := MustConstruct(NotEqual(".", literal.String("test")))
+			ok, leaf := pol.Match(nd)
+			require.False(t, ok)
+			require.Equal(t, pol[0], leaf)
+
+			pol = MustConstruct(NotEqual(".", literal.String("test2")))
+			ok, leaf = pol.Match(nd)
+			require.True(t, ok)
+			require.Nil(t, leaf)
+
+			pol = MustConstruct(NotEqual(".", literal.Int(138)))
+			ok, leaf = pol.Match(nd)
+			require.True(t, ok)
+			require.Nil(t, leaf)
+		})
+
+		t.Run("neq int", func(t *testing.T) {
+			nd := literal.Int(138)
+
+			pol := MustConstruct(NotEqual(".", literal.Int(138)))
+			ok, leaf := pol.Match(nd)
+			require.False(t, ok)
+			require.Equal(t, pol[0], leaf)
+
+			pol = MustConstruct(NotEqual(".", literal.Int(1138)))
+			ok, leaf = pol.Match(nd)
+			require.True(t, ok)
+			require.Nil(t, leaf)
+
+			pol = MustConstruct(NotEqual(".", literal.String("138")))
+			ok, leaf = pol.Match(nd)
+			require.True(t, ok)
+			require.Nil(t, leaf)
+		})
+
+		t.Run("neq float", func(t *testing.T) {
+			nd := literal.Float(1.138)
+
+			pol := MustConstruct(NotEqual(".", literal.Float(1.138)))
+			ok, leaf := pol.Match(nd)
+			require.False(t, ok)
+			require.Equal(t, pol[0], leaf)
+
+			pol = MustConstruct(NotEqual(".", literal.Float(11.38)))
+			ok, leaf = pol.Match(nd)
+			require.True(t, ok)
+			require.Nil(t, leaf)
+
+			pol = MustConstruct(NotEqual(".", literal.String("138")))
+			ok, leaf = pol.Match(nd)
+			require.True(t, ok)
+			require.Nil(t, leaf)
+		})
+
+		t.Run("neq IPLD Link", func(t *testing.T) {
+			l0 := cidlink.Link{Cid: cid.MustParse("bafybeif4owy5gno5lwnixqm52rwqfodklf76hsetxdhffuxnplvijskzqq")}
+			l1 := cidlink.Link{Cid: cid.MustParse("bafkreifau35r7vi37tvbvfy3hdwvgb4tlflqf7zcdzeujqcjk3rsphiwte")}
+
+			nd := literal.Link(l0)
+
+			pol := MustConstruct(NotEqual(".", literal.Link(l0)))
+			ok, leaf := pol.Match(nd)
+			require.False(t, ok)
+			require.Equal(t, pol[0], leaf)
+
+			pol = MustConstruct(NotEqual(".", literal.Link(l1)))
+			ok, leaf = pol.Match(nd)
+			require.True(t, ok)
+			require.Nil(t, leaf)
+
+			pol = MustConstruct(NotEqual(".", literal.String("bafybeif4owy5gno5lwnixqm52rwqfodklf76hsetxdhffuxnplvijskzqq")))
+			ok, leaf = pol.Match(nd)
+			require.True(t, ok)
+			require.Nil(t, leaf)
+		})
+
+		t.Run("neq string in map", func(t *testing.T) {
+			nd, _ := literal.Map(map[string]any{
+				"foo": "bar",
+			})
+
+			pol := MustConstruct(NotEqual(".foo", literal.String("bar")))
+			ok, leaf := pol.Match(nd)
+			require.False(t, ok)
+			require.Equal(t, pol[0], leaf)
+
+			pol = MustConstruct(NotEqual(".[\"foo\"]", literal.String("bar")))
+			ok, leaf = pol.Match(nd)
+			require.False(t, ok)
+			require.Equal(t, pol[0], leaf)
+
+			pol = MustConstruct(NotEqual(".foo", literal.String("baz")))
+			ok, leaf = pol.Match(nd)
+			require.True(t, ok)
+			require.Nil(t, leaf)
+
+			// TODO: clarify how it behave when the data is missing
+			pol = MustConstruct(NotEqual(".foobar", literal.String("bar")))
+			ok, leaf = pol.Match(nd)
+			require.True(t, ok)
+			require.Nil(t, leaf)
+		})
+
+		t.Run("neq string in list", func(t *testing.T) {
+			nd, _ := literal.List([]any{"foo"})
+
+			pol := MustConstruct(NotEqual(".[0]", literal.String("foo")))
+			ok, leaf := pol.Match(nd)
+			require.False(t, ok)
+			require.Equal(t, pol[0], leaf)
+
+			// TODO: clarify how it behave when the data is missing
+			pol = MustConstruct(NotEqual(".[1]", literal.String("foo")))
+			ok, leaf = pol.Match(nd)
+			require.True(t, ok)
+			require.Nil(t, leaf)
 		})
 	})
 
@@ -245,20 +368,61 @@ func TestMatch(t *testing.T) {
 			require.False(t, ok)
 			require.Equal(t, pol[0], leaf)
 		})
+
+		t.Run("lt float", func(t *testing.T) {
+			nd := literal.Float(1.38)
+
+			pol := MustConstruct(LessThan(".", literal.Float(1)))
+			ok, leaf := pol.Match(nd)
+			require.False(t, ok)
+			require.Equal(t, pol[0], leaf)
+
+			pol = MustConstruct(LessThan(".", literal.Float(2)))
+			ok, leaf = pol.Match(nd)
+			require.True(t, ok)
+			require.Nil(t, leaf)
+		})
+
+		t.Run("lte float", func(t *testing.T) {
+			nd := literal.Float(1.38)
+
+			pol := MustConstruct(LessThanOrEqual(".", literal.Float(1)))
+			ok, leaf := pol.Match(nd)
+			require.False(t, ok)
+			require.Equal(t, pol[0], leaf)
+
+			pol = MustConstruct(GreaterThanOrEqual(".", literal.Float(1.38)))
+			ok, leaf = pol.Match(nd)
+			require.True(t, ok)
+			require.Nil(t, leaf)
+
+			pol = MustConstruct(LessThanOrEqual(".", literal.Float(2)))
+			ok, leaf = pol.Match(nd)
+			require.True(t, ok)
+			require.Nil(t, leaf)
+		})
 	})
 
 	t.Run("negation", func(t *testing.T) {
-		nd := literal.Bool(false)
+		nd, _ := literal.Map(map[string]any{
+			"foo": false,
+		})
 
-		pol := MustConstruct(Not(Equal(".", literal.Bool(true))))
+		pol := MustConstruct(Not(Equal(".foo", literal.Bool(true))))
 		ok, leaf := pol.Match(nd)
 		require.True(t, ok)
 		require.Nil(t, leaf)
 
-		pol = MustConstruct(Not(Equal(".", literal.Bool(false))))
+		pol = MustConstruct(Not(Equal(".foo", literal.Bool(false))))
 		ok, leaf = pol.Match(nd)
 		require.False(t, ok)
 		require.Equal(t, pol[0], leaf)
+
+		// TODO: clarify how it works on missing data
+		pol = MustConstruct(Not(Equal(".foobar", literal.Bool(true))))
+		ok, leaf = pol.Match(nd)
+		require.True(t, ok)
+		require.Nil(t, leaf)
 	})
 
 	t.Run("conjunction", func(t *testing.T) {
@@ -482,6 +646,7 @@ func FuzzMatch(f *testing.F) {
 	f.Add([]byte(`[["all", ".reviewer", ["like", ".email", "*@example.com"]]]`), []byte(`{"reviewer": [{"email": "alice@example.com"}, {"email": "bob@example.com"}]}`))
 	f.Add([]byte(`[["any", ".tags", ["or", [["==", ".", "news"], ["==", ".", "press"]]]]]`), []byte(`{"tags": ["news", "press"]}`))
 	f.Add([]byte(`[["==", ".name", "Alice"]]`), []byte(`{"name": "Alice"}`))
+	f.Add([]byte(`[["!=", ".name", "Alice"]]`), []byte(`{"name": "Alice"}`))
 	f.Add([]byte(`[[">", ".age", 30]]`), []byte(`{"age": 31}`))
 	f.Add([]byte(`[["<=", ".height", 180]]`), []byte(`{"height": 170}`))
 	f.Add([]byte(`[["not", ["==", ".status", "inactive"]]]`), []byte(`{"status": "active"}`))

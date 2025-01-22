@@ -14,6 +14,7 @@ import (
 
 const (
 	KindEqual              = "=="   // implemented by equality
+	KindNotEqual           = "!="   // implemented by equality
 	KindGreaterThan        = ">"    // implemented by equality
 	KindGreaterThanOrEqual = ">="   // implemented by equality
 	KindLessThan           = "<"    // implemented by equality
@@ -87,6 +88,13 @@ func Equal(selector string, value ipld.Node) Constructor {
 	}
 }
 
+func NotEqual(selector string, value ipld.Node) Constructor {
+	return func() (Statement, error) {
+		sel, err := selpkg.Parse(selector)
+		return equality{kind: KindNotEqual, selector: sel, value: value}, err
+	}
+}
+
 func GreaterThan(selector string, value ipld.Node) Constructor {
 	return func() (Statement, error) {
 		sel, err := selpkg.Parse(selector)
@@ -125,7 +133,7 @@ func (n negation) Kind() string {
 
 func (n negation) String() string {
 	child := n.statement.String()
-	return fmt.Sprintf(`["%s", "%s"]`, n.Kind(), strings.ReplaceAll(child, "\n", "\n  "))
+	return fmt.Sprintf(`["%s", %s]`, n.Kind(), strings.ReplaceAll(child, "\n", "\n  "))
 }
 
 func Not(cstor Constructor) Constructor {
@@ -149,7 +157,7 @@ func (c connective) String() string {
 	for i, statement := range c.statements {
 		childs[i] = strings.ReplaceAll(statement.String(), "\n", "\n  ")
 	}
-	return fmt.Sprintf("[\"%s\", [\n  %s]]\n", c.kind, strings.Join(childs, ",\n  "))
+	return fmt.Sprintf("[\"%s\", [\n  %s\n]]", c.kind, strings.Join(childs, ",\n  "))
 }
 
 func And(cstors ...Constructor) Constructor {
@@ -208,7 +216,7 @@ func (n quantifier) Kind() string {
 
 func (n quantifier) String() string {
 	child := n.statement.String()
-	return fmt.Sprintf("[\"%s\", \"%s\",\n  %s]", n.Kind(), n.selector, strings.ReplaceAll(child, "\n", "\n  "))
+	return fmt.Sprintf("[\"%s\", \"%s\",\n  %s\n]", n.Kind(), n.selector, strings.ReplaceAll(child, "\n", "\n  "))
 }
 
 func All(selector string, cstor Constructor) Constructor {
