@@ -133,7 +133,7 @@ func TestSelect(t *testing.T) {
 		require.Error(t, err)
 		require.Empty(t, res)
 
-		require.ErrorAs(t, err, &resolutionerr{}, "error should be a resolution error")
+		require.ErrorAs(t, err, &resolutionErr{}, "error should be a resolution error")
 	})
 
 	t.Run("optional not exists", func(t *testing.T) {
@@ -351,7 +351,7 @@ func FuzzParseAndSelect(f *testing.F) {
 
 		// look for panic()
 		_, err = sel.Select(node)
-		if err != nil && !errors.As(err, &resolutionerr{}) {
+		if err != nil && !errors.As(err, &resolutionErr{}) {
 			// not normal, we should only have resolution errors
 			t.Fatal(err)
 		}

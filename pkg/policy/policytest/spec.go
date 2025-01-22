@@ -2,6 +2,7 @@ package policytest
 
 import (
 	"github.com/ipld/go-ipld-prime"
+
 	"github.com/ucan-wg/go-ucan/pkg/args"
 	"github.com/ucan-wg/go-ucan/pkg/policy"
 	"github.com/ucan-wg/go-ucan/pkg/policy/literal"
@@ -10,9 +11,8 @@ import (
 // EmptyPolicy provides a Policy with no statements.
 var EmptyPolicy = policy.Policy{}
 
-// ExampleValidationPolicy provides a instantiated SpecPolicy containing the
-// statements that are included in the second code block of the [Validation]
-// section of the delegation specification.
+// SpecPolicy provides a  valid Policy containing the statements that are included
+// in the second code block of the [Validation] section of the delegation specification.
 //
 // [Validation]: https://github.com/ucan-wg/delegation/tree/v1_ipld#validation
 var SpecPolicy = policy.MustConstruct(
@@ -24,8 +24,8 @@ var SpecPolicy = policy.MustConstruct(
 //       specification has been finished/merged.
 
 // SpecValidArguments provides valid, instantiated Arguments containing
-// the key/value pairs that are included in portion of the the second code
-// block of the [Validation] section of the delegation specification.
+// the key/value pairs that are included in portion of the second code block
+// of the [Validation] section of the delegation specification.
 //
 // [Validation]: https://github.com/ucan-wg/delegation/tree/v1_ipld#validation
 var SpecValidArguments = args.NewBuilder().
@@ -41,8 +41,8 @@ var SpecValidArguments = args.NewBuilder().
 var specValidArgumentsIPLD = mustIPLD(SpecValidArguments)
 
 // SpecInvalidArguments provides invalid, instantiated Arguments containing
-// the key/value pairs that are included in portion of the the second code
-// block of the [Validation] section of the delegation specification.
+// the key/value pairs that are included in portion of the second code block
+// of the [Validation] section of the delegation specification.
 //
 // [Validation]: https://github.com/ucan-wg/delegation/tree/v1_ipld#validation
 var SpecInvalidArguments = args.NewBuilder().

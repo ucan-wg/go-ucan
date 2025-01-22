@@ -19,7 +19,7 @@ type Selector []segment
 // Select perform the selection described by the selector on the input IPLD DAG.
 // Select can return:
 //   - exactly one matched IPLD node
-//   - a resolutionerr error if not being able to resolve to a node
+//   - a resolutionErr error if not being able to resolve to a node
 //   - nil and no errors, if the selector couldn't match on an optional segment (with ?).
 func (s Selector) Select(subject ipld.Node) (ipld.Node, error) {
 	return resolve(s, subject, nil)
@@ -316,27 +316,27 @@ func kindString(n datamodel.Node) string {
 	return n.Kind().String()
 }
 
-type resolutionerr struct {
+type resolutionErr struct {
 	msg string
 	at  []string
 }
 
-func (r resolutionerr) Name() string {
+func (r resolutionErr) Name() string {
 	return "ResolutionError"
 }
 
-func (r resolutionerr) Message() string {
+func (r resolutionErr) Message() string {
 	return fmt.Sprintf("can not resolve path: .%s", strings.Join(r.at, "."))
 }
 
-func (r resolutionerr) At() []string {
+func (r resolutionErr) At() []string {
 	return r.at
 }
 
-func (r resolutionerr) Error() string {
+func (r resolutionErr) Error() string {
 	return r.Message()
 }
 
 func newResolutionError(message string, at []string) error {
-	return resolutionerr{message, at}
+	return resolutionErr{message, at}
 }

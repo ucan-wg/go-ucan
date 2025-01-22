@@ -173,37 +173,37 @@ func tokenize(str string) []string {
 	return toks
 }
 
-type parseerr struct {
+type parseErr struct {
 	msg string
 	src string
 	col int
 	tok string
 }
 
-func (p parseerr) Name() string {
+func (p parseErr) Name() string {
 	return "ParseError"
 }
 
-func (p parseerr) Message() string {
+func (p parseErr) Message() string {
 	return p.msg
 }
 
-func (p parseerr) Column() int {
+func (p parseErr) Column() int {
 	return p.col
 }
 
-func (p parseerr) Error() string {
+func (p parseErr) Error() string {
 	return p.msg
 }
 
-func (p parseerr) Source() string {
+func (p parseErr) Source() string {
 	return p.src
 }
 
-func (p parseerr) Token() string {
+func (p parseErr) Token() string {
 	return p.tok
 }
 
 func newParseError(message string, source string, column int, token string) error {
-	return parseerr{message, source, column, token}
+	return parseErr{message, source, column, token}
 }
