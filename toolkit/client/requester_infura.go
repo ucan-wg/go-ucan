@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"iter"
 	"net/http"
 	"net/url"
@@ -21,8 +22,9 @@ type InfuraRequester struct {
 	baseURL string
 }
 
-// dev: http://ucan-issuer-api.commercial-dev.eks-dev.infura.org/
-// prod:
+// NewInfuraRequester create a requester client for the Infura UCAN token issuer.
+// dev: http://ucan-issuer-api.commercial-dev.eks-dev.infura.org
+// prod: http://ucan-issuer-api.commercial-prod.eks.infura.org
 func NewInfuraRequester(baseURL string) *InfuraRequester {
 	return &InfuraRequester{baseURL: baseURL}
 }
@@ -54,6 +56,13 @@ func (i InfuraRequester) RequestDelegation(ctx context.Context, audience did.DID
 	res, err := http.DefaultClient.Do(r.WithContext(ctx))
 	if err != nil {
 		return nil, err
+	}
+	if res.StatusCode != http.StatusOK {
+		msg, err := io.ReadAll(res.Body)
+		if err != nil {
+			return nil, fmt.Errorf("request failed with status %d, then failed to read response body: %w", res.StatusCode, err)
+		}
+		return nil, fmt.Errorf("request failed with status %d: %s", res.StatusCode, msg)
 	}
 
 	resp := struct {
