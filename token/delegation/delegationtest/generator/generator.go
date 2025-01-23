@@ -217,6 +217,7 @@ func (g *generator) writeGoFile() error {
 	Println("import (")
 	Println("\t\"github.com/ipfs/go-cid\"")
 	Println()
+	Println("\t\"github.com/ucan-wg/go-ucan/token\"")
 	Println("\t\"github.com/ucan-wg/go-ucan/token/delegation\"")
 	Println(")")
 
@@ -242,7 +243,7 @@ func (g *generator) writeGoFile() error {
 	Println("}")
 
 	Println()
-	Println("var AllBundles = []*delegation.Bundle{")
+	Println("var AllBundles = []token.Bundle[*delegation.Token]{")
 	for _, d := range g.dlgs {
 		Printf("\t%sBundle,\n", d.name)
 	}

@@ -15,10 +15,3 @@ type Loader interface {
 	// If not found, ErrDelegationNotFound is returned.
 	GetDelegation(cid cid.Cid) (*Token, error)
 }
-
-// Bundle carries together a decoded delegation with its Cid and raw signed data.
-type Bundle struct {
-	Cid     cid.Cid
-	Decoded *Token
-	Sealed  []byte
-}

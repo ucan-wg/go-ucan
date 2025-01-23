@@ -8,6 +8,7 @@ import (
 	"github.com/ipfs/go-cid"
 
 	"github.com/ucan-wg/go-ucan/pkg/command"
+	"github.com/ucan-wg/go-ucan/token"
 	"github.com/ucan-wg/go-ucan/token/delegation"
 )
 
@@ -38,7 +39,7 @@ var fs embed.FS
 var _ delegation.Loader = (*DelegationLoader)(nil)
 
 type DelegationLoader struct {
-	bundles map[cid.Cid]*delegation.Bundle
+	bundles map[cid.Cid]token.Bundle[*delegation.Token]
 }
 
 var (
@@ -75,7 +76,7 @@ func loadDelegations() (*DelegationLoader, error) {
 		return nil, err
 	}
 
-	bundles := make(map[cid.Cid]*delegation.Bundle, len(dirEntries))
+	bundles := make(map[cid.Cid]token.Bundle[*delegation.Token], len(dirEntries))
 
 	for _, dirEntry := range dirEntries {
 		data, err := fs.ReadFile(filepath.Join(TokenDir, dirEntry.Name()))
@@ -88,7 +89,7 @@ func loadDelegations() (*DelegationLoader, error) {
 			return nil, err
 		}
 
-		bundles[id] = &delegation.Bundle{Cid: id, Decoded: tkn, Sealed: data}
+		bundles[id] = token.Bundle[*delegation.Token]{Cid: id, Decoded: tkn, Sealed: data}
 	}
 
 	return &DelegationLoader{
@@ -106,7 +107,7 @@ func CidToName(id cid.Cid) string {
 	return cidToName[id]
 }
 
-func mustGetBundle(id cid.Cid) *delegation.Bundle {
+func mustGetBundle(id cid.Cid) token.Bundle[*delegation.Token] {
 	bundle, ok := GetDelegationLoader().bundles[id]
 	if !ok {
 		panic(delegation.ErrDelegationNotFound)
