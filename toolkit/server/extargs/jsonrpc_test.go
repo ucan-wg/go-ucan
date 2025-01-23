@@ -6,9 +6,12 @@ import (
 	"github.com/INFURA/go-ethlibs/jsonrpc"
 	"github.com/multiformats/go-multihash"
 	"github.com/stretchr/testify/require"
+	"github.com/ucan-wg/go-ucan/did/didtest"
 	"github.com/ucan-wg/go-ucan/pkg/args"
+	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/policy"
 	"github.com/ucan-wg/go-ucan/pkg/policy/literal"
+	"github.com/ucan-wg/go-ucan/token/invocation"
 )
 
 func TestJsonRpc(t *testing.T) {
@@ -112,6 +115,9 @@ func TestJsonRpc(t *testing.T) {
 }
 
 func TestJsonRpcHash(t *testing.T) {
+	servicePersona := didtest.PersonaAlice
+	clientPersona := didtest.PersonaBob
+
 	req := jsonrpc.MustRequest(1839673506133526, "debug_traceCall",
 		true, false, 1234, "ho_no",
 	)
@@ -119,40 +125,51 @@ func TestJsonRpcHash(t *testing.T) {
 		policy.Equal(".jsonrpc.method", literal.String("debug_traceCall")),
 	)
 
+	makeArg := func(data []byte, code uint64) invocation.Option {
+		mh, err := multihash.Sum(data, code, -1)
+		require.NoError(t, err)
+		return invocation.WithArgument(JsonRpcArgsKey, []byte(mh))
+	}
+
 	tests := []struct {
-		name     string
-		hash     []byte
-		expected bool
+		name       string
+		argOptions []invocation.Option
+		expected   bool
 	}{
 		{
-			name:     "correct hash",
-			hash:     must(MakeJsonRpcHash(req)),
-			expected: true,
+			name:       "correct hash",
+			argOptions: []invocation.Option{must(MakeJsonRpcHash(req))},
+			expected:   true,
 		},
 		{
-			name:     "non-matching hash",
-			hash:     must(multihash.Sum([]byte{1, 2, 3, 4}, multihash.SHA2_256, -1)),
-			expected: false,
+			name:       "non-matching hash",
+			argOptions: []invocation.Option{makeArg([]byte{1, 2, 3, 4}, multihash.SHA2_256)},
+			expected:   false,
 		},
 		{
-			name:     "wrong type of hash",
-			hash:     must(multihash.Sum([]byte{1, 2, 3, 4}, multihash.BLAKE3, -1)),
-			expected: false,
+			name:       "wrong type of hash",
+			argOptions: []invocation.Option{makeArg([]byte{1, 2, 3, 4}, multihash.BLAKE3)},
+			expected:   false,
 		},
 		{
-			name:     "no hash",
-			hash:     nil,
-			expected: false,
+			name:       "no hash",
+			argOptions: nil,
+			expected:   true, // having a hash is not enforced
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			invArgs := args.New()
-			err := invArgs.Add(JsonRpcArgsKey, tc.hash)
+			inv, err := invocation.New(
+				clientPersona.DID(),
+				command.MustParse("/foo"),
+				servicePersona.DID(),
+				nil,
+				tc.argOptions..., // inject hash argument, if any
+			)
 			require.NoError(t, err)
 
-			ctx := NewJsonRpcExtArgs(pol, invArgs.ReadOnly(), req)
+			ctx := NewJsonRpcExtArgs(pol, inv.Arguments(), req)
 
 			if tc.expected {
 				require.NoError(t, ctx.Verify())

@@ -15,6 +15,7 @@ import (
 	"github.com/multiformats/go-multihash"
 	"github.com/ucan-wg/go-ucan/pkg/args"
 	"github.com/ucan-wg/go-ucan/pkg/policy"
+	"github.com/ucan-wg/go-ucan/token/invocation"
 )
 
 // HttpArgsKey is the key in the args, used for:
@@ -111,7 +112,9 @@ func (hea *HttpExtArgs) verifyHash() error {
 // If that hash is inserted at the HttpArgsKey key in the invocation arguments,
 // this increases the security as the UCAN token cannot be used with a different
 // HTTP request.
-func MakeHttpHash(req *http.Request) ([]byte, error) {
+// For convenience, the hash is returned as a read to use invocation argument.
+func MakeHttpHash(req *http.Request) (invocation.Option, error) {
+	// Note: the hash is computed on the full IPLD args, including HttpArgsKey
 	computedArgs, err := makeHttpArgs(req)
 	if err != nil {
 		return nil, err
@@ -132,7 +135,7 @@ func MakeHttpHash(req *http.Request) ([]byte, error) {
 		return nil, err
 	}
 
-	return sum, nil
+	return invocation.WithArgument(HttpArgsKey, []byte(sum)), nil
 }
 
 func makeHttpArgs(req *http.Request) (*args.Args, error) {

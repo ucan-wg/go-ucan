@@ -7,9 +7,12 @@ import (
 
 	"github.com/multiformats/go-multihash"
 	"github.com/stretchr/testify/require"
+	"github.com/ucan-wg/go-ucan/did/didtest"
 	"github.com/ucan-wg/go-ucan/pkg/args"
+	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/policy"
 	"github.com/ucan-wg/go-ucan/pkg/policy/literal"
+	"github.com/ucan-wg/go-ucan/token/invocation"
 )
 
 func TestHttp(t *testing.T) {
@@ -131,6 +134,9 @@ func TestHttp(t *testing.T) {
 }
 
 func TestHttpHash(t *testing.T) {
+	servicePersona := didtest.PersonaAlice
+	clientPersona := didtest.PersonaBob
+
 	req, err := http.NewRequest(http.MethodGet, "http://example.com/foo", nil)
 	require.NoError(t, err)
 	req.Header.Add("User-Agent", "Chrome/51.0.2704.103 Safari/537.36")
@@ -140,40 +146,51 @@ func TestHttpHash(t *testing.T) {
 		policy.Equal(".http.scheme", literal.String("http")),
 	)
 
+	makeArg := func(data []byte, code uint64) invocation.Option {
+		mh, err := multihash.Sum(data, code, -1)
+		require.NoError(t, err)
+		return invocation.WithArgument(HttpArgsKey, []byte(mh))
+	}
+
 	tests := []struct {
-		name     string
-		hash     []byte
-		expected bool
+		name       string
+		argOptions []invocation.Option
+		expected   bool
 	}{
 		{
-			name:     "correct hash",
-			hash:     must(MakeHttpHash(req)),
-			expected: true,
+			name:       "correct hash",
+			argOptions: []invocation.Option{must(MakeHttpHash(req))},
+			expected:   true,
 		},
 		{
-			name:     "non-matching hash",
-			hash:     must(multihash.Sum([]byte{1, 2, 3, 4}, multihash.SHA2_256, -1)),
-			expected: false,
+			name:       "non-matching hash",
+			argOptions: []invocation.Option{makeArg([]byte{1, 2, 3, 4}, multihash.SHA2_256)},
+			expected:   false,
 		},
 		{
-			name:     "wrong type of hash",
-			hash:     must(multihash.Sum([]byte{1, 2, 3, 4}, multihash.BLAKE3, -1)),
-			expected: false,
+			name:       "wrong type of hash",
+			argOptions: []invocation.Option{makeArg([]byte{1, 2, 3, 4}, multihash.BLAKE3)},
+			expected:   false,
 		},
 		{
-			name:     "no hash",
-			hash:     nil,
-			expected: false,
+			name:       "no hash",
+			argOptions: nil,
+			expected:   true, // having a hash is not enforced
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			invArgs := args.New()
-			err := invArgs.Add(HttpArgsKey, tc.hash)
+			inv, err := invocation.New(
+				clientPersona.DID(),
+				command.MustParse("/foo"),
+				servicePersona.DID(),
+				nil,
+				tc.argOptions..., // inject hash argument, if any
+			)
 			require.NoError(t, err)
 
-			ctx := NewHttpExtArgs(pol, invArgs.ReadOnly(), req)
+			ctx := NewHttpExtArgs(pol, inv.Arguments(), req)
 
 			if tc.expected {
 				require.NoError(t, ctx.Verify())
