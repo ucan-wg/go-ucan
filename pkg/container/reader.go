@@ -21,7 +21,12 @@ var ErrNotFound = fmt.Errorf("not found")
 var ErrMultipleInvocations = fmt.Errorf("multiple invocations")
 
 // Reader is a token container reader. It exposes the tokens conveniently decoded.
-type Reader map[cid.Cid]token.Token
+type Reader map[cid.Cid]bundle
+
+type bundle struct {
+	sealed []byte
+	token  token.Token
+}
 
 // FromBytes decodes a container from a []byte
 func FromBytes(data []byte) (Reader, error) {
@@ -92,11 +97,36 @@ func FromReader(r io.Reader) (Reader, error) {
 // GetToken returns an arbitrary decoded token, from its CID.
 // If not found, ErrNotFound is returned.
 func (ctn Reader) GetToken(cid cid.Cid) (token.Token, error) {
-	tkn, ok := ctn[cid]
+	bndl, ok := ctn[cid]
 	if !ok {
 		return nil, ErrNotFound
 	}
-	return tkn, nil
+	return bndl.token, nil
+}
+
+// GetSealed returns an arbitrary sealed token, from its CID.
+// If not found, ErrNotFound is returned.
+func (ctn Reader) GetSealed(cid cid.Cid) ([]byte, error) {
+	bndl, ok := ctn[cid]
+	if !ok {
+		return nil, ErrNotFound
+	}
+	return bndl.sealed, nil
+}
+
+// GetAllTokens return all the tokens in the container.
+func (ctn Reader) GetAllTokens() iter.Seq[token.Bundle[token.Token]] {
+	return func(yield func(token.Bundle[token.Token]) bool) {
+		for c, bndl := range ctn {
+			if !yield(token.Bundle[token.Token]{
+				Cid:     c,
+				Decoded: bndl.token,
+				Sealed:  bndl.sealed,
+			}) {
+				return
+			}
+		}
+	}
 }
 
 // GetDelegation is the same as GetToken but only return a delegation.Token, with the right type.
@@ -113,11 +143,15 @@ func (ctn Reader) GetDelegation(cid cid.Cid) (*delegation.Token, error) {
 }
 
 // GetAllDelegations returns all the delegation.Token in the container.
-func (ctn Reader) GetAllDelegations() iter.Seq2[cid.Cid, *delegation.Token] {
-	return func(yield func(cid.Cid, *delegation.Token) bool) {
-		for c, t := range ctn {
-			if t, ok := t.(*delegation.Token); ok {
-				if !yield(c, t) {
+func (ctn Reader) GetAllDelegations() iter.Seq[token.Bundle[*delegation.Token]] {
+	return func(yield func(token.Bundle[*delegation.Token]) bool) {
+		for c, bndl := range ctn {
+			if t, ok := bndl.token.(*delegation.Token); ok {
+				if !yield(token.Bundle[*delegation.Token]{
+					Cid:     c,
+					Decoded: t,
+					Sealed:  bndl.sealed,
+				}) {
 					return
 				}
 			}
@@ -130,8 +164,8 @@ func (ctn Reader) GetAllDelegations() iter.Seq2[cid.Cid, *delegation.Token] {
 // If more than one invocation exists, ErrMultipleInvocations is returned.
 func (ctn Reader) GetInvocation() (*invocation.Token, error) {
 	var res *invocation.Token
-	for _, t := range ctn {
-		if inv, ok := t.(*invocation.Token); ok {
+	for _, bndl := range ctn {
+		if inv, ok := bndl.token.(*invocation.Token); ok {
 			if res != nil {
 				return nil, ErrMultipleInvocations
 			}
@@ -145,11 +179,15 @@ func (ctn Reader) GetInvocation() (*invocation.Token, error) {
 }
 
 // GetAllInvocations returns all the invocation.Token in the container.
-func (ctn Reader) GetAllInvocations() iter.Seq2[cid.Cid, *invocation.Token] {
-	return func(yield func(cid.Cid, *invocation.Token) bool) {
-		for c, t := range ctn {
-			if t, ok := t.(*invocation.Token); ok {
-				if !yield(c, t) {
+func (ctn Reader) GetAllInvocations() iter.Seq[token.Bundle[*invocation.Token]] {
+	return func(yield func(token.Bundle[*invocation.Token]) bool) {
+		for c, bndl := range ctn {
+			if t, ok := bndl.token.(*invocation.Token); ok {
+				if !yield(token.Bundle[*invocation.Token]{
+					Cid:     c,
+					Decoded: t,
+					Sealed:  bndl.sealed,
+				}) {
 					return
 				}
 			}
@@ -162,6 +200,19 @@ func (ctn Reader) addToken(data []byte) error {
 	if err != nil {
 		return err
 	}
-	ctn[c] = tkn
+	ctn[c] = bundle{
+		sealed: data,
+		token:  tkn,
+	}
 	return nil
+}
+
+// ToWriter convert a container Reader into a Writer.
+// Most likely, you only want to use this in tests for convenience.
+func (ctn Reader) ToWriter() Writer {
+	writer := NewWriter()
+	for _, bndl := range ctn {
+		writer.AddSealed(bndl.sealed)
+	}
+	return writer
 }

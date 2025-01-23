@@ -39,3 +39,10 @@ type Marshaller interface {
 	// ToDagJsonWriter is the same as ToDagJson, but it accepts an io.Writer.
 	ToDagJsonWriter(w io.Writer, privKey crypto.PrivKey) error
 }
+
+// Bundle carries together a decoded token with its Cid and raw signed data.
+type Bundle[T Token] struct {
+	Cid     cid.Cid
+	Decoded T
+	Sealed  []byte
+}
