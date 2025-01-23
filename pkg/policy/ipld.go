@@ -81,7 +81,7 @@ func statementFromIPLD(path string, node datamodel.Node) (Statement, error) {
 		}
 	case 3:
 		switch op {
-		case KindEqual, KindLessThan, KindLessThanOrEqual, KindGreaterThan, KindGreaterThanOrEqual:
+		case KindEqual, KindNotEqual, KindLessThan, KindLessThanOrEqual, KindGreaterThan, KindGreaterThanOrEqual:
 			sel, err := arg2AsSelector(op)
 			if err != nil {
 				return nil, err
