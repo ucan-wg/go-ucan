@@ -135,8 +135,6 @@ func TestMatch(t *testing.T) {
 			require.Equal(t, pol[0], leaf)
 		})
 
-		// ------------
-
 		t.Run("neq string", func(t *testing.T) {
 			nd := literal.String("test")
 
@@ -236,11 +234,11 @@ func TestMatch(t *testing.T) {
 			require.True(t, ok)
 			require.Nil(t, leaf)
 
-			// TODO: clarify how it behave when the data is missing
+			// missing data will fail, as not optional
 			pol = MustConstruct(NotEqual(".foobar", literal.String("bar")))
 			ok, leaf = pol.Match(nd)
-			require.True(t, ok)
-			require.Nil(t, leaf)
+			require.False(t, ok)
+			require.Equal(t, pol[0], leaf)
 		})
 
 		t.Run("neq string in list", func(t *testing.T) {
@@ -251,11 +249,16 @@ func TestMatch(t *testing.T) {
 			require.False(t, ok)
 			require.Equal(t, pol[0], leaf)
 
-			// TODO: clarify how it behave when the data is missing
-			pol = MustConstruct(NotEqual(".[1]", literal.String("foo")))
+			pol = MustConstruct(NotEqual(".[0]", literal.String("bar")))
 			ok, leaf = pol.Match(nd)
 			require.True(t, ok)
 			require.Nil(t, leaf)
+
+			// missing data will fail, as not optional
+			pol = MustConstruct(NotEqual(".[1]", literal.String("foo")))
+			ok, leaf = pol.Match(nd)
+			require.False(t, ok)
+			require.Equal(t, pol[0], leaf)
 		})
 	})
 
@@ -418,11 +421,11 @@ func TestMatch(t *testing.T) {
 		require.False(t, ok)
 		require.Equal(t, pol[0], leaf)
 
-		// TODO: clarify how it works on missing data
+		// missing data will fail, as not optional
 		pol = MustConstruct(Not(Equal(".foobar", literal.Bool(true))))
 		ok, leaf = pol.Match(nd)
-		require.True(t, ok)
-		require.Nil(t, leaf)
+		require.False(t, ok)
+		require.Equal(t, MustConstruct(Equal(".foobar", literal.Bool(true)))[0], leaf)
 	})
 
 	t.Run("conjunction", func(t *testing.T) {

@@ -57,7 +57,7 @@ Not implemented yet:
 
 Besides that, `go-ucan` also includes:
 - a simplified [DID](https://www.w3.org/TR/did-core/) and [did-key](https://w3c-ccg.github.io/did-method-key/) implementation
-- a [token container](https://github.com/ucan-wg/go-ucan/tree/v1/pkg/container) with CBOR and CAR format, to package and carry tokens together
+- a [token container](https://github.com/ucan-wg/go-ucan/tree/v1/pkg/container) with CBOR and CAR format, to package and carry tokens together, see [SPEC](pkg/container/SPEC.md)
 - support for encrypted values in token's metadata
 
 ## Getting Help
