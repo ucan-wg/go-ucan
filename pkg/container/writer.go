@@ -74,7 +74,7 @@ func (ctn Writer) ToBase64URLWriter(w io.Writer) error {
 }
 
 // ToBase64URL encode the container into pre-gzipped base64 string, with URL-safe encoding and no padding.
-func (ctn Writer) ToBase64URLGzip() (string, error) {
+func (ctn Writer) ToBase64URLGzipped() (string, error) {
 	return ctn.toString(headerBase64URLGzip)
 }
 

@@ -36,7 +36,7 @@ func TestContainerRoundTrip(t *testing.T) {
 		{"Base64StdPaddingGzippedWriter", headerBase64StdPaddingGzip, Writer.ToBase64StdPaddingGzippedWriter},
 		{"Base64URL", headerBase64URL, Writer.ToBase64URL},
 		{"Base64URLWriter", headerBase64URL, Writer.ToBase64URLWriter},
-		{"Base64URLGzip", headerBase64URLGzip, Writer.ToBase64URLGzip},
+		{"Base64URLGzipped", headerBase64URLGzip, Writer.ToBase64URLGzipped},
 		{"Base64URLGzipWriter", headerBase64URLGzip, Writer.ToBase64URLGzipWriter},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
