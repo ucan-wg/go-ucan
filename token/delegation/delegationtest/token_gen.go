@@ -5,7 +5,6 @@ package delegationtest
 import (
 	"github.com/ipfs/go-cid"
 
-	"github.com/ucan-wg/go-ucan/token"
 	"github.com/ucan-wg/go-ucan/token/delegation"
 )
 
@@ -196,7 +195,7 @@ var AllTokens = []*delegation.Token{
 	TokenErinFrank_ValidExamplePolicy,
 }
 
-var AllBundles = []token.Bundle[*delegation.Token]{
+var AllBundles = []delegation.Bundle{
 	TokenAliceBobBundle,
 	TokenBobCarolBundle,
 	TokenCarolDanBundle,

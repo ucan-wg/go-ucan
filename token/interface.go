@@ -41,8 +41,8 @@ type Marshaller interface {
 }
 
 // Bundle carries together a decoded token with its Cid and raw signed data.
-type Bundle[T Token] struct {
+type Bundle struct {
 	Cid     cid.Cid
-	Decoded T
+	Decoded Token
 	Sealed  []byte
 }
