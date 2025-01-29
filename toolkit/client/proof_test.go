@@ -2,7 +2,6 @@ package client
 
 import (
 	"iter"
-	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -14,7 +13,13 @@ import (
 
 func TestFindProof(t *testing.T) {
 	dlgs := func() iter.Seq[*delegation.Bundle] {
-		return slices.Values(delegationtest.AllBundles)
+		return func(yield func(*delegation.Bundle) bool) {
+			for _, bundle := range delegationtest.AllBundles {
+				if !yield(&bundle) {
+					return
+				}
+			}
+		}
 	}
 
 	require.Equal(t, delegationtest.ProofAliceBob,
