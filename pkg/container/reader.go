@@ -115,10 +115,10 @@ func (ctn Reader) GetSealed(cid cid.Cid) ([]byte, error) {
 }
 
 // GetAllTokens return all the tokens in the container.
-func (ctn Reader) GetAllTokens() iter.Seq[token.Bundle[token.Token]] {
-	return func(yield func(token.Bundle[token.Token]) bool) {
+func (ctn Reader) GetAllTokens() iter.Seq[token.Bundle] {
+	return func(yield func(token.Bundle) bool) {
 		for c, bndl := range ctn {
-			if !yield(token.Bundle[token.Token]{
+			if !yield(token.Bundle{
 				Cid:     c,
 				Decoded: bndl.token,
 				Sealed:  bndl.sealed,
@@ -143,11 +143,11 @@ func (ctn Reader) GetDelegation(cid cid.Cid) (*delegation.Token, error) {
 }
 
 // GetAllDelegations returns all the delegation.Token in the container.
-func (ctn Reader) GetAllDelegations() iter.Seq[token.Bundle[*delegation.Token]] {
-	return func(yield func(token.Bundle[*delegation.Token]) bool) {
+func (ctn Reader) GetAllDelegations() iter.Seq[token.Bundle] {
+	return func(yield func(token.Bundle) bool) {
 		for c, bndl := range ctn {
 			if t, ok := bndl.token.(*delegation.Token); ok {
-				if !yield(token.Bundle[*delegation.Token]{
+				if !yield(token.Bundle{
 					Cid:     c,
 					Decoded: t,
 					Sealed:  bndl.sealed,
@@ -179,11 +179,11 @@ func (ctn Reader) GetInvocation() (*invocation.Token, error) {
 }
 
 // GetAllInvocations returns all the invocation.Token in the container.
-func (ctn Reader) GetAllInvocations() iter.Seq[token.Bundle[*invocation.Token]] {
-	return func(yield func(token.Bundle[*invocation.Token]) bool) {
+func (ctn Reader) GetAllInvocations() iter.Seq[invocation.Bundle] {
+	return func(yield func(invocation.Bundle) bool) {
 		for c, bndl := range ctn {
 			if t, ok := bndl.token.(*invocation.Token); ok {
-				if !yield(token.Bundle[*invocation.Token]{
+				if !yield(invocation.Bundle{
 					Cid:     c,
 					Decoded: t,
 					Sealed:  bndl.sealed,
