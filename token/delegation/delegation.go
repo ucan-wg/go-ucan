@@ -83,7 +83,7 @@ func New(iss did.DID, aud did.DID, cmd command.Command, pol policy.Policy, sub d
 }
 
 // Root creates a validated UCAN delegation Token from the provided parameters and options.
-// This is typically used to create and give a power to an agent.
+// This is typically used to create and give power to an agent.
 //
 // You can read it as "(issuer) allows (audience) to perform (cmd+pol) on itself".
 func Root(iss did.DID, aud did.DID, cmd command.Command, pol policy.Policy, opts ...Option) (*Token, error) {
@@ -152,6 +152,16 @@ func (t *Token) NotBefore() *time.Time {
 // Expiration returns the time at which the Token expires.
 func (t *Token) Expiration() *time.Time {
 	return t.expiration
+}
+
+// IsRoot tells if the token is a root delegation.
+func (t *Token) IsRoot() bool {
+	return t.issuer == t.subject
+}
+
+// IsPowerline tells if the token is a powerline delegation.
+func (t *Token) IsPowerline() bool {
+	return t.subject == did.Undef
 }
 
 // IsValidNow verifies that the token can be used at the current time, based on expiration or "not before" fields.
