@@ -20,39 +20,16 @@ const (
 	subJectCmd = "/foo/bar"
 	subjectPol = `
 [
-	[
-		"==",
-		".status",
-		"draft"
-	],
-	[
-		"all",
-		".reviewer",
-		[
-			"like",
-			".email",
-			"*@example.com"
-		]
-	],
-	[
-		"any",
-		".tags",
-		[
-			"or",
-			[
-				[
-					"==",
-					".",
-					"news"
-				],
-				[
-					"==",
-					".",
-					"press"
-				]
-			]
-		]
-	]
+  ["==", ".status", "draft"],
+  ["all", ".reviewer",
+    ["like", ".email", "*@example.com"]
+  ],
+  ["any", ".tags",
+    ["or", [
+      ["==", ".", "news"],
+      ["==", ".", "press"]
+    ]]
+  ]
 ]
 `
 
@@ -80,6 +57,9 @@ func TestConstructors(t *testing.T) {
 		)
 		require.NoError(t, err)
 
+		require.False(t, tkn.IsRoot())
+		require.False(t, tkn.IsPowerline())
+
 		data, err := tkn.ToDagJson(didtest.PersonaAlice.PrivKey())
 		require.NoError(t, err)
 
@@ -97,6 +77,9 @@ func TestConstructors(t *testing.T) {
 		)
 		require.NoError(t, err)
 
+		require.True(t, tkn.IsRoot())
+		require.False(t, tkn.IsPowerline())
+
 		data, err := tkn.ToDagJson(didtest.PersonaAlice.PrivKey())
 		require.NoError(t, err)
 
@@ -113,6 +96,9 @@ func TestConstructors(t *testing.T) {
 			delegation.WithMeta("bar", "barr"),
 		)
 		require.NoError(t, err)
+
+		require.False(t, tkn.IsRoot())
+		require.True(t, tkn.IsPowerline())
 
 		data, err := tkn.ToDagJson(didtest.PersonaAlice.PrivKey())
 		require.NoError(t, err)
