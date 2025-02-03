@@ -143,11 +143,11 @@ func (ctn Reader) GetDelegation(cid cid.Cid) (*delegation.Token, error) {
 }
 
 // GetAllDelegations returns all the delegation.Token in the container.
-func (ctn Reader) GetAllDelegations() iter.Seq[token.Bundle] {
-	return func(yield func(token.Bundle) bool) {
+func (ctn Reader) GetAllDelegations() iter.Seq[delegation.Bundle] {
+	return func(yield func(delegation.Bundle) bool) {
 		for c, bndl := range ctn {
 			if t, ok := bndl.token.(*delegation.Token); ok {
-				if !yield(token.Bundle{
+				if !yield(delegation.Bundle{
 					Cid:     c,
 					Decoded: t,
 					Sealed:  bndl.sealed,
