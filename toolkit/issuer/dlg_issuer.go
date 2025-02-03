@@ -2,6 +2,7 @@ package issuer
 
 import (
 	"context"
+	"fmt"
 	"iter"
 	"time"
 
@@ -14,18 +15,31 @@ import (
 	"github.com/INFURA/go-ucan-toolkit/client"
 )
 
+// DlgIssuingLogic is a function that decides what powers are given to a client.
+// - issuer: the DID of our issuer
+// - audience: the DID of the client, also the issuer of the invocation token
+// - cmd: the command to execute
+// - subject: the DID of the resource to operate on, also the subject (or audience if defined) of the invocation token
+// Note: you can read it as "(audience) wants to do (cmd) on (subject)".
+// Note: you can decide to match the input parameters exactly or issue a broader power, as long as it allows the
+// expected action. If you don't want to give that power, return an error instead.
+type DlgIssuingLogic func(iss did.DID, aud did.DID, cmd command.Command, subject did.DID) (*delegation.Token, error)
+
 var _ client.DelegationRequester = &Issuer{}
 
+// Issuer is an implementation of a re-delegating issuer.
+// Note: Your actual needs for an issuer can easily be different (caching...) than the choices made here.
+// Feel free to replace this component with your own flavor.
 type Issuer struct {
 	did     did.DID
 	privKey crypto.PrivKey
 
 	pool      *client.Pool
 	requester client.DelegationRequester
-	logic     IssuingLogic
+	logic     DlgIssuingLogic
 }
 
-func NewIssuer(privKey crypto.PrivKey, requester client.DelegationRequester, logic IssuingLogic) (*Issuer, error) {
+func NewIssuer(privKey crypto.PrivKey, requester client.DelegationRequester, logic DlgIssuingLogic) (*Issuer, error) {
 	d, err := did.FromPrivKey(privKey)
 	if err != nil {
 		return nil, err
@@ -39,16 +53,6 @@ func NewIssuer(privKey crypto.PrivKey, requester client.DelegationRequester, log
 	}, nil
 }
 
-// IssuingLogic is a function that decides what powers are given to a client.
-// - issuer: the DID of our issuer
-// - audience: the DID of the client, also the issuer of the invocation token
-// - cmd: the command to execute
-// - subject: the DID of the resource to operate on, also the subject (or audience if defined) of the invocation token
-// Note: you can read it as "(audience) wants to do (cmd) on (subject)".
-// Note: you can decide to match the input parameters exactly or issue a broader power, as long as it allows the
-// expected action. If you don't want to give that power, return an error instead.
-type IssuingLogic func(iss did.DID, aud did.DID, cmd command.Command, subject did.DID) (*delegation.Token, error)
-
 // RequestDelegation retrieve chain of delegation for the given parameters.
 // - audience: the DID of the client, also the issuer of the invocation token
 // - cmd: the command to execute
@@ -56,6 +60,10 @@ type IssuingLogic func(iss did.DID, aud did.DID, cmd command.Command, subject di
 // Note: you can read it as "(audience) does (cmd) on (subject)".
 // Note: the returned delegation(s) don't have to match exactly the parameters, as long as they allow them.
 func (i *Issuer) RequestDelegation(ctx context.Context, audience did.DID, cmd command.Command, subject did.DID) (iter.Seq2[*delegation.Bundle, error], error) {
+	if subject != i.did {
+		return nil, fmt.Errorf("subject DID doesn't match the issuer DID")
+	}
+
 	var proof []cid.Cid
 
 	// is there already a valid proof chain?
@@ -85,6 +93,9 @@ func (i *Issuer) RequestDelegation(ctx context.Context, audience did.DID, cmd co
 	dlg, err := i.logic(i.did, audience, cmd, subject)
 	if err != nil {
 		return nil, err
+	}
+	if dlg.IsRoot() {
+		return nil, fmt.Errorf("issuing logic should return a non-root delegation")
 	}
 
 	// sign and cache the new token
