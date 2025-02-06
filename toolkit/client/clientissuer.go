@@ -1,18 +1,15 @@
-package issuer
+package client
 
 import (
 	"context"
 	"fmt"
 	"iter"
-	"time"
 
 	"github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/ucan-wg/go-ucan/did"
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/token/delegation"
-
-	"github.com/INFURA/go-ucan-toolkit/client"
 )
 
 // DlgIssuingLogic is a function that decides what powers are given to a client.
@@ -25,32 +22,19 @@ import (
 // expected action. If you don't want to give that power, return an error instead.
 type DlgIssuingLogic func(iss did.DID, aud did.DID, cmd command.Command, subject did.DID) (*delegation.Token, error)
 
-var _ client.DelegationRequester = &Issuer{}
+var _ DelegationRequester = &WithIssuer{}
 
-// Issuer is an implementation of a re-delegating issuer.
-// Note: Your actual needs for an issuer can easily be different (caching...) than the choices made here.
-// Feel free to replace this component with your own flavor.
-type Issuer struct {
-	did     did.DID
-	privKey crypto.PrivKey
-
-	pool      *client.Pool
-	requester client.DelegationRequester
-	logic     DlgIssuingLogic
+type WithIssuer struct {
+	*Client
+	logic DlgIssuingLogic
 }
 
-func NewIssuer(privKey crypto.PrivKey, requester client.DelegationRequester, logic DlgIssuingLogic) (*Issuer, error) {
-	d, err := did.FromPrivKey(privKey)
+func NewWithIssuer(privKey crypto.PrivKey, requester DelegationRequester, logic DlgIssuingLogic) (*WithIssuer, error) {
+	client, err := NewClient(privKey, requester)
 	if err != nil {
 		return nil, err
 	}
-	return &Issuer{
-		did:       d,
-		privKey:   privKey,
-		pool:      client.NewPool(),
-		requester: client.RequesterWithRetry(requester, time.Second, 3),
-		logic:     logic,
-	}, nil
+	return &WithIssuer{Client: client, logic: logic}, nil
 }
 
 // RequestDelegation retrieve chain of delegation for the given parameters.
@@ -59,22 +43,18 @@ func NewIssuer(privKey crypto.PrivKey, requester client.DelegationRequester, log
 // - subject: the DID of the resource to operate on, also the subject (or audience if defined) of the invocation token
 // Note: you can read it as "(audience) does (cmd) on (subject)".
 // Note: the returned delegation(s) don't have to match exactly the parameters, as long as they allow them.
-func (i *Issuer) RequestDelegation(ctx context.Context, audience did.DID, cmd command.Command, subject did.DID) (iter.Seq2[*delegation.Bundle, error], error) {
-	if subject != i.did {
-		return nil, fmt.Errorf("subject DID doesn't match the issuer DID")
-	}
-
+func (c *WithIssuer) RequestDelegation(ctx context.Context, audience did.DID, cmd command.Command, subject did.DID) (iter.Seq2[*delegation.Bundle, error], error) {
 	var proof []cid.Cid
 
 	// is there already a valid proof chain?
-	if proof = i.pool.FindProof(audience, cmd, subject); len(proof) > 0 {
-		return i.pool.GetBundles(proof), nil
+	if proof = c.pool.FindProof(audience, cmd, subject); len(proof) > 0 {
+		return c.pool.GetBundles(proof), nil
 	}
 
 	// do we have the power to delegate this?
-	if proof = i.pool.FindProof(i.did, cmd, subject); len(proof) == 0 {
+	if proof = c.pool.FindProof(c.did, cmd, subject); len(proof) == 0 {
 		// we need to request a new proof
-		proofBundles, err := i.requester.RequestDelegation(ctx, i.did, cmd, subject)
+		proofBundles, err := c.requester.RequestDelegation(ctx, c.did, cmd, subject)
 		if err != nil {
 			return nil, err
 		}
@@ -85,12 +65,12 @@ func (i *Issuer) RequestDelegation(ctx context.Context, audience did.DID, cmd co
 				return nil, err
 			}
 			proof = append(proof, bundle.Cid)
-			i.pool.AddBundle(bundle)
+			c.pool.AddBundle(bundle)
 		}
 	}
 
 	// run the custom logic to get what we actually issue
-	dlg, err := i.logic(i.did, audience, cmd, subject)
+	dlg, err := c.logic(c.did, audience, cmd, subject)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +79,7 @@ func (i *Issuer) RequestDelegation(ctx context.Context, audience did.DID, cmd co
 	}
 
 	// sign and cache the new token
-	dlgBytes, dlgCid, err := dlg.ToSealed(i.privKey)
+	dlgBytes, dlgCid, err := dlg.ToSealed(c.privKey)
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +94,7 @@ func (i *Issuer) RequestDelegation(ctx context.Context, audience did.DID, cmd co
 		if !yield(bundle, nil) {
 			return
 		}
-		for b, err := range i.pool.GetBundles(proof) {
+		for b, err := range c.pool.GetBundles(proof) {
 			if !yield(b, err) {
 				return
 			}

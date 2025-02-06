@@ -1,0 +1,57 @@
+@startuml
+left to right direction
+
+rectangle Service as owner {
+    rectangle Issuer as issuer
+    rectangle Executor as exec
+}
+
+node resource as res
+
+owner --> res : Controls
+exec --> res : Allow access to
+
+rectangle "Alice" as alice {
+    rectangle Client as aliceclient
+
+}
+
+aliceclient --> issuer : [1] request delegation
+aliceclient <-- issuer : [2] issue delegation A
+
+aliceclient --> exec : [3] make request with A
+@enduml
+
+
+@startuml
+left to right direction
+
+rectangle Service as owner {
+    rectangle Issuer as issuer
+    rectangle Executor as exec
+}
+
+node resource as res
+
+owner --> res : Controls
+exec --> res : Allow access to
+
+rectangle "Alice" as alice {
+    rectangle Client as aliceclient
+    rectangle Issuer as aliceissuer
+}
+
+aliceclient --> issuer : [1] request delegation
+aliceclient <-- issuer : [2] issue delegation A
+
+aliceclient --> exec : [3] make request with A
+
+rectangle "Bob" as bob {
+    rectangle Client as bobclient
+}
+
+bobclient --> aliceissuer : [4] request delegation
+bobclient <-- aliceissuer : [5] issue delegation B\nalso returns A
+
+bobclient -down-> exec : [6] make request with A+B
+@enduml

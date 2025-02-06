@@ -9,16 +9,27 @@ import (
 
 // Endpoints
 
-var ServerUrl = ":8080"
-var IssuerUrl = ":8081"
+var ServiceUrl = ":8080"
+var ServiceIssuerUrl = ":8081"
+
+var AliceIssuerUrl = ":8082"
 
 // Service
 
 var ServicePrivKey crypto.PrivKey
 var ServiceDid did.DID
 
+// Alice
+
+var AlicePrivKey crypto.PrivKey
+var AliceDid did.DID
+
 func init() {
-	privRaw, _ := base64.StdEncoding.DecodeString("CAESQGs7hPBRBmxH1UmHrdcPrBkecuFUuCWHK0kMJvZYCBqIa35SGxUdXVGuigQDkMpf7xO4C2C2Acl8QTtSrYS7Cnc=")
-	ServicePrivKey, _ = crypto.UnmarshalPrivateKey(privRaw)
+	servPrivRaw, _ := base64.StdEncoding.DecodeString("CAESQGs7hPBRBmxH1UmHrdcPrBkecuFUuCWHK0kMJvZYCBqIa35SGxUdXVGuigQDkMpf7xO4C2C2Acl8QTtSrYS7Cnc=")
+	ServicePrivKey, _ = crypto.UnmarshalPrivateKey(servPrivRaw)
 	ServiceDid, _ = did.FromPrivKey(ServicePrivKey)
+
+	alicePrivRaw, _ := base64.StdEncoding.DecodeString("CAESQFESA31nDYUhXXwbCNSFvg7M+TOFgyxy0tVX6o+TkJAKqAwDvtGxZeGyUjibGd/op+xOLvzE6BrTIOw62K3yLp8=")
+	AlicePrivKey, _ = crypto.UnmarshalPrivateKey(alicePrivRaw)
+	AliceDid, _ = did.FromPrivKey(AlicePrivKey)
 }

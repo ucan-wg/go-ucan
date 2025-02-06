@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -20,6 +19,7 @@ import (
 	"github.com/ucan-wg/go-ucan/token/delegation"
 
 	example "github.com/INFURA/go-ucan-toolkit/_example"
+	protocol "github.com/INFURA/go-ucan-toolkit/_example/_protocol-issuer"
 	"github.com/INFURA/go-ucan-toolkit/issuer"
 )
 
@@ -35,7 +35,7 @@ func main() {
 		cancel()
 	}()
 
-	err := run(ctx, example.IssuerUrl, example.ServicePrivKey)
+	err := run(ctx, example.ServiceIssuerUrl, example.ServicePrivKey)
 	if err != nil {
 		log.Println(err)
 		os.Exit(1)
@@ -50,7 +50,12 @@ func run(ctx context.Context, issuerUrl string, servicePrivKey crypto.PrivKey) e
 		// Here, we enforce that the caller uses its own DID endpoint (an arbitrary construct for this example).
 		// You will notice that the server doesn't need to know about this logic to enforce it.
 		policies, err := policy.Construct(
-			policy.Equal(".http.path", literal.String(fmt.Sprintf("/%s", aud.String()))),
+			policy.Or(
+				// allow exact path
+				policy.Equal(".http.path", literal.String(fmt.Sprintf("/%s", aud.String()))),
+				// allow sub-path
+				policy.Like(".http.path", fmt.Sprintf("/%s/*", aud.String())),
+			),
 		)
 		if err != nil {
 			return nil, err
@@ -67,35 +72,7 @@ func run(ctx context.Context, issuerUrl string, servicePrivKey crypto.PrivKey) e
 		return err
 	}
 
-	handler := issuer.HttpWrapper(rootIssuer, func(r *http.Request) (*issuer.ResolvedRequest, error) {
-		// Let's make up a simple json protocol
-		req := struct {
-			Audience string `json:"aud"`
-			Cmd      string `json:"cmd"`
-			Subject  string `json:"sub"`
-		}{}
-		err := json.NewDecoder(r.Body).Decode(&req)
-		if err != nil {
-			return nil, err
-		}
-		aud, err := did.Parse(req.Audience)
-		if err != nil {
-			return nil, err
-		}
-		cmd, err := command.Parse(req.Cmd)
-		if err != nil {
-			return nil, err
-		}
-		sub, err := did.Parse(req.Subject)
-		if err != nil {
-			return nil, err
-		}
-		return &issuer.ResolvedRequest{
-			Audience: aud,
-			Cmd:      cmd,
-			Subject:  sub,
-		}, nil
-	})
+	handler := issuer.HttpWrapper(rootIssuer, protocol.RequestResolver)
 
 	srv := &http.Server{
 		Addr:    issuerUrl,

@@ -27,14 +27,16 @@ func main() {
 		cancel()
 	}()
 
-	err := run(ctx, example.ServerUrl, example.ServiceDid)
+	err := run(ctx, example.ServiceUrl, example.ServiceDid)
 	if err != nil {
 		log.Println(err)
 		os.Exit(1)
 	}
 }
 
-func run(ctx context.Context, serverUrl string, serviceDID did.DID) error {
+func run(ctx context.Context, serviceUrl string, serviceDID did.DID) error {
+	log.Printf("service DID is %s\n", serviceDID.String())
+
 	// we'll make a simple handling pipeline:
 	// - exectx.ExtractMW to extract and decode the UCAN context, verify the service DID
 	// - exectx.HttpExtArgsVerify to verify the HTTP policies
@@ -50,7 +52,8 @@ func run(ctx context.Context, serverUrl string, serviceDID did.DID) error {
 
 		switch ucanCtx.Command().String() {
 		case "/foo/bar":
-			log.Printf("handled command %v for %v", ucanCtx.Command(), ucanCtx.Invocation().Issuer())
+			log.Printf("handled command %v at %v for %v", ucanCtx.Command(), r.URL.Path, ucanCtx.Invocation().Issuer())
+			log.Printf("proof is %v", ucanCtx.Invocation().Proof())
 			w.WriteHeader(http.StatusOK)
 			_, _ = w.Write([]byte("OK"))
 		default:
@@ -64,7 +67,7 @@ func run(ctx context.Context, serverUrl string, serviceDID did.DID) error {
 	handler = exectx.ExtractMW(handler, serviceDID)
 
 	srv := &http.Server{
-		Addr:    serverUrl,
+		Addr:    serviceUrl,
 		Handler: handler,
 	}
 
