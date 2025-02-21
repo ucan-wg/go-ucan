@@ -185,7 +185,7 @@ func anyAssemble(val any) qp.Assemble {
 		return qp.Int(i)
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		u := rv.Uint()
-		if u > limits.MaxInt53 {
+		if u > uint64(limits.MaxInt53) {
 			panic(fmt.Sprintf("unsigned integer %d exceeds safe bounds", u))
 		}
 		return qp.Int(int64(u))
