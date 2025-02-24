@@ -68,7 +68,7 @@ func Parse(str string) (Selector, error) {
 				if err != nil {
 					return nil, newParseError("invalid index", str, col, tok)
 				}
-				if idx > limits.MaxInt53 || idx < limits.MinInt53 {
+				if int64(idx) > limits.MaxInt53 || int64(idx) < limits.MinInt53 {
 					return nil, newParseError(fmt.Sprintf("index %d exceeds safe integer bounds", idx), str, col, tok)
 				}
 				sel = append(sel, segment{str: tok, optional: opt, index: idx})
