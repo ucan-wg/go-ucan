@@ -50,7 +50,7 @@ func run(ctx context.Context, aliceUrl string, aliceDid did.DID, serverUrl strin
 
 	log.Printf("Bob DID is %s", d.String())
 
-	cli, err := client.NewClient(priv, protocol.NewRequester(aliceUrl))
+	cli, err := client.NewClient(priv, protocol.NewRequester("http://"+aliceUrl))
 	if err != nil {
 		return err
 	}

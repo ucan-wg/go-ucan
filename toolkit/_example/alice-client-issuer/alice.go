@@ -67,7 +67,7 @@ func run(ctx context.Context, ownIssuerUrl string, priv crypto.PrivKey, d did.DI
 		return delegation.New(iss, aud, cmd, policies, subject)
 	}
 
-	cli, err := client.NewWithIssuer(priv, protocol.NewRequester(serviceIssuerUrl), issuingLogic)
+	cli, err := client.NewWithIssuer(priv, protocol.NewRequester("http://"+serviceIssuerUrl), issuingLogic)
 	if err != nil {
 		return err
 	}

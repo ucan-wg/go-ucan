@@ -45,7 +45,7 @@ func (r Requester) RequestDelegation(ctx context.Context, audience did.DID, cmd 
 		return nil, err
 	}
 
-	req, err := http.NewRequest(http.MethodPost, "http://"+r.issuerURL, buf)
+	req, err := http.NewRequest(http.MethodPost, r.issuerURL, buf)
 	if err != nil {
 		return nil, err
 	}
