@@ -18,7 +18,7 @@ func ExtractMW(next http.Handler, serviceDID did.DID) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctn, err := bearer.ExtractBearerContainer(r.Header)
 		if errors.Is(err, bearer.ErrNoUcan) {
-			http.Error(w, "no UCAN auth", http.StatusBadRequest)
+			http.Error(w, "no UCAN auth", http.StatusUnauthorized)
 			return
 		}
 		if errors.Is(err, bearer.ErrContainerMalformed) {
@@ -34,7 +34,7 @@ func ExtractMW(next http.Handler, serviceDID did.DID) http.Handler {
 		// prepare a UcanCtx from the container, for further evaluation in the server pipeline
 		ucanCtx, err := FromContainer(ctn)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}
 
