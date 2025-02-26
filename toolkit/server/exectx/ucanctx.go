@@ -92,6 +92,13 @@ func (ctn *UcanCtx) GetDelegation(cid cid.Cid) (*delegation.Token, error) {
 	return nil, delegation.ErrDelegationNotFound
 }
 
+// GetRootDelegation returns the delegation.Token at the root of the proof chain.
+func (ctn *UcanCtx) GetRootDelegation() *delegation.Token {
+	proofs := ctn.inv.Proof()
+	c := proofs[len(proofs)-1]
+	return ctn.dlgs[c]
+}
+
 // Policies return the full set of policy statements to satisfy.
 func (ctn *UcanCtx) Policies() policy.Policy {
 	return ctn.policies
