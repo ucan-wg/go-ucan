@@ -59,6 +59,9 @@ type Token struct {
 
 // New creates an invocation Token with the provided options.
 //
+// The given proofs MUST be ordered from the leaf (matching the invocation) to
+// the root delegation.
+//
 // If no nonce is provided, a random 12-byte nonce is generated. Use the
 // WithNonce or WithEmptyNonce options to specify provide your own nonce
 // or to leave the nonce empty respectively.

@@ -63,7 +63,7 @@ func (t *Token) verifyProofs(delegations []*delegation.Token) error {
 		sub = t.audience
 	}
 
-	// control from the invocation to the root
+	// control from the invocation to the root delegation
 	for i, dlgCid := range t.proof {
 		dlg := delegations[i]
 
