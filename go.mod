@@ -7,7 +7,7 @@ require (
 	github.com/ipfs/go-cid v0.5.0
 	github.com/ipld/go-ipld-prime v0.21.0
 	github.com/lestrrat-go/jwx/v2 v2.1.3
-	github.com/libp2p/go-libp2p v0.38.2
+	github.com/libp2p/go-libp2p v0.33.0
 	github.com/mr-tron/base58 v1.2.0
 	github.com/multiformats/go-multibase v0.2.0
 	github.com/multiformats/go-multicodec v0.9.0
