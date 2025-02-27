@@ -70,6 +70,21 @@ func FromContainer(cont container.Reader) (*UcanCtx, error) {
 		ctx.meta.Include(dlg.Meta())
 	}
 
+	// DX: As the invocation is created without the delegation, no check is done that the proof chain (CIDs only)
+	// is ordered properly and not broken. We don't check that in the container either as it doesn't make any assumption
+	// on what is being carried around. That UcanCtx is the first place where we enforce having a single invocation and
+	// only the matching delegation.
+	// For sanity, we verify that the proofs are ordered properly. This will be checked later anyway, but it's cheap to
+	// verify here and catch an easy mistake.
+	chainTo := inv.Issuer()
+	for _, c := range inv.Proof() {
+		dlg := ctx.dlgs[c]
+		if dlg.Audience() != chainTo {
+			return nil, fmt.Errorf("proof chain is broken or not ordered correctly")
+		}
+		chainTo = dlg.Issuer()
+	}
+
 	return ctx, nil
 }
 
