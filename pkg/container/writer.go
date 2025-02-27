@@ -120,3 +120,20 @@ func (ctn Writer) toWriter(header header, w io.Writer) (err error) {
 
 	return ipld.EncodeStreaming(encoder, node, cbor.Encode)
 }
+
+// ToReader convert a container Writer into a Reader.
+// Most likely, you only want to use this in tests for convenience.
+// This is not optimized and can panic.
+func (ctn Writer) ToReader() Reader {
+	data, err := ctn.ToBytes()
+	if err != nil {
+		panic(err)
+	}
+
+	reader, err := FromBytes(data)
+	if err != nil {
+		panic(err)
+	}
+
+	return reader
+}
