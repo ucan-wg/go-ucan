@@ -30,7 +30,7 @@ const (
 	network = "eth-mainnet"
 )
 
-func TestCtx(t *testing.T) {
+func TestUcanCtxFullFlow(t *testing.T) {
 	// let's use some pre-made DID+privkey.
 	// use go-ucan/did to generate or parse them.
 	service := didtest.PersonaAlice
@@ -204,4 +204,64 @@ func TestGoCtx(t *testing.T) {
 	got, ok := exectx.FromContext(ctx)
 	require.True(t, ok)
 	require.Equal(t, expected, got)
+}
+
+func TestUcanCtx(t *testing.T) {
+	const service = didtest.PersonaAlice
+	const client1 = didtest.PersonaBob
+	const client2 = didtest.PersonaCarol
+	const cmd = "/foo/bar"
+
+	cont := container.NewWriter()
+
+	pol1 := policy.MustConstruct(
+		policy.Equal(".http.scheme", literal.String("https")),
+	)
+	dlg1, err := delegation.Root(service.DID(), client1.DID(), cmd, pol1,
+		delegation.WithMeta("foo", "bar"),
+	)
+	require.NoError(t, err)
+	dlg1Byte, dlg1Cid, err := dlg1.ToSealed(service.PrivKey())
+	require.NoError(t, err)
+	cont.AddSealed(dlg1Byte)
+
+	pol2 := policy.MustConstruct(
+		policy.Equal(".http.method", literal.String("GET")),
+	)
+	dlg2, err := delegation.New(client1.DID(), client2.DID(), cmd, pol2, service.DID(),
+		delegation.WithMeta("foo", "foo"), // attempt to replace
+	)
+	require.NoError(t, err)
+	dlg2Byte, dlg2Cid, err := dlg2.ToSealed(client1.PrivKey())
+	require.NoError(t, err)
+	cont.AddSealed(dlg2Byte)
+
+	inv, err := invocation.New(client2.DID(), cmd, service.DID(), []cid.Cid{dlg2Cid, dlg1Cid})
+	require.NoError(t, err)
+	invBytes, _, err := inv.ToSealed(client2.PrivKey())
+	require.NoError(t, err)
+	cont.AddSealed(invBytes)
+
+	ctx, err := exectx.FromContainer(cont.ToReader())
+	require.NoError(t, err)
+
+	require.NotNil(t, ctx.Invocation())
+	require.Equal(t, cmd, ctx.Command().String())
+	require.Equal(t, 1, ctx.Meta().Len())
+	require.Equal(t, "bar", must(ctx.Meta().GetString("foo")))
+	require.Equal(t, service.DID(), ctx.GetRootDelegation().Issuer())
+	require.Equal(t, append(pol1, pol2...), ctx.Policies())
+
+	require.ErrorContains(t, ctx.ExecutionAllowed(), `the following UCAN policy is not satisfied: ["==", ".http.method", "GET"]`)
+
+	r := httptest.NewRequest(http.MethodGet, "https://foo/bar", nil)
+	require.NoError(t, ctx.VerifyHttp(r))
+	require.NoError(t, ctx.ExecutionAllowed())
+}
+
+func must[T any](e T, err error) T {
+	if err != nil {
+		panic(err)
+	}
+	return e
 }
