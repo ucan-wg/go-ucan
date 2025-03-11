@@ -144,7 +144,7 @@ func WithInvokedAtIn(after time.Duration) Option {
 }
 
 // WithoutInvokedAt clears the Token's invokedAt field.
-func WithoutInvokedAt() Option {
+func WithoutIssuedAt() Option {
 	return func(t *Token) error {
 		t.issuedAt = nil
 
