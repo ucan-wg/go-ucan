@@ -54,7 +54,7 @@ The following base encoding combinations are REQUIRED to be supported:
 - base64, standard alphabet, padding
 - base64, URL alphabet, no padding
 
-The CBOR bytes MUST be prepended by a single byte header to indicate the selection combination of base encoding and compression. This header value MUST be set according to the following table:
+The CBOR bytes MUST be prepended by a single byte header to indicate the selected combination of base encoding and compression. This header value MUST be set according to the following table:
 
 | Header as hex | Header as ASCII | Base encoding           | Compression    |
 |---------------|-----------------|-------------------------|----------------|
