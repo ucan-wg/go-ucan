@@ -129,7 +129,7 @@ func WithExpirationIn(after time.Duration) Option {
 // If this Option is not provided, the invocation Token's iat field will
 // be set to the value of time.Now().  If you want to create an invocation
 // Token without this field being set, use the WithoutInvokedAt Option.
-func WithInvokedAt(iat time.Time) Option {
+func WithIssuedAt(iat time.Time) Option {
 	return func(t *Token) error {
 		t.issuedAt = &iat
 
