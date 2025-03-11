@@ -231,7 +231,7 @@ func (t *Token) String() string {
 	res.WriteString(fmt.Sprintf("Nonce: %s\n", base64.StdEncoding.EncodeToString(t.Nonce())))
 	res.WriteString(fmt.Sprintf("Meta: %s\n", t.Meta()))
 	res.WriteString(fmt.Sprintf("Expiration: %v\n", t.Expiration()))
-	res.WriteString(fmt.Sprintf("Invoked At: %v\n", t.IssuedAt()))
+	res.WriteString(fmt.Sprintf("Issued At: %v\n", t.IssuedAt()))
 	res.WriteString(fmt.Sprintf("Cause: %v", t.Cause()))
 
 	return res.String()
