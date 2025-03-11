@@ -23,7 +23,7 @@ func TestSealUnsealRoundtrip(t *testing.T) {
 		invocation.WithMeta("env", "development"),
 		invocation.WithMeta("tags", meta["tags"]),
 		invocation.WithExpirationIn(time.Minute),
-		invocation.WithoutInvokedAt(),
+		invocation.WithoutIssuedAt(),
 	)
 	require.NoError(t, err)
 

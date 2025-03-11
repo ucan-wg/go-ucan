@@ -51,7 +51,7 @@ type Token struct {
 	// The timestamp at which the Invocation becomes invalid
 	expiration *time.Time
 	// The timestamp at which the Invocation was created
-	invokedAt *time.Time
+	issuedAt *time.Time
 
 	// An optional CID of the Receipt that enqueued the Task
 	cause *cid.Cid
@@ -66,9 +66,9 @@ type Token struct {
 // WithNonce or WithEmptyNonce options to specify provide your own nonce
 // or to leave the nonce empty respectively.
 //
-// If no invokedAt is provided, the current time is used. Use the
-// WithInvokedAt or WithInvokedAtIn Options to specify a different time
-// or the WithoutInvokedAt Option to clear the Token's invokedAt field.
+// If no IssuedAt is provided, the current time is used. Use the
+// IssuedAt or WithIssuedAtIn Options to specify a different time
+// or the WithoutIssuedAt Option to clear the Token's IssuedAt field.
 //
 // With the exception of the WithMeta option, all others will overwrite
 // the previous contents of their target field.
@@ -85,7 +85,7 @@ func New(iss did.DID, cmd command.Command, sub did.DID, prf []cid.Cid, opts ...O
 		proof:     prf,
 		meta:      meta.NewMeta(),
 		nonce:     nil,
-		invokedAt: &iat,
+		issuedAt:  &iat,
 	}
 
 	for _, opt := range opts {
@@ -192,10 +192,10 @@ func (t *Token) Expiration() *time.Time {
 	return t.expiration
 }
 
-// InvokedAt returns the time.Time at which the invocation token was
+// IssuedAt returns the time.Time at which the invocation token was
 // created.
-func (t *Token) InvokedAt() *time.Time {
-	return t.invokedAt
+func (t *Token) IssuedAt() *time.Time {
+	return t.issuedAt
 }
 
 // Cause returns the Token's (optional) cause field which may specify
@@ -231,7 +231,7 @@ func (t *Token) String() string {
 	res.WriteString(fmt.Sprintf("Nonce: %s\n", base64.StdEncoding.EncodeToString(t.Nonce())))
 	res.WriteString(fmt.Sprintf("Meta: %s\n", t.Meta()))
 	res.WriteString(fmt.Sprintf("Expiration: %v\n", t.Expiration()))
-	res.WriteString(fmt.Sprintf("Invoked At: %v\n", t.InvokedAt()))
+	res.WriteString(fmt.Sprintf("Issued At: %v\n", t.IssuedAt()))
 	res.WriteString(fmt.Sprintf("Cause: %v", t.Cause()))
 
 	return res.String()
@@ -313,9 +313,9 @@ func tokenFromModel(m tokenPayloadModel) (*Token, error) {
 		return nil, fmt.Errorf("parse expiration: %w", err)
 	}
 
-	tkn.invokedAt, err = parse.OptionalTimestamp(m.Iat)
+	tkn.issuedAt, err = parse.OptionalTimestamp(m.Iat)
 	if err != nil {
-		return nil, fmt.Errorf("parse invokedAt: %w", err)
+		return nil, fmt.Errorf("parse IssuedAt: %w", err)
 	}
 
 	tkn.cause = m.Cause

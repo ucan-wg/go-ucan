@@ -217,8 +217,8 @@ func (t *Token) toIPLD(privKey crypto.PrivKey) (datamodel.Node, error) {
 	}
 
 	var iat *int64
-	if t.invokedAt != nil {
-		i := t.invokedAt.Unix()
+	if t.issuedAt != nil {
+		i := t.issuedAt.Unix()
 		iat = &i
 	}
 

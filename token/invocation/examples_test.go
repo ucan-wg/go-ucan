@@ -34,7 +34,7 @@ func ExampleNew() {
 		invocation.WithMeta("env", "development"),
 		invocation.WithMeta("tags", meta["tags"]),
 		invocation.WithExpirationIn(time.Minute),
-		invocation.WithoutInvokedAt())
+		invocation.WithoutIssuedAt())
 	if err != nil {
 		fmt.Println("failed to create invocation:", err.Error())
 
