@@ -131,7 +131,7 @@ func WithExpirationIn(after time.Duration) Option {
 // Token without this field being set, use the WithoutInvokedAt Option.
 func WithInvokedAt(iat time.Time) Option {
 	return func(t *Token) error {
-		t.invokedAt = &iat
+		t.issuedAt = &iat
 
 		return nil
 	}
@@ -146,7 +146,7 @@ func WithInvokedAtIn(after time.Duration) Option {
 // WithoutInvokedAt clears the Token's invokedAt field.
 func WithoutInvokedAt() Option {
 	return func(t *Token) error {
-		t.invokedAt = nil
+		t.issuedAt = nil
 
 		return nil
 	}
