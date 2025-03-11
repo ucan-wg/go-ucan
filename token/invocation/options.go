@@ -123,12 +123,12 @@ func WithExpirationIn(after time.Duration) Option {
 	return WithExpiration(time.Now().Add(after))
 }
 
-// WithInvokedAt sets the Token's invokedAt field to the provided
+// WithIssuedAt sets the Token's IssuedAt field to the provided
 // time.Time.
 //
 // If this Option is not provided, the invocation Token's iat field will
 // be set to the value of time.Now().  If you want to create an invocation
-// Token without this field being set, use the WithoutInvokedAt Option.
+// Token without this field being set, use the WithoutIssuedAt Option.
 func WithIssuedAt(iat time.Time) Option {
 	return func(t *Token) error {
 		t.issuedAt = &iat
@@ -137,13 +137,13 @@ func WithIssuedAt(iat time.Time) Option {
 	}
 }
 
-// WithInvokedAtIn sets the Token's invokedAt field to Now() plus the
+// WithIssuedAtIn sets the Token's IssuedAt field to Now() plus the
 // given duration.
-func WithInvokedAtIn(after time.Duration) Option {
-	return WithInvokedAt(time.Now().Add(after))
+func WithIssuedAtIn(after time.Duration) Option {
+	return WithIssuedAt(time.Now().Add(after))
 }
 
-// WithoutInvokedAt clears the Token's invokedAt field.
+// WithoutIssuedAt clears the Token's IssuedAt field.
 func WithoutIssuedAt() Option {
 	return func(t *Token) error {
 		t.issuedAt = nil

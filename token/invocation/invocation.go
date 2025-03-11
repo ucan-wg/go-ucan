@@ -66,9 +66,9 @@ type Token struct {
 // WithNonce or WithEmptyNonce options to specify provide your own nonce
 // or to leave the nonce empty respectively.
 //
-// If no invokedAt is provided, the current time is used. Use the
-// WithInvokedAt or WithInvokedAtIn Options to specify a different time
-// or the WithoutInvokedAt Option to clear the Token's invokedAt field.
+// If no IssuedAt is provided, the current time is used. Use the
+// IssuedAt or WithIssuedAtIn Options to specify a different time
+// or the WithoutIssuedAt Option to clear the Token's IssuedAt field.
 //
 // With the exception of the WithMeta option, all others will overwrite
 // the previous contents of their target field.
@@ -315,7 +315,7 @@ func tokenFromModel(m tokenPayloadModel) (*Token, error) {
 
 	tkn.issuedAt, err = parse.OptionalTimestamp(m.Iat)
 	if err != nil {
-		return nil, fmt.Errorf("parse invokedAt: %w", err)
+		return nil, fmt.Errorf("parse IssuedAt: %w", err)
 	}
 
 	tkn.cause = m.Cause
