@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"iter"
 
 	"github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p/core/crypto"
@@ -33,6 +34,16 @@ func NewClient(privKey crypto.PrivKey, requester DelegationRequester) (*Client, 
 		pool:      NewPool(),
 		requester: requester,
 	}, nil
+}
+
+// AddBundle adds a delegation.Bundle to the client's pool.
+func (c *Client) AddBundle(bundle *delegation.Bundle) {
+	c.pool.AddBundle(bundle)
+}
+
+// AddBundles adds a sequence of delegation.Bundles to the client's pool.
+func (c *Client) AddBundles(bundles iter.Seq[*delegation.Bundle]) {
+	c.pool.AddBundles(bundles)
 }
 
 // PrepareInvoke returns an invocation, bundled in a container.Writer with the necessary proofs.
