@@ -3,6 +3,7 @@ package delegation
 import (
 	"io"
 
+	"github.com/MetaMask/go-did-it"
 	"github.com/MetaMask/go-did-it/crypto"
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime"
@@ -46,8 +47,8 @@ func (t *Token) ToSealedWriter(w io.Writer, privKey crypto.PrivateKeySigningByte
 // verifies that the envelope's signature is correct based on the public
 // key taken from the issuer (iss) field and calculates the CID of the
 // incoming data.
-func FromSealed(data []byte) (*Token, cid.Cid, error) {
-	tkn, err := FromDagCbor(data)
+func FromSealed(data []byte, resolvOpts ...did.ResolutionOption) (*Token, cid.Cid, error) {
+	tkn, err := FromDagCbor(data, resolvOpts...)
 	if err != nil {
 		return nil, cid.Undef, err
 	}
@@ -61,10 +62,10 @@ func FromSealed(data []byte) (*Token, cid.Cid, error) {
 }
 
 // FromSealedReader is the same as Unseal but accepts an io.Reader.
-func FromSealedReader(r io.Reader) (*Token, cid.Cid, error) {
+func FromSealedReader(r io.Reader, resolvOpts ...did.ResolutionOption) (*Token, cid.Cid, error) {
 	cidReader := envelope.NewCIDReader(r)
 
-	tkn, err := FromDagCborReader(cidReader)
+	tkn, err := FromDagCborReader(cidReader, resolvOpts...)
 	if err != nil {
 		return nil, cid.Undef, err
 	}
@@ -123,29 +124,29 @@ func (t *Token) ToDagJsonWriter(w io.Writer, privKey crypto.PrivateKeySigningByt
 //
 // An error is returned if the conversion fails, or if the resulting
 // Token is invalid.
-func Decode(b []byte, decFn codec.Decoder) (*Token, error) {
+func Decode(b []byte, decFn codec.Decoder, resolvOpts ...did.ResolutionOption) (*Token, error) {
 	node, err := ipld.Decode(b, decFn)
 	if err != nil {
 		return nil, err
 	}
-	return FromIPLD(node)
+	return FromIPLD(node, resolvOpts...)
 }
 
 // DecodeReader is the same as Decode, but accept an io.Reader.
-func DecodeReader(r io.Reader, decFn codec.Decoder) (*Token, error) {
+func DecodeReader(r io.Reader, decFn codec.Decoder, resolvOpts ...did.ResolutionOption) (*Token, error) {
 	node, err := ipld.DecodeStreaming(r, decFn)
 	if err != nil {
 		return nil, err
 	}
-	return FromIPLD(node)
+	return FromIPLD(node, resolvOpts...)
 }
 
 // FromDagCbor unmarshals the input data into a Token.
 //
 // An error is returned if the conversion fails, or if the resulting
 // Token is invalid.
-func FromDagCbor(data []byte) (*Token, error) {
-	pay, err := envelope.FromDagCbor[*tokenPayloadModel](data)
+func FromDagCbor(data []byte, resolvOpts ...did.ResolutionOption) (*Token, error) {
+	pay, err := envelope.FromDagCbor[*tokenPayloadModel](data, resolvOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -159,26 +160,26 @@ func FromDagCbor(data []byte) (*Token, error) {
 }
 
 // FromDagCborReader is the same as FromDagCbor, but accept an io.Reader.
-func FromDagCborReader(r io.Reader) (*Token, error) {
-	return DecodeReader(r, dagcbor.Decode)
+func FromDagCborReader(r io.Reader, resolvOpts ...did.ResolutionOption) (*Token, error) {
+	return DecodeReader(r, dagcbor.Decode, resolvOpts...)
 }
 
 // FromDagJson unmarshals the input data into a Token.
 //
 // An error is returned if the conversion fails, or if the resulting
 // Token is invalid.
-func FromDagJson(data []byte) (*Token, error) {
-	return Decode(data, dagjson.Decode)
+func FromDagJson(data []byte, resolvOpts ...did.ResolutionOption) (*Token, error) {
+	return Decode(data, dagjson.Decode, resolvOpts...)
 }
 
 // FromDagJsonReader is the same as FromDagJson, but accept an io.Reader.
-func FromDagJsonReader(r io.Reader) (*Token, error) {
-	return DecodeReader(r, dagjson.Decode)
+func FromDagJsonReader(r io.Reader, resolvOpts ...did.ResolutionOption) (*Token, error) {
+	return DecodeReader(r, dagjson.Decode, resolvOpts...)
 }
 
 // FromIPLD decode the given IPLD representation into a Token.
-func FromIPLD(node datamodel.Node) (*Token, error) {
-	pay, err := envelope.FromIPLD[*tokenPayloadModel](node)
+func FromIPLD(node datamodel.Node, resolvOpts ...did.ResolutionOption) (*Token, error) {
+	pay, err := envelope.FromIPLD[*tokenPayloadModel](node, resolvOpts...)
 	if err != nil {
 		return nil, err
 	}

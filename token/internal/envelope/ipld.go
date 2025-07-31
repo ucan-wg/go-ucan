@@ -70,56 +70,56 @@ type Tokener interface {
 //
 // An error is returned if the conversion fails, or if the resulting
 // Tokener is invalid.
-func Decode[T Tokener](b []byte, decFn codec.Decoder) (T, error) {
+func Decode[T Tokener](b []byte, decFn codec.Decoder, resolvOpts ...did.ResolutionOption) (T, error) {
 	node, err := ipld.Decode(b, decFn)
 	if err != nil {
 		return *new(T), err
 	}
 
-	return FromIPLD[T](node)
+	return FromIPLD[T](node, resolvOpts...)
 }
 
 // DecodeReader is the same as Decode, but accept an io.Reader.
-func DecodeReader[T Tokener](r io.Reader, decFn codec.Decoder) (T, error) {
+func DecodeReader[T Tokener](r io.Reader, decFn codec.Decoder, resolvOpts ...did.ResolutionOption) (T, error) {
 	node, err := ipld.DecodeStreaming(r, decFn)
 	if err != nil {
 		return *new(T), err
 	}
 
-	return FromIPLD[T](node)
+	return FromIPLD[T](node, resolvOpts...)
 }
 
 // FromDagCbor unmarshals the input data into a Tokener.
 //
 // An error is returned if the conversion fails, or if the resulting
 // Tokener is invalid.
-func FromDagCbor[T Tokener](b []byte) (T, error) {
-	return Decode[T](b, dagcbor.Decode)
+func FromDagCbor[T Tokener](b []byte, resolvOpts ...did.ResolutionOption) (T, error) {
+	return Decode[T](b, dagcbor.Decode, resolvOpts...)
 }
 
 // FromDagCborReader is the same as FromDagCbor, but accept an io.Reader.
-func FromDagCborReader[T Tokener](r io.Reader) (T, error) {
-	return DecodeReader[T](r, dagcbor.Decode)
+func FromDagCborReader[T Tokener](r io.Reader, resolvOpts ...did.ResolutionOption) (T, error) {
+	return DecodeReader[T](r, dagcbor.Decode, resolvOpts...)
 }
 
 // FromDagJson unmarshals the input data into a Tokener.
 //
 // An error is returned if the conversion fails, or if the resulting
 // Tokener is invalid.
-func FromDagJson[T Tokener](b []byte) (T, error) {
-	return Decode[T](b, dagjson.Decode)
+func FromDagJson[T Tokener](b []byte, resolvOpts ...did.ResolutionOption) (T, error) {
+	return Decode[T](b, dagjson.Decode, resolvOpts...)
 }
 
 // FromDagJsonReader is the same as FromDagJson, but accept an io.Reader.
-func FromDagJsonReader[T Tokener](r io.Reader) (T, error) {
-	return DecodeReader[T](r, dagjson.Decode)
+func FromDagJsonReader[T Tokener](r io.Reader, resolvOpts ...did.ResolutionOption) (T, error) {
+	return DecodeReader[T](r, dagjson.Decode, resolvOpts...)
 }
 
 // FromIPLD unwraps a Tokener from the provided IPLD datamodel.Node.
 //
 // An error is returned if the conversion fails, or if the resulting
 // Tokener is invalid.
-func FromIPLD[T Tokener](node datamodel.Node) (T, error) {
+func FromIPLD[T Tokener](node datamodel.Node, resolvOpts ...did.ResolutionOption) (T, error) {
 	zero := *new(T)
 
 	info, err := Inspect(node)
@@ -173,8 +173,7 @@ func FromIPLD[T Tokener](node datamodel.Node) (T, error) {
 		return zero, err
 	}
 
-	// TODO: pass resolution options
-	issuerDoc, err := issuerDID.Document()
+	issuerDoc, err := issuerDID.Document(resolvOpts...)
 	if err != nil {
 		return zero, err
 	}
