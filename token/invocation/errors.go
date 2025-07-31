@@ -4,13 +4,13 @@ import "errors"
 
 // Loading errors
 var (
-	// ErrMissingDelegation
+	// ErrMissingDelegation is returned when a loader can't find a delegation
 	ErrMissingDelegation = errors.New("loader missing delegation for proof chain")
 )
 
 // Time bound errors
 var (
-	// ErrTokenExpired is returned if a token is invalid at execution time
+	// ErrTokenInvalidNow is returned if a token is invalid at execution time
 	ErrTokenInvalidNow = errors.New("token has expired")
 )
 

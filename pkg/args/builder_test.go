@@ -6,6 +6,7 @@ import (
 	"github.com/ipld/go-ipld-prime"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	"github.com/ucan-wg/go-ucan/pkg/args"
 )
 

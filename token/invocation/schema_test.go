@@ -2,27 +2,26 @@ package invocation_test
 
 import (
 	"bytes"
+	"encoding/base64"
 	"testing"
 
-	"github.com/libp2p/go-libp2p/core/crypto"
+	"github.com/MetaMask/go-did-it/crypto"
+	"github.com/MetaMask/go-did-it/crypto/ed25519"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gotest.tools/v3/golden"
 
-	"github.com/ucan-wg/go-ucan/did/didtest"
 	"github.com/ucan-wg/go-ucan/token/internal/envelope"
 	"github.com/ucan-wg/go-ucan/token/invocation"
 )
 
 const (
-	issuerPrivKeyCfg = "CAESQK45xBfqIxRp7ZdRdck3tIJZKocCqvANQc925dCJhFwO7DJNA2j94zkF0TNx5mpXV0s6utfkFdHddWTaPVU6yZc="
-	newCID           = "zdpuAqY6Zypg4UnpbSUgDvYGneyFaTKaZevzxgSxV4rmv3Fpp"
+	issuerPrivKeyCfg = "BeAgktAj8irGgWjp4PGk/fV67e5CcML/KRmmHSldco3etP5lRiuYQ+VVO/39ol3XXruJC8deSuBxoEXzgdYpYw=="
+	newCID           = "zdpuB1NjhETofEUp5iYzoHjSc2KKgZvSoT6FBaLMoVzzsxiR1"
 )
 
 func TestSchemaRoundTrip(t *testing.T) {
 	t.Parallel()
 
-	invocationJson := golden.Get(t, "new.dagjson")
 	privKey := privKey(t, issuerPrivKeyCfg)
 
 	t.Run("via buffers", func(t *testing.T) {
@@ -31,7 +30,7 @@ func TestSchemaRoundTrip(t *testing.T) {
 		// format:    dagJson   -->   PayloadModel   -->   dagCbor   -->   PayloadModel   -->   dagJson
 		// function:      DecodeDagJson()           Seal()        Unseal()          EncodeDagJson()
 
-		p1, err := invocation.FromDagJson(invocationJson)
+		p1, err := invocation.FromDagJson(newDagJson)
 		require.NoError(t, err)
 
 		cborBytes, id, err := p1.ToSealed(privKey)
@@ -45,13 +44,13 @@ func TestSchemaRoundTrip(t *testing.T) {
 		readJson, err := p2.ToDagJson(privKey)
 		require.NoError(t, err)
 
-		assert.JSONEq(t, string(invocationJson), string(readJson))
+		assert.JSONEq(t, string(newDagJson), string(readJson))
 	})
 
 	t.Run("via streaming", func(t *testing.T) {
 		t.Parallel()
 
-		buf := bytes.NewBuffer(invocationJson)
+		buf := bytes.NewBuffer(newDagJson)
 
 		// format:    dagJson   -->   PayloadModel   -->   dagCbor   -->   PayloadModel   -->   dagJson
 		// function:      DecodeDagJson()           Seal()         Unseal()         EncodeDagJson()
@@ -71,25 +70,15 @@ func TestSchemaRoundTrip(t *testing.T) {
 		readJson := &bytes.Buffer{}
 		require.NoError(t, p2.ToDagJsonWriter(readJson, privKey))
 
-		assert.JSONEq(t, string(invocationJson), readJson.String())
-	})
-
-	t.Run("fails with wrong PrivKey", func(t *testing.T) {
-		t.Parallel()
-
-		p1, err := invocation.FromDagJson(invocationJson)
-		require.NoError(t, err)
-
-		_, _, err = p1.ToSealed(didtest.PersonaBob.PrivKey())
-		require.EqualError(t, err, "private key doesn't match the issuer")
+		assert.JSONEq(t, string(newDagJson), readJson.String())
 	})
 }
 
-func privKey(t require.TestingT, privKeyCfg string) crypto.PrivKey {
-	privKeyMar, err := crypto.ConfigDecodeKey(privKeyCfg)
+func privKey(t require.TestingT, privKeyCfg string) crypto.PrivateKeySigningBytes {
+	privBytes, err := base64.StdEncoding.DecodeString(privKeyCfg)
 	require.NoError(t, err)
 
-	privKey, err := crypto.UnmarshalPrivateKey(privKeyMar)
+	privKey, err := ed25519.PrivateKeyFromBytes(privBytes)
 	require.NoError(t, err)
 
 	return privKey

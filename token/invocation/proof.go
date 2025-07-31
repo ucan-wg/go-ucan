@@ -59,7 +59,7 @@ func (t *Token) verifyProofs(delegations []*delegation.Token) error {
 	cmd := t.command
 	iss := t.issuer
 	sub := t.subject
-	if t.audience.Defined() {
+	if t.audience != nil {
 		sub = t.audience
 	}
 
@@ -68,13 +68,13 @@ func (t *Token) verifyProofs(delegations []*delegation.Token) error {
 		dlg := delegations[i]
 
 		// The Subject of each delegation must equal the invocation's Subject (or Audience if defined). - 4f
-		if dlg.Subject() != sub {
+		if !dlg.Subject().Equal(sub) {
 			return fmt.Errorf("%w: delegation %s, expected %s, got %s", ErrWrongSub, dlgCid, sub, dlg.Subject())
 		}
 
 		// The first proof must be issued to the Invoker (audience DID). - 4c
 		// The Issuer of each delegation must be the Audience in the next one. - 4d
-		if dlg.Audience() != iss {
+		if !dlg.Audience().Equal(iss) {
 			return fmt.Errorf("%w: delegation %s, expected %s, got %s", ErrBrokenChain, dlgCid, iss, dlg.Audience())
 		}
 		iss = dlg.Issuer()
@@ -87,7 +87,7 @@ func (t *Token) verifyProofs(delegations []*delegation.Token) error {
 	}
 
 	// The last prf value must be a root delegation (have the issuer field match the Subject field) - 4e
-	if last := delegations[len(delegations)-1]; last.Issuer() != last.Subject() {
+	if last := delegations[len(delegations)-1]; !last.Issuer().Equal(last.Subject()) {
 		return fmt.Errorf("%w: expected %s, got %s", ErrLastNotRoot, last.Subject(), last.Issuer())
 	}
 

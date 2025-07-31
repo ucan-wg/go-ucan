@@ -9,16 +9,17 @@ import (
 	"slices"
 	"time"
 
+	"github.com/MetaMask/go-did-it"
+	didkeyctl "github.com/MetaMask/go-did-it/controller/did-key"
+	"github.com/MetaMask/go-did-it/crypto"
 	"github.com/ipfs/go-cid"
-	"github.com/libp2p/go-libp2p/core/crypto"
 
-	"github.com/ucan-wg/go-ucan/did"
-	"github.com/ucan-wg/go-ucan/did/didtest"
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/policy"
 	"github.com/ucan-wg/go-ucan/pkg/policy/policytest"
 	"github.com/ucan-wg/go-ucan/token/delegation"
 	"github.com/ucan-wg/go-ucan/token/delegation/delegationtest"
+	"github.com/ucan-wg/go-ucan/token/internal/didtest"
 )
 
 const (
@@ -30,7 +31,7 @@ const (
 var constantNonce = []byte{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b}
 
 type newDelegationParams struct {
-	privKey crypto.PrivKey // iss
+	privKey crypto.PrivateKeySigningBytes // iss
 	aud     did.DID
 	cmd     command.Command
 	pol     policy.Policy
@@ -157,10 +158,7 @@ func (g *generator) chainPersonas(personas []didtest.Persona, acc acc, vari vari
 func (g *generator) createDelegation(params newDelegationParams, name string, vari variant) (cid.Cid, error) {
 	vari.variant(&params)
 
-	issDID, err := did.FromPrivKey(params.privKey)
-	if err != nil {
-		return cid.Undef, err
-	}
+	issDID := didkeyctl.FromPrivateKey(params.privKey)
 
 	tkn, err := delegation.New(issDID, params.aud, params.cmd, params.pol, params.sub, params.opts...)
 	if err != nil {

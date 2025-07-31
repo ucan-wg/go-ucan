@@ -7,14 +7,15 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/MetaMask/go-did-it"
+	didkeyctl "github.com/MetaMask/go-did-it/controller/did-key"
+	"github.com/MetaMask/go-did-it/crypto/ed25519"
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/codec/dagcbor"
 	"github.com/ipld/go-ipld-prime/codec/dagjson"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
-	"github.com/libp2p/go-libp2p/core/crypto"
 
-	"github.com/ucan-wg/go-ucan/did"
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/token/invocation"
 )
@@ -60,18 +61,18 @@ func ExampleNew() {
 	fmt.Println(json)
 
 	// Expected CID and DAG-JSON output:
-	// CID: bafyreid2n5q45vk4osned7k5huocbe3mxbisonh5vujepqftc5ftr543ae
+	// CID: bafyreicgyuf6g7geoupyzpo3lgvyvsyhtc6tvnhiajkoo7lmy6woavkhra
 	// Token (pretty DAG-JSON):
 	// [
 	//   {
 	// 	"/": {
-	// 	  "bytes": "gvyL7kdSkgmaDpDU/Qj9ohRwxYLCHER52HFMSFEqQqEcQC9qr4JCPP1f/WybvGGuVzYiA0Hx4JO+ohNz8BxUAA"
+	// 	  "bytes": "nWYKygq0TTooQGdQsfQWwMOCuX7+KYNRSyW8h4AcRoTIJHsYyG/mpU3iBhAdsAGhi8Brnm+/Z0tC2KoC/KUlDA"
 	// 	}
 	//   },
 	//   {
 	// 	"h": {
 	// 	  "/": {
-	// 		"bytes": "NO0BcQ"
+	// 		"bytes": "NAHtAe0BE3E"
 	// 	  }
 	// 	},
 	// 	"ucan/inv@1.0.0-rc.1": {
@@ -91,8 +92,8 @@ func ExampleNew() {
 	// 		"uri": "https://example.com/blog/posts"
 	// 	  },
 	// 	  "cmd": "/crud/create",
-	// 	  "exp": 1729788921,
-	// 	  "iss": "did:key:z6MkhniGGyP88eZrq2dpMvUPdS2RQMhTUAWzcu6kVGUvEtCJ",
+	// 	  "exp": 1753965273,
+	// 	  "iss": "did:key:z6MknZNRLJ8zD2x5QhFuPsXYKAJ8PJpCe76bC5p7bGZXC5HD",
 	// 	  "meta": {
 	// 		"env": "development",
 	// 		"tags": [
@@ -103,7 +104,7 @@ func ExampleNew() {
 	// 	  },
 	// 	  "nonce": {
 	// 		"/": {
-	// 		  "bytes": "2xXPoZwWln1TfXIp"
+	// 		  "bytes": "y4kwaLuEHOPBUgrl"
 	// 		}
 	// 	  },
 	// 	  "prf": [
@@ -117,7 +118,7 @@ func ExampleNew() {
 	// 		  "/": "bafyreibkb66tpo2ixqx3fe5hmekkbuasrod6olt5bwm5u5pi726mduuwlq"
 	// 		}
 	// 	  ],
-	// 	  "sub": "did:key:z6MktWuvPvBe5UyHnDGuEdw8aJ5qrhhwLG6jy7cQYM6ckP6P"
+	// 	  "sub": "did:key:z6MkqEBN9zEGU9Euh9toLGFkTaSguXPavv55yS9m3VnwWeMW"
 	// 	}
 	//   }
 	// ]
@@ -144,18 +145,22 @@ func prettyDAGJSON(data []byte) (string, error) {
 	return out.String(), nil
 }
 
-func setupExampleNew() (privKey crypto.PrivKey, iss, sub did.DID, cmd command.Command, args map[string]any, prf []cid.Cid, meta map[string]any, errs error) {
+func setupExampleNew() (privKey ed25519.PrivateKey, iss, sub did.DID, cmd command.Command, args map[string]any, prf []cid.Cid, meta map[string]any, errs error) {
 	var err error
 
-	privKey, iss, err = did.GenerateEd25519()
+	_, privKey, err = ed25519.GenerateKeyPair()
 	if err != nil {
-		errs = errors.Join(errs, fmt.Errorf("failed to generate Issuer identity: %w", err))
+		errs = errors.Join(errs, fmt.Errorf("failed to generate Ed25519 keypair: %w", err))
+		return
 	}
+	iss = didkeyctl.FromPrivateKey(privKey)
 
-	_, sub, err = did.GenerateEd25519()
+	_, privKeySub, err := ed25519.GenerateKeyPair()
 	if err != nil {
-		errs = errors.Join(errs, fmt.Errorf("failed to generate Subject identity: %w", err))
+		errs = errors.Join(errs, fmt.Errorf("failed to generate Ed25519 keypair: %w", err))
+		return
 	}
+	sub = didkeyctl.FromPrivateKey(privKeySub)
 
 	cmd, err = command.Parse("/crud/create")
 	if err != nil {

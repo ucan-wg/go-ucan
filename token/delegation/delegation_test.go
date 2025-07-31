@@ -1,18 +1,27 @@
 package delegation_test
 
 import (
+	_ "embed"
 	"encoding/base64"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
-	"gotest.tools/v3/golden"
 
-	"github.com/ucan-wg/go-ucan/did/didtest"
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/policy"
 	"github.com/ucan-wg/go-ucan/token/delegation"
+	"github.com/ucan-wg/go-ucan/token/internal/didtest"
 )
+
+//go:embed testdata/new.dagjson
+var newDagJson []byte
+
+//go:embed testdata/powerline.dagjson
+var powerlineDagJson []byte
+
+//go:embed testdata/root.dagjson
+var rootDagJson []byte
 
 const (
 	nonce = "6roDhGi0kiNriQAz7J3d+bOeoI/tj8ENikmQNbtjnD0"
@@ -63,12 +72,10 @@ func TestConstructors(t *testing.T) {
 		data, err := tkn.ToDagJson(didtest.PersonaAlice.PrivKey())
 		require.NoError(t, err)
 
-		golden.Assert(t, string(data), "new.dagjson")
+		require.Equal(t, newDagJson, data)
 	})
 
 	t.Run("Root", func(t *testing.T) {
-		t.Parallel()
-
 		tkn, err := delegation.Root(didtest.PersonaAlice.DID(), didtest.PersonaBob.DID(), cmd, pol,
 			delegation.WithNonce([]byte(nonce)),
 			delegation.WithExpiration(exp),
@@ -83,12 +90,10 @@ func TestConstructors(t *testing.T) {
 		data, err := tkn.ToDagJson(didtest.PersonaAlice.PrivKey())
 		require.NoError(t, err)
 
-		golden.Assert(t, string(data), "root.dagjson")
+		require.Equal(t, rootDagJson, data)
 	})
 
 	t.Run("Powerline", func(t *testing.T) {
-		t.Parallel()
-
 		tkn, err := delegation.Powerline(didtest.PersonaAlice.DID(), didtest.PersonaBob.DID(), cmd, pol,
 			delegation.WithNonce([]byte(nonce)),
 			delegation.WithExpiration(exp),
@@ -103,7 +108,7 @@ func TestConstructors(t *testing.T) {
 		data, err := tkn.ToDagJson(didtest.PersonaAlice.PrivKey())
 		require.NoError(t, err)
 
-		golden.Assert(t, string(data), "powerline.dagjson")
+		require.Equal(t, powerlineDagJson, data)
 	})
 }
 

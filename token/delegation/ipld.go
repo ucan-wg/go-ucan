@@ -1,25 +1,23 @@
 package delegation
 
 import (
-	"fmt"
 	"io"
 
+	"github.com/MetaMask/go-did-it/crypto"
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/codec"
 	"github.com/ipld/go-ipld-prime/codec/dagcbor"
 	"github.com/ipld/go-ipld-prime/codec/dagjson"
 	"github.com/ipld/go-ipld-prime/datamodel"
-	"github.com/libp2p/go-libp2p/core/crypto"
 
-	"github.com/ucan-wg/go-ucan/did"
 	"github.com/ucan-wg/go-ucan/token/internal/envelope"
 )
 
 // ToSealed wraps the delegation token in an envelope, generates the
 // signature, encodes the result to DAG-CBOR and calculates the CID of
 // the resulting binary data.
-func (t *Token) ToSealed(privKey crypto.PrivKey) ([]byte, cid.Cid, error) {
+func (t *Token) ToSealed(privKey crypto.PrivateKeySigningBytes) ([]byte, cid.Cid, error) {
 	data, err := t.ToDagCbor(privKey)
 	if err != nil {
 		return nil, cid.Undef, err
@@ -34,7 +32,7 @@ func (t *Token) ToSealed(privKey crypto.PrivKey) ([]byte, cid.Cid, error) {
 }
 
 // ToSealedWriter is the same as ToSealed but accepts an io.Writer.
-func (t *Token) ToSealedWriter(w io.Writer, privKey crypto.PrivKey) (cid.Cid, error) {
+func (t *Token) ToSealedWriter(w io.Writer, privKey crypto.PrivateKeySigningBytes) (cid.Cid, error) {
 	cidWriter := envelope.NewCIDWriter(w)
 
 	if err := t.ToDagCborWriter(cidWriter, privKey); err != nil {
@@ -81,7 +79,7 @@ func FromSealedReader(r io.Reader) (*Token, cid.Cid, error) {
 
 // Encode marshals a Token to the format specified by the provided
 // codec.Encoder.
-func (t *Token) Encode(privKey crypto.PrivKey, encFn codec.Encoder) ([]byte, error) {
+func (t *Token) Encode(privKey crypto.PrivateKeySigningBytes, encFn codec.Encoder) ([]byte, error) {
 	node, err := t.toIPLD(privKey)
 	if err != nil {
 		return nil, err
@@ -91,7 +89,7 @@ func (t *Token) Encode(privKey crypto.PrivKey, encFn codec.Encoder) ([]byte, err
 }
 
 // EncodeWriter is the same as Encode, but accepts an io.Writer.
-func (t *Token) EncodeWriter(w io.Writer, privKey crypto.PrivKey, encFn codec.Encoder) error {
+func (t *Token) EncodeWriter(w io.Writer, privKey crypto.PrivateKeySigningBytes, encFn codec.Encoder) error {
 	node, err := t.toIPLD(privKey)
 	if err != nil {
 		return err
@@ -101,22 +99,22 @@ func (t *Token) EncodeWriter(w io.Writer, privKey crypto.PrivKey, encFn codec.En
 }
 
 // ToDagCbor marshals the Token to the DAG-CBOR format.
-func (t *Token) ToDagCbor(privKey crypto.PrivKey) ([]byte, error) {
+func (t *Token) ToDagCbor(privKey crypto.PrivateKeySigningBytes) ([]byte, error) {
 	return t.Encode(privKey, dagcbor.Encode)
 }
 
 // ToDagCborWriter is the same as ToDagCbor, but it accepts an io.Writer.
-func (t *Token) ToDagCborWriter(w io.Writer, privKey crypto.PrivKey) error {
+func (t *Token) ToDagCborWriter(w io.Writer, privKey crypto.PrivateKeySigningBytes) error {
 	return t.EncodeWriter(w, privKey, dagcbor.Encode)
 }
 
 // ToDagJson marshals the Token to the DAG-JSON format.
-func (t *Token) ToDagJson(privKey crypto.PrivKey) ([]byte, error) {
+func (t *Token) ToDagJson(privKey crypto.PrivateKeySigningBytes) ([]byte, error) {
 	return t.Encode(privKey, dagjson.Encode)
 }
 
 // ToDagJsonWriter is the same as ToDagJson, but it accepts an io.Writer.
-func (t *Token) ToDagJsonWriter(w io.Writer, privKey crypto.PrivKey) error {
+func (t *Token) ToDagJsonWriter(w io.Writer, privKey crypto.PrivateKeySigningBytes) error {
 	return t.EncodeWriter(w, privKey, dagjson.Encode)
 }
 
@@ -193,18 +191,9 @@ func FromIPLD(node datamodel.Node) (*Token, error) {
 	return tkn, err
 }
 
-func (t *Token) toIPLD(privKey crypto.PrivKey) (datamodel.Node, error) {
-	// sanity check that privKey and issuer are matching
-	issPub, err := t.issuer.PubKey()
-	if err != nil {
-		return nil, err
-	}
-	if !issPub.Equals(privKey.GetPublic()) {
-		return nil, fmt.Errorf("private key doesn't match the issuer")
-	}
-
+func (t *Token) toIPLD(privKey crypto.PrivateKeySigningBytes) (datamodel.Node, error) {
 	var sub *string
-	if t.subject != did.Undef {
+	if t.subject != nil {
 		s := t.subject.String()
 		sub = &s
 	}

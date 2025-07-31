@@ -1,23 +1,25 @@
 package invocation_test
 
 import (
+	_ "embed"
 	"testing"
 
 	"github.com/ipfs/go-cid"
 	"github.com/stretchr/testify/require"
 
-	"github.com/ucan-wg/go-ucan/did/didtest"
 	"github.com/ucan-wg/go-ucan/pkg/args"
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/policy/policytest"
 	"github.com/ucan-wg/go-ucan/token/delegation/delegationtest"
+	"github.com/ucan-wg/go-ucan/token/internal/didtest"
 	"github.com/ucan-wg/go-ucan/token/invocation"
 )
 
+//go:embed testdata/new.dagjson
+var newDagJson []byte
+
 const (
-	missingPrivKeyCfg = "CAESQMjRvrEIjpPYRQKmkAGw/pV0XgE958rYa4vlnKJjl1zz/sdnGnyV1xKLJk8D39edyjhHWyqcpgFnozQK62SG16k="
-	missingTknCIDStr  = "bafyreigwypmw6eul6vadi6g6lnfbsfo2zck7gfzsbjoroqs3djhnzzc7mm"
-	missingDIDStr     = "did:key:z6MkwboxFsH3kEuehBZ5fLkRmxi68yv1u38swA4r9Jm2VRma"
+	missingTknCIDStr = "bafyreigwypmw6eul6vadi6g6lnfbsfo2zck7gfzsbjoroqs3djhnzzc7mm"
 )
 
 var emptyArguments = args.New()

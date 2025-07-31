@@ -13,11 +13,11 @@ import (
 	"github.com/ipld/go-ipld-prime/codec/dagcbor"
 	"github.com/ipld/go-ipld-prime/codec/dagjson"
 
-	"github.com/ucan-wg/go-ucan/did/didtest"
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/policy"
 	"github.com/ucan-wg/go-ucan/pkg/policy/literal"
 	"github.com/ucan-wg/go-ucan/token/delegation"
+	"github.com/ucan-wg/go-ucan/token/internal/didtest"
 	"github.com/ucan-wg/go-ucan/token/internal/envelope"
 )
 
@@ -57,37 +57,37 @@ func ExampleNew() {
 
 	// Example output:
 	//
-	// issDid: did:key:z6MkvJPmEZZYbgiw1ouT1oouTsTFBHJSts9ophVsNgcRmYxU
+	// issDid: did:key:z6Mkf4WtCwPDtamsZvBJA4eSVcE7vZuRPy5Skm4HaoQv81i1
 	//
-	// CID (base58BTC): zdpuAsqfZkgg2jgZyob23sq1J9xwtf9PHgt1PsskVCMq7Vvxk
+	// CID (base58BTC): zdpuB1bzMdGAtzBej9ZBJbW3ppsjP2Cf9KZ8xMjdhUjaf3vz1
 	//
-	// DAG-CBOR (base64) out: lhAOnjc0bPptlI5MxRBrIK3YmAP1CxKfXOPkz6MHt/UJCx2gCN+6gXZX2N+BIJvmy8XmAO5sT2GYimiV7HlJH1AA6JhaEQ07QFxc3VjYW4vZGxnQDEuMC4wLXJjLjGpY2F1ZHg4ZGlkOmtleTp6Nk1rZ3VwY2hoNUh3dUhhaFM3WXN5RThiTHVhMU1yOHAyaUtOUmh5dlN2UkFzOW5jY21kaC9mb28vYmFyY2V4cBpnROP/Y2lzc3g4ZGlkOmtleTp6Nk1rdkpQbUVaWlliZ2l3MW91VDFvb3VUc1RGQkhKU3RzOW9waFZzTmdjUm1ZeFVjbmJmGmdE1itjcG9sg4NiPT1nLnN0YXR1c2VkcmFmdINjYWxsaS5yZXZpZXdlcoNkbGlrZWYuZW1haWxtKkBleGFtcGxlLmNvbYNjYW55ZS50YWdzgmJvcoKDYj09YS5kbmV3c4NiPT1hLmVwcmVzc2NzdWJ4OGRpZDprZXk6ejZNa3V1a2syc2tEWExRbjdOSzNFaDlqTW5kWWZ2REJ4eGt0Z3BpZEpBcWI3TTNwZG1ldGGiY2Jhehh7Y2Zvb2NiYXJlbm9uY2VMv+Diy6GExIuM1eX4
+	// DAG-CBOR (base64) out: glhAQhZTTb4U1rin/oLFre618Ol5/leaP758T6EkHYfQaNmFYad7yVTer8bbM1Zp2LxrV3eEYeWkHeL3F0V3zWC/CaJhaEg0Ae0B7QETcXN1Y2FuL2RsZ0AxLjAuMC1yYy4xqWNhdWR4OGRpZDprZXk6ejZNa2pXRlU4SHRmTXF1V241TUVROXIyMnpXcXlDTjF2YXpHdzZnNnB6Y2l6aU5WY2NtZGgvZm9vL2JhcmNleHAaaItoW2Npc3N4OGRpZDprZXk6ejZNa2Y0V3RDd1BEdGFtc1p2QkpBNGVTVmNFN3ZadVJQeTVTa200SGFvUXY4MWkxY25iZhpoi1qHY3BvbIODYj09Zy5zdGF0dXNlZHJhZnSDY2FsbGkucmV2aWV3ZXKDZGxpa2VmLmVtYWlsbSpAZXhhbXBsZS5jb22DY2FueWUudGFnc4Jib3KCg2I9PWEuZG5ld3ODYj09YS5lcHJlc3Njc3VieDhkaWQ6a2V5Ono2TWtuVXoxbVNqNHB2UzZhVVVIZWtDSGRVUHY3SEJoRHlEQlpRMlczVnVqYzVxQ2RtZXRhomNiYXoYe2Nmb29jYmFyZW5vbmNlTHa1D4DJ78LvscA/hg==
 	// Converted to DAG-JSON out:
 	//	[
 	//		{
 	//			"/": {
-	//				"bytes": "5rvl8uKmDVGvAVSt4m/0MGiXl9dZwljJJ9m2qHCoIB617l26UvMxyH5uvN9hM7ozfVATiq4mLhoGgm9IGnEEAg"
+	//				"bytes": "QhZTTb4U1rin/oLFre618Ol5/leaP758T6EkHYfQaNmFYad7yVTer8bbM1Zp2LxrV3eEYeWkHeL3F0V3zWC/CQ"
 	//			}
 	//		},
 	//		{
 	//			"h": {
 	//				"/": {
-	//					"bytes": "NO0BcQ"
+	//					"bytes": "NAHtAe0BE3E"
 	//				}
 	//			},
 	//			"ucan/dlg@1.0.0-rc.1": {
-	//				"aud": "did:key:z6Mkq5YmbJcTrPExNDi26imrTCpKhepjBFBSHqrBDN2ArPkv",
+	//				"aud": "did:key:z6MkjWFU8HtfMquWn5MEQ9r22zWqyCN1vazGw6g6pzciziNV",
 	//				"cmd": "/foo/bar",
-	//				"exp": 1728933098,
-	//				"iss": "did:key:z6MkhVFznPeR572rTK51UjoTNpnF8cxuWfPm9oBMPr7y8ABe",
+	//				"exp": 1753966683,
+	//				"iss": "did:key:z6Mkf4WtCwPDtamsZvBJA4eSVcE7vZuRPy5Skm4HaoQv81i1",
 	//				"meta": {
 	//					"baz": 123,
 	//					"foo": "bar"
 	//				},
-	//				"nbf": 1728929558,
+	//				"nbf": 1753963143,
 	//				"nonce": {
 	//					"/": {
-	//						"bytes": "u0HMgJ5Y+M84I/66"
+	//						"bytes": "drUPgMnvwu+xwD+G"
 	//					}
 	//				},
 	//				"pol": [
@@ -125,7 +125,7 @@ func ExampleNew() {
 	//						]
 	//					]
 	//				],
-	//				"sub": "did:key:z6MktA1uBdCpq4uJBqE9jjMiLyxZBg9a6xgPPKJjMqss6Zc2"
+	//				"sub": "did:key:z6MknUz1mSj4pvS6aUUHekCHdUPv7HBhDyDBZQ2W3Vujc5qC"
 	//			}
 	//		}
 	//	]
@@ -166,38 +166,36 @@ func ExampleRoot() {
 
 	// Example output:
 	//
-	// issDid: did:key:z6MknWJqz17Y4AfsXSJUFKomuBR4GTkViM7kJYutzTMkCyFF
-	//
 	// CID (base58BTC): zdpuAkwYz8nY7uU8j3F6wVTfFY1VEoExwvUAYBEwRWfTozddE
 	//
-	// DAG-CBOR (base64) out: glhAVpW67FJ+myNi+azvnw2jivuiqXTuMrDZI2Qdaa8jE1Oi3mkjnm7DyqSQGADcomcuDslMWKmJ+OIyvbPG5PtSA6JhaEQ07QFxc3VjYW4vZGxnQDEuMC4wLXJjLjGpY2F1ZHg4ZGlkOmtleTp6Nk1rdkpQbUVaWlliZ2l3MW91VDFvb3VUc1RGQkhKU3RzOW9waFZzTmdjUm1ZeFVjY21kaC9mb28vYmFyY2V4cBpnROVoY2lzc3g4ZGlkOmtleTp6Nk1rdXVrazJza0RYTFFuN05LM0VoOWpNbmRZZnZEQnh4a3RncGlkSkFxYjdNM3BjbmJmGmdE15RjcG9sg4NiPT1nLnN0YXR1c2VkcmFmdINjYWxsaS5yZXZpZXdlcoNkbGlrZWYuZW1haWxtKkBleGFtcGxlLmNvbYNjYW55ZS50YWdzgmJvcoKDYj09YS5kbmV3c4NiPT1hLmVwcmVzc2NzdWJ4OGRpZDprZXk6ejZNa3V1a2syc2tEWExRbjdOSzNFaDlqTW5kWWZ2REJ4eGt0Z3BpZEpBcWI3TTNwZG1ldGGiY2Jhehh7Y2Zvb2NiYXJlbm9uY2VMwzDc03WBciJIGPWG
+	// DAG-CBOR (base64) out: glhATIXb2wnBByq/llaQ4RLoWTxheAwamCNo2sKL8SQJbq0EVRvdfUQDKNpuMVkvtyUR6tUdZlKv1BcXjfGEaF2XAKJhaEg0Ae0B7QETcXN1Y2FuL2RsZ0AxLjAuMC1yYy4xqWNhdWR4OGRpZDprZXk6ejZNa2Y0V3RDd1BEdGFtc1p2QkpBNGVTVmNFN3ZadVJQeTVTa200SGFvUXY4MWkxY2NtZGgvZm9vL2JhcmNleHAaaItnfWNpc3N4OGRpZDprZXk6ejZNa25VejFtU2o0cHZTNmFVVUhla0NIZFVQdjdIQmhEeURCWlEyVzNWdWpjNXFDY25iZhpoi1mpY3BvbIODYj09Zy5zdGF0dXNlZHJhZnSDY2FsbGkucmV2aWV3ZXKDZGxpa2VmLmVtYWlsbSpAZXhhbXBsZS5jb22DY2FueWUudGFnc4Jib3KCg2I9PWEuZG5ld3ODYj09YS5lcHJlc3Njc3VieDhkaWQ6a2V5Ono2TWtuVXoxbVNqNHB2UzZhVVVIZWtDSGRVUHY3SEJoRHlEQlpRMlczVnVqYzVxQ2RtZXRhomNiYXoYe2Nmb29jYmFyZW5vbmNlTGxwbjHKcevt5dZ0Xg==
 	//
 	// Converted to DAG-JSON out:
 	//	[
 	//		{
 	//			"/": {
-	//				"bytes": "VpW67FJ+myNi+azvnw2jivuiqXTuMrDZI2Qdaa8jE1Oi3mkjnm7DyqSQGADcomcuDslMWKmJ+OIyvbPG5PtSAw"
+	//				"bytes": "TIXb2wnBByq/llaQ4RLoWTxheAwamCNo2sKL8SQJbq0EVRvdfUQDKNpuMVkvtyUR6tUdZlKv1BcXjfGEaF2XAA"
 	//			}
 	//		},
 	//		{
 	//			"h": {
 	//				"/": {
-	//					"bytes": "NO0BcQ"
+	//					"bytes": "NAHtAe0BE3E"
 	//				}
 	//			},
 	//			"ucan/dlg@1.0.0-rc.1": {
-	//				"aud": "did:key:z6MkvJPmEZZYbgiw1ouT1oouTsTFBHJSts9ophVsNgcRmYxU",
+	//				"aud": "did:key:z6Mkf4WtCwPDtamsZvBJA4eSVcE7vZuRPy5Skm4HaoQv81i1",
 	//				"cmd": "/foo/bar",
-	//				"exp": 1732568424,
-	//				"iss": "did:key:z6Mkuukk2skDXLQn7NK3Eh9jMndYfvDBxxktgpidJAqb7M3p",
+	//				"exp": 1753966461,
+	//				"iss": "did:key:z6MknUz1mSj4pvS6aUUHekCHdUPv7HBhDyDBZQ2W3Vujc5qC",
 	//				"meta": {
 	//					"baz": 123,
 	//					"foo": "bar"
 	//				},
-	//				"nbf": 1732564884,
+	//				"nbf": 1753962921,
 	//				"nonce": {
 	//					"/": {
-	//						"bytes": "wzDc03WBciJIGPWG"
+	//						"bytes": "bHBuMcpx6+3l1nRe"
 	//					}
 	//				},
 	//				"pol": [
@@ -235,7 +233,7 @@ func ExampleRoot() {
 	//						]
 	//					]
 	//				],
-	//				"sub": "did:key:z6Mkuukk2skDXLQn7NK3Eh9jMndYfvDBxxktgpidJAqb7M3p"
+	//				"sub": "did:key:z6MknUz1mSj4pvS6aUUHekCHdUPv7HBhDyDBZQ2W3Vujc5qC"
 	//			}
 	//		}
 	//	]
@@ -244,7 +242,7 @@ func ExampleRoot() {
 // The following example demonstrates how to get a delegation.Token from
 // a DAG-CBOR []byte.
 func ExampleFromSealed() {
-	const cborBase64 = "glhAmnAkgfjAx4SA5pzJmtaHRJtTGNpF1y6oqb4yhGoM2H2EUGbBYT4rVDjMKBgCjhdGHjipm00L8iR5SsQh3sIEBaJhaEQ07QFxc3VjYW4vZGxnQDEuMC4wLXJjLjGoY2F1ZHg4ZGlkOmtleTp6Nk1rcTVZbWJKY1RyUEV4TkRpMjZpbXJUQ3BLaGVwakJGQlNIcXJCRE4yQXJQa3ZjY21kaC9mb28vYmFyY2V4cPZjaXNzeDhkaWQ6a2V5Ono2TWtwem4ybjNaR1QyVmFxTUdTUUMzdHptelY0VFM5UzcxaUZzRFhFMVdub05IMmNwb2yDg2I9PWcuc3RhdHVzZWRyYWZ0g2NhbGxpLnJldmlld2Vyg2RsaWtlZi5lbWFpbG0qQGV4YW1wbGUuY29tg2NhbnllLnRhZ3OCYm9ygoNiPT1hLmRuZXdzg2I9PWEuZXByZXNzY3N1Yng4ZGlkOmtleTp6Nk1rdEExdUJkQ3BxNHVKQnFFOWpqTWlMeXhaQmc5YTZ4Z1BQS0pqTXFzczZaYzJkbWV0YaBlbm9uY2VMAAECAwQFBgcICQoL"
+	const cborBase64 = "glhACBuW/rjVKyBPUVPxexsafwBe7y84k0yzywq3hQW2rs2TNmWA5wexAQ+jTkSQ07zhmQRA/wytBfqWkx24+sjlD6JhaEg0Ae0B7QETcXN1Y2FuL2RsZ0AxLjAuMC1yYy4xp2NhdWR4OGRpZDprZXk6ejZNa2pXRlU4SHRmTXF1V241TUVROXIyMnpXcXlDTjF2YXpHdzZnNnB6Y2l6aU5WY2NtZGgvZm9vL2JhcmNleHD2Y2lzc3g4ZGlkOmtleTp6Nk1rZjRXdEN3UER0YW1zWnZCSkE0ZVNWY0U3dlp1UlB5NVNrbTRIYW9RdjgxaTFjcG9sg4NiPT1nLnN0YXR1c2VkcmFmdINjYWxsaS5yZXZpZXdlcoNkbGlrZWYuZW1haWxtKkBleGFtcGxlLmNvbYNjYW55ZS50YWdzgmJvcoKDYj09YS5kbmV3c4NiPT1hLmVwcmVzc2NzdWJ4OGRpZDprZXk6ejZNa25VejFtU2o0cHZTNmFVVUhla0NIZFVQdjdIQmhEeURCWlEyVzNWdWpjNXFDZW5vbmNlTDVJDkO3LVTKnhxKKw=="
 
 	cborBytes, err := base64.StdEncoding.DecodeString(cborBase64)
 	printThenPanicOnErr(err)
@@ -264,10 +262,10 @@ func ExampleFromSealed() {
 	fmt.Println("Expiration (exp):", tkn.Expiration())
 
 	// Output:
-	// CID (base58BTC): zdpuAw26pFuvZa2Z9YAtpZZnWN6VmnRFr7Z8LVY5c7RVWoxGY
-	// Issuer (iss): did:key:z6Mkpzn2n3ZGT2VaqMGSQC3tzmzV4TS9S71iFsDXE1WnoNH2
-	// Audience (aud): did:key:z6Mkq5YmbJcTrPExNDi26imrTCpKhepjBFBSHqrBDN2ArPkv
-	// Subject (sub): did:key:z6MktA1uBdCpq4uJBqE9jjMiLyxZBg9a6xgPPKJjMqss6Zc2
+	// CID (base58BTC): zdpuAsgmtmC849BEApGCJm2fTSzwtHiAqQnuJCMBBBCbFiadd
+	// Issuer (iss): did:key:z6Mkf4WtCwPDtamsZvBJA4eSVcE7vZuRPy5Skm4HaoQv81i1
+	// Audience (aud): did:key:z6MkjWFU8HtfMquWn5MEQ9r22zWqyCN1vazGw6g6pzciziNV
+	// Subject (sub): did:key:z6MknUz1mSj4pvS6aUUHekCHdUPv7HBhDyDBZQ2W3Vujc5qC
 	// Command (cmd): /foo/bar
 	// Policy (pol): [
 	//   ["==", ".status", "draft"],
@@ -281,7 +279,7 @@ func ExampleFromSealed() {
 	//     ]]
 	//   ]
 	// ]
-	// Nonce (nonce): 000102030405060708090a0b
+	// Nonce (nonce): 35490e43b72d54ca9e1c4a2b
 	// Meta (meta): {}
 	// NotBefore (nbf): <nil>
 	// Expiration (exp): <nil>

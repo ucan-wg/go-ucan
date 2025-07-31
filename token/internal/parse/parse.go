@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ucan-wg/go-ucan/did"
+	"github.com/MetaMask/go-did-it"
+
 	"github.com/ucan-wg/go-ucan/pkg/policy/limits"
 )
 
 func OptionalDID(s *string) (did.DID, error) {
 	if s == nil {
-		return did.Undef, nil
+		return nil, nil
 	}
 	return did.Parse(*s)
 }

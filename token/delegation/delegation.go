@@ -16,7 +16,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ucan-wg/go-ucan/did"
+	"github.com/MetaMask/go-did-it"
+
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/meta"
 	"github.com/ucan-wg/go-ucan/pkg/policy"
@@ -102,7 +103,7 @@ func Root(iss did.DID, aud did.DID, cmd command.Command, pol policy.Policy, opts
 //
 // You can read it as "(issuer) allows (audience) to perform (cmd+pol) on anything".
 func Powerline(iss did.DID, aud did.DID, cmd command.Command, pol policy.Policy, opts ...Option) (*Token, error) {
-	return New(iss, aud, cmd, pol, did.Undef, opts...)
+	return New(iss, aud, cmd, pol, nil, opts...)
 }
 
 // Issuer returns the did.DID representing the Token's issuer.
@@ -156,12 +157,12 @@ func (t *Token) Expiration() *time.Time {
 
 // IsRoot tells if the token is a root delegation.
 func (t *Token) IsRoot() bool {
-	return t.issuer == t.subject
+	return t.issuer.Equal(t.subject)
 }
 
 // IsPowerline tells if the token is a powerline delegation.
 func (t *Token) IsPowerline() bool {
-	return t.subject == did.Undef
+	return t.subject == nil
 }
 
 // IsValidNow verifies that the token can be used at the current time, based on expiration or "not before" fields.
@@ -189,7 +190,7 @@ func (t *Token) String() string {
 	switch {
 	case t.issuer == t.subject:
 		kind = " (root delegation)"
-	case t.subject == did.Undef:
+	case t.subject == nil:
 		kind = " (powerline delegation)"
 	default:
 		kind = " (normal delegation)"
@@ -212,7 +213,7 @@ func (t *Token) validate() error {
 	var errs error
 
 	requiredDID := func(id did.DID, fieldname string) {
-		if !id.Defined() {
+		if id == nil {
 			errs = errors.Join(errs, fmt.Errorf(`a valid did is required for %s: %s`, fieldname, id.String()))
 		}
 	}

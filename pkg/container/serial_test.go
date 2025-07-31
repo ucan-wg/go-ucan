@@ -9,11 +9,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/MetaMask/go-did-it"
+	"github.com/MetaMask/go-did-it/controller/did-key"
+	"github.com/MetaMask/go-did-it/crypto/ed25519"
 	"github.com/ipfs/go-cid"
-	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/stretchr/testify/require"
 
-	"github.com/ucan-wg/go-ucan/did"
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/policy"
 	"github.com/ucan-wg/go-ucan/pkg/policy/literal"
@@ -172,15 +173,12 @@ func BenchmarkContainerSerialisation(b *testing.B) {
 	}
 }
 
-func randDID() (crypto.PrivKey, did.DID) {
-	privKey, _, err := crypto.GenerateEd25519Key(rand.Reader)
+func randDID() (ed25519.PrivateKey, did.DID) {
+	_, privKey, err := ed25519.GenerateKeyPair()
 	if err != nil {
 		panic(err)
 	}
-	d, err := did.FromPrivKey(privKey)
-	if err != nil {
-		panic(err)
-	}
+	d := didkeyctl.FromPrivateKey(privKey)
 	return privKey, d
 }
 
