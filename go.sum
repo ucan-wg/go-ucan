@@ -1,6 +1,6 @@
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
-github.com/MetaMask/go-did-it v0.0.0-20250730165819-a7ebe989e01b h1:5whMOaNgR+pkjdfk5Vvj8m5WYQRkfCHzO0ZI0Vu+jpw=
-github.com/MetaMask/go-did-it v0.0.0-20250730165819-a7ebe989e01b/go.mod h1:82WNXsHTCp5ZXmBokhCwInrNaQYeIZsS7SnvwQwVaTo=
+github.com/MetaMask/go-did-it v1.0.0-pre1 h1:NTGAC7z52TwFegEF7c+csUr/6Al1nAo6ValAAxOsjto=
+github.com/MetaMask/go-did-it v1.0.0-pre1/go.mod h1:7m9syDnXFTg5GmUEcydpO4Rs3eYT4McFH7vCw5fp3A4=
 github.com/cpuguy83/go-md2man/v2 v2.0.0-20190314233015-f79a8a8ca69d/go.mod h1:maD7wRr/U5Z6m/iR4s+kqSMx2CaBsrgA7czyZG/E6dU=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
@@ -59,8 +59,8 @@ github.com/spaolacci/murmur3 v1.1.0 h1:7c1g84S4BPRrfL5Xrdp6fOJ206sU9y293DDHaoy0b
 github.com/spaolacci/murmur3 v1.1.0/go.mod h1:JwIasOWyU6f++ZhiEuf87xNszmSA2myDM2Kzu9HwQUA=
 github.com/stretchr/testify v1.10.0 h1:Xv5erBjTwe/5IxqUQTdXv5kgmIvbHo3QQyRwhJsOfJA=
 github.com/stretchr/testify v1.10.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY=
-github.com/ucan-wg/go-varsig v1.0.0-pre6 h1:go023KQG4fGaLskEUpn7Ftqg3PvW4iO2HaeWEjwIH+k=
-github.com/ucan-wg/go-varsig v1.0.0-pre6/go.mod h1:Sakln6IPooDPH+ClQ0VvR09TuwUhHcfLqcPiPkMZGh0=
+github.com/ucan-wg/go-varsig v1.0.0 h1:Hrc437Zg+B5Eoajg+qZQZI3Q3ocPyjlnp3/Bz9ZnlWw=
+github.com/ucan-wg/go-varsig v1.0.0/go.mod h1:Sakln6IPooDPH+ClQ0VvR09TuwUhHcfLqcPiPkMZGh0=
 github.com/urfave/cli v1.22.10/go.mod h1:Gos4lmkARVdJ6EkW0WaNv/tZAAMe9V7XWyB60NtXRu0=
 github.com/warpfork/go-wish v0.0.0-20220906213052-39a1cc7a02d0 h1:GDDkbFiaK8jsSDJfjId/PEGEShv6ugrt4kYsC5UIDaQ=
 github.com/warpfork/go-wish v0.0.0-20220906213052-39a1cc7a02d0/go.mod h1:x6AKhvSSexNrVSrViXSHUEbICjmGXhtgABaHIySUSGw=

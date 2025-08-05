@@ -15,7 +15,7 @@ type Token interface {
 	// IsValidNow verifies that the token can be used at the current time, based on expiration or "not before" fields.
 	// This does NOT do any other kind of verifications.
 	IsValidNow() bool
-	// IsValidNow verifies that the token can be used at the given time, based on expiration or "not before" fields.
+	// IsValidAt verifies that the token can be used at the given time, based on expiration or "not before" fields.
 	// This does NOT do any other kind of verifications.
 	IsValidAt(t time.Time) bool
 }

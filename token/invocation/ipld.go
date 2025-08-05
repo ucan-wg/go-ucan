@@ -122,7 +122,7 @@ func (t *Token) ToDagJsonWriter(w io.Writer, privKey crypto.PrivateKeySigningByt
 // Decode unmarshals the input data using the format specified by the
 // provided codec.Decoder into a Token.
 //
-// An error is returned if the conversion fails, or if the resulting
+// An error is returned if the conversion fails or if the resulting
 // Token is invalid.
 func Decode(b []byte, decFn codec.Decoder, resolvOpts ...did.ResolutionOption) (*Token, error) {
 	node, err := ipld.Decode(b, decFn)
@@ -143,7 +143,7 @@ func DecodeReader(r io.Reader, decFn codec.Decoder, resolvOpts ...did.Resolution
 
 // FromDagCbor unmarshals the input data into a Token.
 //
-// An error is returned if the conversion fails, or if the resulting
+// An error is returned if the conversion fails or if the resulting
 // Token is invalid.
 func FromDagCbor(data []byte, resolvOpts ...did.ResolutionOption) (*Token, error) {
 	pay, err := envelope.FromDagCbor[*tokenPayloadModel](data, resolvOpts...)
@@ -166,7 +166,7 @@ func FromDagCborReader(r io.Reader, resolvOpts ...did.ResolutionOption) (*Token,
 
 // FromDagJson unmarshals the input data into a Token.
 //
-// An error is returned if the conversion fails, or if the resulting
+// An error is returned if the conversion fails or if the resulting
 // Token is invalid.
 func FromDagJson(data []byte, resolvOpts ...did.ResolutionOption) (*Token, error) {
 	return Decode(data, dagjson.Decode, resolvOpts...)
