@@ -9,7 +9,6 @@ import (
 	"github.com/multiformats/go-multihash"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gotest.tools/v3/golden"
 
 	"github.com/ucan-wg/go-ucan/token/internal/envelope"
 )
@@ -17,11 +16,11 @@ import (
 func TestCidFromBytes(t *testing.T) {
 	t.Parallel()
 
-	expData := golden.Get(t, "example.dagcbor")
+	expData := exampleDagCbor
 	expHash, err := multihash.Sum(expData, uint64(multicodec.Sha2_256), -1)
 	require.NoError(t, err)
 
-	data, err := envelope.ToDagCbor(examplePrivKey(t), newExample(t))
+	data, err := envelope.ToDagCbor(examplePrivKey(t), newExample())
 	require.NoError(t, err)
 
 	id, err := envelope.CIDFromBytes(data)

@@ -4,20 +4,23 @@
 package didtest
 
 import (
+	"encoding/base64"
 	"fmt"
 
-	"github.com/libp2p/go-libp2p/core/crypto"
-
-	"github.com/ucan-wg/go-ucan/did"
+	"github.com/MetaMask/go-did-it"
+	didkeyctl "github.com/MetaMask/go-did-it/controller/did-key"
+	"github.com/MetaMask/go-did-it/crypto"
+	"github.com/MetaMask/go-did-it/crypto/ed25519"
 )
 
 const (
-	alicePrivKeyB64 = "CAESQHdNJLBBiuc1AdwPHBkubB2KS1p0cv2JEF7m8tfwtrcm5ajaYPm+XmVCmtcHOF2lGDlmaiDA7emfwD3IrcyES0M="
-	bobPrivKeyB64   = "CAESQHBz+AIop1g+9iBDj+ufUc/zm9/ry7c6kDFO8Wl/D0+H63V9hC6s9l4npf3pYEFCjBtlR0AMNWMoFQKSlYNKo20="
-	carolPrivKeyB64 = "CAESQPrCgkcHnYFXDT9AlAydhPECBEivEuuVx9dJxLjVvDTmJIVNivfzg6H4mAiPfYS+5ryVVUZTHZBzvMuvvvG/Ks0="
-	danPrivKeyB64   = "CAESQCgNhzofKhC+7hW6x+fNd7iMPtQHeEmKRhhlduf/I7/TeOEFYAEflbJ0sAhMeDJ/HQXaAvsWgHEbJ3ZLhP8q2B0="
-	erinPrivKeyB64  = "CAESQKhCJo5UBpQcthko8DKMFsbdZ+qqQ5oc01CtLCqrE90dF2GfRlrMmot3WPHiHGCmEYi5ZMEHuiSI095e/6O4Bpw="
-	frankPrivKeyB64 = "CAESQDlXPKsy3jHh7OWTWQqyZF95Ueac5DKo7xD0NOBE5F2BNr1ZVxRmJ2dBELbOt8KP9sOACcO9qlCB7uMA1UQc7sk="
+	// all are ed25519 as base64
+	alicePrivKeyB64 = "zth/9cTSUVwlLzfEWwLCcOkaEmjrRGPOI6mOJksWAYZ3Toe7ymxAzDeiseyxbmEpJ81qYM3dZ8XrXqgonnTTEw=="
+	bobPrivKeyB64   = "+p1REV3MkUnLhUMbFe9RcSsmo33TT/FO85yaV+c6fiYJCBsdiwfMwodlkzSAG3sHQIuZj8qnJ678oJucYy7WEg=="
+	carolPrivKeyB64 = "aSu3vTwE7z3pXaTaAhVLeizuqnZUJZQHTCSLMLxyZh5LDoZQn80uoQgMEdsbOhR+zIqrjBn5WviGurDkKYVfug=="
+	danPrivKeyB64   = "s1zM1av6og3o0UMNbEs/RyezS7Nk/jbSYL2Z+xPEw9Cho/KuEAa75Sf4yJHclLwpKXNucbrZ2scE8Iy8K05KWQ=="
+	erinPrivKeyB64  = "+qHpaAR3iivWMEl+pkXmq+uJeHtqFiY++XOXtZ9Tu/WPABCO+eRFrTCLJykJEzAPGFmkJF8HQ7DMwOH7Ry3Aqw=="
+	frankPrivKeyB64 = "4k/1N0+Fq73DxmNbGis9PY2KgKxWmtDWhmi1E6sBLuGd7DS0TWjCn1Xa3lXkY49mFszMjhWC+V6DCBf7R68u4Q=="
 )
 
 // Persona is a generic participant used for cryptographic testing.
@@ -36,17 +39,17 @@ const (
 	PersonaFrank
 )
 
-var privKeys map[Persona]crypto.PrivKey
+var privKeys map[Persona]crypto.PrivateKeySigningBytes
 
 func init() {
-	privKeys = make(map[Persona]crypto.PrivKey, 6)
-	for persona, privKeyCfg := range privKeyB64() {
-		privKeyMar, err := crypto.ConfigDecodeKey(privKeyCfg)
+	privKeys = make(map[Persona]crypto.PrivateKeySigningBytes, 6)
+	for persona, pB64 := range privKeyB64() {
+		privBytes, err := base64.StdEncoding.DecodeString(pB64)
 		if err != nil {
 			return
 		}
 
-		privKey, err := crypto.UnmarshalPrivateKey(privKeyMar)
+		privKey, err := ed25519.PrivateKeyFromBytes(privBytes)
 		if err != nil {
 			return
 		}
@@ -57,11 +60,7 @@ func init() {
 
 // DID returns a did.DID based on the Persona's Ed25519 public key.
 func (p Persona) DID() did.DID {
-	d, err := did.FromPrivKey(p.PrivKey())
-	if err != nil {
-		panic(err)
-	}
-	return d
+	return didkeyctl.FromPrivateKey(p.PrivKey())
 }
 
 // Name returns the username of the Persona.
@@ -82,7 +81,7 @@ func (p Persona) Name() string {
 }
 
 // PrivKey returns the Ed25519 private key for the Persona.
-func (p Persona) PrivKey() crypto.PrivKey {
+func (p Persona) PrivKey() crypto.PrivateKeySigningBytes {
 	res, ok := privKeys[p]
 	if !ok {
 		panic(fmt.Sprintf("Unknown persona: %v", p))
@@ -99,18 +98,8 @@ func (p Persona) PrivKeyConfig() string {
 }
 
 // PubKey returns the Ed25519 public key for the Persona.
-func (p Persona) PubKey() crypto.PubKey {
-	return p.PrivKey().GetPublic()
-}
-
-// PubKeyConfig returns the marshaled and encoded Ed25519 public key
-// for the Persona.
-func (p Persona) PubKeyConfig() string {
-	pubKeyMar, err := crypto.MarshalPublicKey(p.PrivKey().GetPublic())
-	if err != nil {
-		panic(err)
-	}
-	return crypto.ConfigEncodeKey(pubKeyMar)
+func (p Persona) PubKey() crypto.PublicKey {
+	return p.PrivKey().Public()
 }
 
 func privKeyB64() map[Persona]string {

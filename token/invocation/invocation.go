@@ -14,9 +14,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/MetaMask/go-did-it"
 	"github.com/ipfs/go-cid"
 
-	"github.com/ucan-wg/go-ucan/did"
 	"github.com/ucan-wg/go-ucan/pkg/args"
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/meta"
@@ -169,7 +169,7 @@ func (t *Token) Arguments() args.ReadOnly {
 	return t.arguments.ReadOnly()
 }
 
-// Proof() returns the ordered list of cid.Cid which reference the
+// Proof returns the ordered list of cid.Cid which reference the
 // delegation Tokens that authorize this invocation.
 // Ordering is from the leaf Delegation (with aud matching the invocation's iss)
 // to the root delegation.
@@ -210,7 +210,7 @@ func (t *Token) IsValidNow() bool {
 	return t.IsValidAt(time.Now())
 }
 
-// IsValidNow verifies that the token can be used at the given time, based on expiration or "not before" fields.
+// IsValidAt verifies that the token can be used at the given time, based on expiration or "not before" fields.
 // This does NOT do any other kind of verifications.
 func (t *Token) IsValidAt(ti time.Time) bool {
 	if t.expiration != nil && ti.After(*t.expiration) {
@@ -241,7 +241,7 @@ func (t *Token) validate() error {
 	var errs error
 
 	requiredDID := func(id did.DID, fieldname string) {
-		if !id.Defined() {
+		if id == nil {
 			errs = errors.Join(errs, fmt.Errorf(`a valid did is required for %s: %s`, fieldname, id.String()))
 		}
 	}

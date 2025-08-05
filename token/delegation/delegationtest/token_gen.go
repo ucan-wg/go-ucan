@@ -9,161 +9,161 @@ import (
 )
 
 var (
-	TokenAliceBobCID    = cid.MustParse("bafyreicidrwvmac5lvjypucgityrtjsknojraio7ujjli4r5eyby66wjzm")
+	TokenAliceBobCID    = cid.MustParse("bafyreifa35rjstdm37cjudzs72ab22rnh5blny725khtapox63fnsj6pbe")
 	TokenAliceBobSealed = mustGetBundle(TokenAliceBobCID).Sealed
 	TokenAliceBobBundle = mustGetBundle(TokenAliceBobCID)
 	TokenAliceBob       = mustGetBundle(TokenAliceBobCID).Decoded
 )
 
 var (
-	TokenBobCarolCID    = cid.MustParse("bafyreihxv2uhq43oxllzs2xfvxst7wtvvvl7pohb2chcz6hjvfv2ntea5u")
+	TokenBobCarolCID    = cid.MustParse("bafyreiaysaafvfplhjsjywaqfletlr2sziui3sekkczwp2srszdoezwc7u")
 	TokenBobCarolSealed = mustGetBundle(TokenBobCarolCID).Sealed
 	TokenBobCarolBundle = mustGetBundle(TokenBobCarolCID)
 	TokenBobCarol       = mustGetBundle(TokenBobCarolCID).Decoded
 )
 
 var (
-	TokenCarolDanCID    = cid.MustParse("bafyreihclsgiroazq3heqdswvj2cafwqbpboicq7immo65scl7ahktpsdq")
+	TokenCarolDanCID    = cid.MustParse("bafyreibwpzxcvrere7g5riv3dhza4xibrvulxcvj2nwxu6ozp572o2sbfa")
 	TokenCarolDanSealed = mustGetBundle(TokenCarolDanCID).Sealed
 	TokenCarolDanBundle = mustGetBundle(TokenCarolDanCID)
 	TokenCarolDan       = mustGetBundle(TokenCarolDanCID).Decoded
 )
 
 var (
-	TokenDanErinCID    = cid.MustParse("bafyreicja6ihewy64p3ake56xukotafjlkh4uqep2qhj52en46zzfwby3e")
+	TokenDanErinCID    = cid.MustParse("bafyreichxodkcokcbvomxhmlf3g3j3zokruxvca63itynf7ib3hsmi4hla")
 	TokenDanErinSealed = mustGetBundle(TokenDanErinCID).Sealed
 	TokenDanErinBundle = mustGetBundle(TokenDanErinCID)
 	TokenDanErin       = mustGetBundle(TokenDanErinCID).Decoded
 )
 
 var (
-	TokenErinFrankCID    = cid.MustParse("bafyreicjlx3lobxm6hl5s4htd4ydwkkqeiou6rft4rnvulfdyoew565vka")
+	TokenErinFrankCID    = cid.MustParse("bafyreigg434khwxqyfasnk63pi542uwtbrlpfd5sgjfrddqqcba3tardlu")
 	TokenErinFrankSealed = mustGetBundle(TokenErinFrankCID).Sealed
 	TokenErinFrankBundle = mustGetBundle(TokenErinFrankCID)
 	TokenErinFrank       = mustGetBundle(TokenErinFrankCID).Decoded
 )
 
 var (
-	TokenCarolDan_InvalidExpandedCommandCID    = cid.MustParse("bafyreid3m3pk53gqgp5rlzqhvpedbwsqbidqlp4yz64vknwbzj7bxrmsr4")
+	TokenCarolDan_InvalidExpandedCommandCID    = cid.MustParse("bafyreifxdve23izhlg7fhzqh32i6wxtw33rqidm3cb72pghxlovnensjwe")
 	TokenCarolDan_InvalidExpandedCommandSealed = mustGetBundle(TokenCarolDan_InvalidExpandedCommandCID).Sealed
 	TokenCarolDan_InvalidExpandedCommandBundle = mustGetBundle(TokenCarolDan_InvalidExpandedCommandCID)
 	TokenCarolDan_InvalidExpandedCommand       = mustGetBundle(TokenCarolDan_InvalidExpandedCommandCID).Decoded
 )
 
 var (
-	TokenDanErin_InvalidExpandedCommandCID    = cid.MustParse("bafyreifn4sy5onwajx3kqvot5mib6m6xarzrqjozqbzgmzpmc5ox3g2uzm")
+	TokenDanErin_InvalidExpandedCommandCID    = cid.MustParse("bafyreieblevkqh2xnbr4x5mosvwv7rboat7ip6ucqvefb2pomrb4qjg4wu")
 	TokenDanErin_InvalidExpandedCommandSealed = mustGetBundle(TokenDanErin_InvalidExpandedCommandCID).Sealed
 	TokenDanErin_InvalidExpandedCommandBundle = mustGetBundle(TokenDanErin_InvalidExpandedCommandCID)
 	TokenDanErin_InvalidExpandedCommand       = mustGetBundle(TokenDanErin_InvalidExpandedCommandCID).Decoded
 )
 
 var (
-	TokenErinFrank_InvalidExpandedCommandCID    = cid.MustParse("bafyreidmpgd36jznmq42bs34o4qi3fcbrsh4idkg6ejahudejzwb76fwxe")
+	TokenErinFrank_InvalidExpandedCommandCID    = cid.MustParse("bafyreia2ckukamhpeqpcdhevr75ym66vqem432dx4dwbdrdkh63pke3r3i")
 	TokenErinFrank_InvalidExpandedCommandSealed = mustGetBundle(TokenErinFrank_InvalidExpandedCommandCID).Sealed
 	TokenErinFrank_InvalidExpandedCommandBundle = mustGetBundle(TokenErinFrank_InvalidExpandedCommandCID)
 	TokenErinFrank_InvalidExpandedCommand       = mustGetBundle(TokenErinFrank_InvalidExpandedCommandCID).Decoded
 )
 
 var (
-	TokenCarolDan_ValidAttenuatedCommandCID    = cid.MustParse("bafyreiekhtm237vyapk3c6voeb5lnz54crebqdqi3x4wn4u4cbrrhzsqfe")
+	TokenCarolDan_ValidAttenuatedCommandCID    = cid.MustParse("bafyreibftsq3mhjd5itg6jbos4doccwspvmnilpuduniv2el7mnl45z33y")
 	TokenCarolDan_ValidAttenuatedCommandSealed = mustGetBundle(TokenCarolDan_ValidAttenuatedCommandCID).Sealed
 	TokenCarolDan_ValidAttenuatedCommandBundle = mustGetBundle(TokenCarolDan_ValidAttenuatedCommandCID)
 	TokenCarolDan_ValidAttenuatedCommand       = mustGetBundle(TokenCarolDan_ValidAttenuatedCommandCID).Decoded
 )
 
 var (
-	TokenDanErin_ValidAttenuatedCommandCID    = cid.MustParse("bafyreicrvzqferyy7rgo75l5rn6r2nl7zyeexxjmu3dm4ff7rn2coblj4y")
+	TokenDanErin_ValidAttenuatedCommandCID    = cid.MustParse("bafyreig5gsifqn3afnyaoqtjhnud2w7tnrda57eiel3d45vbp47hjyayey")
 	TokenDanErin_ValidAttenuatedCommandSealed = mustGetBundle(TokenDanErin_ValidAttenuatedCommandCID).Sealed
 	TokenDanErin_ValidAttenuatedCommandBundle = mustGetBundle(TokenDanErin_ValidAttenuatedCommandCID)
 	TokenDanErin_ValidAttenuatedCommand       = mustGetBundle(TokenDanErin_ValidAttenuatedCommandCID).Decoded
 )
 
 var (
-	TokenErinFrank_ValidAttenuatedCommandCID    = cid.MustParse("bafyreie6fhspk53kplcc2phla3e7z7fzldlbmmpuwk6nbow5q6s2zjmw2q")
+	TokenErinFrank_ValidAttenuatedCommandCID    = cid.MustParse("bafyreiex2qyrw3xmye4fk5wdf6ukea3ojbokq77k6y566hupj6cicszi3e")
 	TokenErinFrank_ValidAttenuatedCommandSealed = mustGetBundle(TokenErinFrank_ValidAttenuatedCommandCID).Sealed
 	TokenErinFrank_ValidAttenuatedCommandBundle = mustGetBundle(TokenErinFrank_ValidAttenuatedCommandCID)
 	TokenErinFrank_ValidAttenuatedCommand       = mustGetBundle(TokenErinFrank_ValidAttenuatedCommandCID).Decoded
 )
 
 var (
-	TokenCarolDan_InvalidSubjectCID    = cid.MustParse("bafyreifgksz6756if42tnc6rqsnbaa2u3fdrveo7ek44lnj2d64d5sw26u")
+	TokenCarolDan_InvalidSubjectCID    = cid.MustParse("bafyreie7snyknubaeh4ruig7wxvos54b7skmwsnegf6k23bsffs5btbiiq")
 	TokenCarolDan_InvalidSubjectSealed = mustGetBundle(TokenCarolDan_InvalidSubjectCID).Sealed
 	TokenCarolDan_InvalidSubjectBundle = mustGetBundle(TokenCarolDan_InvalidSubjectCID)
 	TokenCarolDan_InvalidSubject       = mustGetBundle(TokenCarolDan_InvalidSubjectCID).Decoded
 )
 
 var (
-	TokenDanErin_InvalidSubjectCID    = cid.MustParse("bafyreibdwew5nypsxrm4fq73wu6hw3lgwwiolj3bi33xdrbgcf3ogm6fty")
+	TokenDanErin_InvalidSubjectCID    = cid.MustParse("bafyreicrfmlw4nqqk5t7j6r7ct3c7jlxeasyetb6fq3556vmtihcnbi54i")
 	TokenDanErin_InvalidSubjectSealed = mustGetBundle(TokenDanErin_InvalidSubjectCID).Sealed
 	TokenDanErin_InvalidSubjectBundle = mustGetBundle(TokenDanErin_InvalidSubjectCID)
 	TokenDanErin_InvalidSubject       = mustGetBundle(TokenDanErin_InvalidSubjectCID).Decoded
 )
 
 var (
-	TokenErinFrank_InvalidSubjectCID    = cid.MustParse("bafyreicr364mj3n7x4iyhcksxypelktcqkkw3ptg7ggxtqegw3p3mr6zc4")
+	TokenErinFrank_InvalidSubjectCID    = cid.MustParse("bafyreietx2sjsm72sbgjnosdnejwlqc5dadlolh2bjl6ifxdllslup7ecm")
 	TokenErinFrank_InvalidSubjectSealed = mustGetBundle(TokenErinFrank_InvalidSubjectCID).Sealed
 	TokenErinFrank_InvalidSubjectBundle = mustGetBundle(TokenErinFrank_InvalidSubjectCID)
 	TokenErinFrank_InvalidSubject       = mustGetBundle(TokenErinFrank_InvalidSubjectCID).Decoded
 )
 
 var (
-	TokenCarolDan_InvalidExpiredCID    = cid.MustParse("bafyreifyzm5jkx2sfu5awyndg3dn5zlg7sq5hssgfatafk62kiiilapnqe")
+	TokenCarolDan_InvalidExpiredCID    = cid.MustParse("bafyreifhdiem6r5fh3wwaa6uszqe5uashfwaastqjyvzssbiju4mravx3y")
 	TokenCarolDan_InvalidExpiredSealed = mustGetBundle(TokenCarolDan_InvalidExpiredCID).Sealed
 	TokenCarolDan_InvalidExpiredBundle = mustGetBundle(TokenCarolDan_InvalidExpiredCID)
 	TokenCarolDan_InvalidExpired       = mustGetBundle(TokenCarolDan_InvalidExpiredCID).Decoded
 )
 
 var (
-	TokenDanErin_InvalidExpiredCID    = cid.MustParse("bafyreihhnisabmkofuk3qaw37leijxqjaz5or6v2cufjxwzdkvuvv2dzbq")
+	TokenDanErin_InvalidExpiredCID    = cid.MustParse("bafyreiff7fqutstzz2ep5gzs2mqnt4rka7ezscrzpijyc4jjeopqm7oxxq")
 	TokenDanErin_InvalidExpiredSealed = mustGetBundle(TokenDanErin_InvalidExpiredCID).Sealed
 	TokenDanErin_InvalidExpiredBundle = mustGetBundle(TokenDanErin_InvalidExpiredCID)
 	TokenDanErin_InvalidExpired       = mustGetBundle(TokenDanErin_InvalidExpiredCID).Decoded
 )
 
 var (
-	TokenErinFrank_InvalidExpiredCID    = cid.MustParse("bafyreigeokaziviwm5kzmkpwesj3gta5k7zrd62x4a746fnrnkhvatwbna")
+	TokenErinFrank_InvalidExpiredCID    = cid.MustParse("bafyreigxfwcynzsy4v4po36s3mz5nf6mg4kpptw6rpld3sc3c3mthq4noa")
 	TokenErinFrank_InvalidExpiredSealed = mustGetBundle(TokenErinFrank_InvalidExpiredCID).Sealed
 	TokenErinFrank_InvalidExpiredBundle = mustGetBundle(TokenErinFrank_InvalidExpiredCID)
 	TokenErinFrank_InvalidExpired       = mustGetBundle(TokenErinFrank_InvalidExpiredCID).Decoded
 )
 
 var (
-	TokenCarolDan_InvalidInactiveCID    = cid.MustParse("bafyreicea5y2nvlitvxijkupeavtg23i7ktjk3uejnaquguurzptiabk4u")
+	TokenCarolDan_InvalidInactiveCID    = cid.MustParse("bafyreifw4j2mxg4bovuhihvnhqgln7m57lvajt6fza4x4jc7sncyh66wxm")
 	TokenCarolDan_InvalidInactiveSealed = mustGetBundle(TokenCarolDan_InvalidInactiveCID).Sealed
 	TokenCarolDan_InvalidInactiveBundle = mustGetBundle(TokenCarolDan_InvalidInactiveCID)
 	TokenCarolDan_InvalidInactive       = mustGetBundle(TokenCarolDan_InvalidInactiveCID).Decoded
 )
 
 var (
-	TokenDanErin_InvalidInactiveCID    = cid.MustParse("bafyreifsgqzkmxj2vexuts3z766mwcjreiisjg2jykyzf7tbj5sclutpvq")
+	TokenDanErin_InvalidInactiveCID    = cid.MustParse("bafyreigrrfefw4wvjitiheonigeldnem2loo4yp5cghdskteunuxyozkiq")
 	TokenDanErin_InvalidInactiveSealed = mustGetBundle(TokenDanErin_InvalidInactiveCID).Sealed
 	TokenDanErin_InvalidInactiveBundle = mustGetBundle(TokenDanErin_InvalidInactiveCID)
 	TokenDanErin_InvalidInactive       = mustGetBundle(TokenDanErin_InvalidInactiveCID).Decoded
 )
 
 var (
-	TokenErinFrank_InvalidInactiveCID    = cid.MustParse("bafyreifbfegon24c6dndiqyktahzs65vhyasrygbw7nhsvojn6distsdre")
+	TokenErinFrank_InvalidInactiveCID    = cid.MustParse("bafyreicdlvnc7iinl2eay3xc3yvtmwezifvfxywjud3defssstusngt6du")
 	TokenErinFrank_InvalidInactiveSealed = mustGetBundle(TokenErinFrank_InvalidInactiveCID).Sealed
 	TokenErinFrank_InvalidInactiveBundle = mustGetBundle(TokenErinFrank_InvalidInactiveCID)
 	TokenErinFrank_InvalidInactive       = mustGetBundle(TokenErinFrank_InvalidInactiveCID).Decoded
 )
 
 var (
-	TokenCarolDan_ValidExamplePolicyCID    = cid.MustParse("bafyreibtfrp2njnkjrcuhxd4ebaecmpcql5knek2h2j2fjzu2sij2tv6ei")
+	TokenCarolDan_ValidExamplePolicyCID    = cid.MustParse("bafyreidvi5y42befcnb2qud23yt5memf4itn2v6xmw7gvdpihbnanvgqly")
 	TokenCarolDan_ValidExamplePolicySealed = mustGetBundle(TokenCarolDan_ValidExamplePolicyCID).Sealed
 	TokenCarolDan_ValidExamplePolicyBundle = mustGetBundle(TokenCarolDan_ValidExamplePolicyCID)
 	TokenCarolDan_ValidExamplePolicy       = mustGetBundle(TokenCarolDan_ValidExamplePolicyCID).Decoded
 )
 
 var (
-	TokenDanErin_ValidExamplePolicyCID    = cid.MustParse("bafyreidxfwbkzujpu7ivulkc7b6ff4cpbzrkeklmxqvyhhmkmym5b45e2e")
+	TokenDanErin_ValidExamplePolicyCID    = cid.MustParse("bafyreid3mr53fjsntyyfbbzjx2n32d7atj3v4ztfufdkamrodm6kcjww64")
 	TokenDanErin_ValidExamplePolicySealed = mustGetBundle(TokenDanErin_ValidExamplePolicyCID).Sealed
 	TokenDanErin_ValidExamplePolicyBundle = mustGetBundle(TokenDanErin_ValidExamplePolicyCID)
 	TokenDanErin_ValidExamplePolicy       = mustGetBundle(TokenDanErin_ValidExamplePolicyCID).Decoded
 )
 
 var (
-	TokenErinFrank_ValidExamplePolicyCID    = cid.MustParse("bafyreiatkvtvgakqcrdk6vgrv7tbq5rbeiqct52ep4plcftp2agffjyvp4")
+	TokenErinFrank_ValidExamplePolicyCID    = cid.MustParse("bafyreiegytubdwqnl3gd7dddfmqhr4kyo4sb5446kjyqvvolk2wmwum6ae")
 	TokenErinFrank_ValidExamplePolicySealed = mustGetBundle(TokenErinFrank_ValidExamplePolicyCID).Sealed
 	TokenErinFrank_ValidExamplePolicyBundle = mustGetBundle(TokenErinFrank_ValidExamplePolicyCID)
 	TokenErinFrank_ValidExamplePolicy       = mustGetBundle(TokenErinFrank_ValidExamplePolicyCID).Decoded

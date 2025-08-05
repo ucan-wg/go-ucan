@@ -3,7 +3,7 @@
 // a verified [TokenPayload].
 //
 // Encoding functions in this package require a private key as a
-// parameter so the VarsigHeader can be set and so that a
+// parameter so the VarsigBytes can be set and so that a
 // cryptographic signature can be generated.
 //
 // Decoding functions in this package likewise perform the signature
@@ -40,10 +40,10 @@ import (
 	"github.com/ipld/go-ipld-prime/node/basicnode"
 	"github.com/ipld/go-ipld-prime/node/bindnode"
 	"github.com/ipld/go-ipld-prime/schema"
-	"github.com/libp2p/go-libp2p/core/crypto"
+	"github.com/ucan-wg/go-varsig"
 
-	"github.com/ucan-wg/go-ucan/did"
-	"github.com/ucan-wg/go-ucan/token/internal/varsig"
+	"github.com/MetaMask/go-did-it"
+	"github.com/MetaMask/go-did-it/crypto"
 )
 
 const (
@@ -70,56 +70,56 @@ type Tokener interface {
 //
 // An error is returned if the conversion fails, or if the resulting
 // Tokener is invalid.
-func Decode[T Tokener](b []byte, decFn codec.Decoder) (T, error) {
+func Decode[T Tokener](b []byte, decFn codec.Decoder, resolvOpts ...did.ResolutionOption) (T, error) {
 	node, err := ipld.Decode(b, decFn)
 	if err != nil {
 		return *new(T), err
 	}
 
-	return FromIPLD[T](node)
+	return FromIPLD[T](node, resolvOpts...)
 }
 
 // DecodeReader is the same as Decode, but accept an io.Reader.
-func DecodeReader[T Tokener](r io.Reader, decFn codec.Decoder) (T, error) {
+func DecodeReader[T Tokener](r io.Reader, decFn codec.Decoder, resolvOpts ...did.ResolutionOption) (T, error) {
 	node, err := ipld.DecodeStreaming(r, decFn)
 	if err != nil {
 		return *new(T), err
 	}
 
-	return FromIPLD[T](node)
+	return FromIPLD[T](node, resolvOpts...)
 }
 
 // FromDagCbor unmarshals the input data into a Tokener.
 //
 // An error is returned if the conversion fails, or if the resulting
 // Tokener is invalid.
-func FromDagCbor[T Tokener](b []byte) (T, error) {
-	return Decode[T](b, dagcbor.Decode)
+func FromDagCbor[T Tokener](b []byte, resolvOpts ...did.ResolutionOption) (T, error) {
+	return Decode[T](b, dagcbor.Decode, resolvOpts...)
 }
 
 // FromDagCborReader is the same as FromDagCbor, but accept an io.Reader.
-func FromDagCborReader[T Tokener](r io.Reader) (T, error) {
-	return DecodeReader[T](r, dagcbor.Decode)
+func FromDagCborReader[T Tokener](r io.Reader, resolvOpts ...did.ResolutionOption) (T, error) {
+	return DecodeReader[T](r, dagcbor.Decode, resolvOpts...)
 }
 
 // FromDagJson unmarshals the input data into a Tokener.
 //
 // An error is returned if the conversion fails, or if the resulting
 // Tokener is invalid.
-func FromDagJson[T Tokener](b []byte) (T, error) {
-	return Decode[T](b, dagjson.Decode)
+func FromDagJson[T Tokener](b []byte, resolvOpts ...did.ResolutionOption) (T, error) {
+	return Decode[T](b, dagjson.Decode, resolvOpts...)
 }
 
 // FromDagJsonReader is the same as FromDagJson, but accept an io.Reader.
-func FromDagJsonReader[T Tokener](r io.Reader) (T, error) {
-	return DecodeReader[T](r, dagjson.Decode)
+func FromDagJsonReader[T Tokener](r io.Reader, resolvOpts ...did.ResolutionOption) (T, error) {
+	return DecodeReader[T](r, dagjson.Decode, resolvOpts...)
 }
 
 // FromIPLD unwraps a Tokener from the provided IPLD datamodel.Node.
 //
 // An error is returned if the conversion fails, or if the resulting
 // Tokener is invalid.
-func FromIPLD[T Tokener](node datamodel.Node) (T, error) {
+func FromIPLD[T Tokener](node datamodel.Node, resolvOpts ...did.ResolutionOption) (T, error) {
 	zero := *new(T)
 
 	info, err := Inspect(node)
@@ -132,7 +132,7 @@ func FromIPLD[T Tokener](node datamodel.Node) (T, error) {
 	}
 
 	// This needs to be done before converting this node to its schema
-	// representation (afterwards, the field might be renamed os it's safer
+	// representation (afterwards, the field might be renamed, so it's safer
 	// to use the wire name).
 	issuerNode, err := info.tokenPayloadNode.LookupByString("iss")
 	if err != nil {
@@ -162,7 +162,7 @@ func FromIPLD[T Tokener](node datamodel.Node) (T, error) {
 	}
 
 	// Check that the issuer's DID contains a public key with a type that
-	// matches the VarsigHeader and then verify the SigPayload.
+	// matches the VarsigBytes and then verify the SigPayload.
 	issuer, err := issuerNode.AsString()
 	if err != nil {
 		return zero, err
@@ -173,28 +173,35 @@ func FromIPLD[T Tokener](node datamodel.Node) (T, error) {
 		return zero, err
 	}
 
-	issuerPubKey, err := issuerDID.PubKey()
+	issuerDoc, err := issuerDID.Document(resolvOpts...)
 	if err != nil {
 		return zero, err
 	}
 
-	issuerVarsigHeader, err := varsig.Encode(issuerPubKey.Type())
+	vsig, err := varsig.Decode(info.VarsigBytes)
+	if err != nil {
+		return zero, fmt.Errorf("failed to decode varsig: %w", err)
+	}
+
+	var data []byte
+
+	switch vsig.PayloadEncoding() {
+	case varsig.PayloadEncodingDAGCBOR:
+		// TODO: can we use the already serialized CBOR data here, instead of encoding again the payload?
+		data, err = ipld.Encode(info.sigPayloadNode, dagcbor.Encode)
+	case varsig.PayloadEncodingDAGJSON:
+		data, err = ipld.Encode(info.sigPayloadNode, dagjson.Encode)
+	default:
+		return zero, errors.New("unsupported payload encoding")
+	}
 	if err != nil {
 		return zero, err
 	}
 
-	if string(info.VarsigHeader) != string(issuerVarsigHeader) {
-		return zero, errors.New("the VarsigHeader key type doesn't match the issuer's key type")
-	}
+	// TODO: use CapabilityDelegation() or CapabilityInvocation()
 
-	// TODO: can we use the already serialized CBOR data here, instead of encoding again the payload?
-	data, err := ipld.Encode(info.sigPayloadNode, dagcbor.Encode)
-	if err != nil {
-		return zero, err
-	}
-
-	ok, err = issuerPubKey.Verify(data, info.Signature)
-	if err != nil || !ok {
+	ok, _ = did.TryAllVerifyBytes(issuerDoc.CapabilityDelegation(), data, info.Signature, crypto.WithVarsig(vsig))
+	if !ok {
 		return zero, errors.New("failed to verify the token's signature")
 	}
 
@@ -203,7 +210,7 @@ func FromIPLD[T Tokener](node datamodel.Node) (T, error) {
 
 // Encode marshals a Tokener to the format specified by the provided
 // codec.Encoder.
-func Encode(privKey crypto.PrivKey, token Tokener, encFn codec.Encoder) ([]byte, error) {
+func Encode(privKey crypto.PrivateKeySigningBytes, token Tokener, encFn codec.Encoder) ([]byte, error) {
 	node, err := ToIPLD(privKey, token)
 	if err != nil {
 		return nil, err
@@ -214,7 +221,7 @@ func Encode(privKey crypto.PrivKey, token Tokener, encFn codec.Encoder) ([]byte,
 
 // EncodeWriter is the same as Encode but outputs to an io.Writer instead
 // of encoding into a []byte.
-func EncodeWriter(w io.Writer, privKey crypto.PrivKey, token Tokener, encFn codec.Encoder) error {
+func EncodeWriter(w io.Writer, privKey crypto.PrivateKeySigningBytes, token Tokener, encFn codec.Encoder) error {
 	node, err := ToIPLD(privKey, token)
 	if err != nil {
 		return err
@@ -224,38 +231,36 @@ func EncodeWriter(w io.Writer, privKey crypto.PrivKey, token Tokener, encFn code
 }
 
 // ToDagCbor marshals the Tokener to the DAG-CBOR format.
-func ToDagCbor(privKey crypto.PrivKey, token Tokener) ([]byte, error) {
+func ToDagCbor(privKey crypto.PrivateKeySigningBytes, token Tokener) ([]byte, error) {
 	return Encode(privKey, token, dagcbor.Encode)
 }
 
 // ToDagCborWriter is the same as ToDagCbor but outputs to an io.Writer
 // instead of encoding into a []byte.
-func ToDagCborWriter(w io.Writer, privKey crypto.PrivKey, token Tokener) error {
+func ToDagCborWriter(w io.Writer, privKey crypto.PrivateKeySigningBytes, token Tokener) error {
 	return EncodeWriter(w, privKey, token, dagcbor.Encode)
 }
 
 // ToDagJson marshals the Tokener to the DAG-JSON format.
-func ToDagJson(privKey crypto.PrivKey, token Tokener) ([]byte, error) {
+func ToDagJson(privKey crypto.PrivateKeySigningBytes, token Tokener) ([]byte, error) {
 	return Encode(privKey, token, dagjson.Encode)
 }
 
 // ToDagJsonWriter is the same as ToDagJson but outputs to an io.Writer
 // instead of encoding into a []byte.
-func ToDagJsonWriter(w io.Writer, privKey crypto.PrivKey, token Tokener) error {
+func ToDagJsonWriter(w io.Writer, privKey crypto.PrivateKeySigningBytes, token Tokener) error {
 	return EncodeWriter(w, privKey, token, dagjson.Encode)
 }
 
 // ToIPLD wraps the Tokener in an IPLD datamodel.Node.
-func ToIPLD(privKey crypto.PrivKey, token Tokener) (datamodel.Node, error) {
+func ToIPLD(privKey crypto.PrivateKeySigningBytes, token Tokener) (datamodel.Node, error) {
 	tokenPayloadNode := bindnode.Wrap(token, token.Prototype().Type()).Representation()
 
-	varsigHeader, err := varsig.Encode(privKey.Type())
-	if err != nil {
-		return nil, err
-	}
+	opts := []crypto.SigningOption{crypto.WithPayloadEncoding(varsig.PayloadEncodingDAGCBOR)}
+	vsig := privKey.Varsig(opts...)
 
 	sigPayloadNode, err := qp.BuildMap(basicnode.Prototype.Any, 2, func(ma datamodel.MapAssembler) {
-		qp.MapEntry(ma, VarsigHeaderKey, qp.Bytes(varsigHeader))
+		qp.MapEntry(ma, VarsigHeaderKey, qp.Bytes(vsig.Encode()))
 		qp.MapEntry(ma, token.Tag(), qp.Node(tokenPayloadNode))
 	})
 
@@ -264,7 +269,7 @@ func ToIPLD(privKey crypto.PrivKey, token Tokener) (datamodel.Node, error) {
 		return nil, err
 	}
 
-	signature, err := privKey.Sign(data)
+	signature, err := privKey.SignToBytes(data, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -315,7 +320,7 @@ func FindTag(node datamodel.Node) (string, error) {
 type Info struct {
 	Tag              string
 	Signature        []byte
-	VarsigHeader     []byte
+	VarsigBytes      []byte
 	sigPayloadNode   datamodel.Node // private, we don't want to expose that
 	tokenPayloadNode datamodel.Node // private, we don't want to expose that
 }
@@ -367,7 +372,7 @@ func Inspect(node datamodel.Node) (Info, error) {
 		switch {
 		case key == VarsigHeaderKey:
 			foundVarsigHeader = true
-			res.VarsigHeader, err = v.AsBytes()
+			res.VarsigBytes, err = v.AsBytes()
 			if err != nil {
 				return Info{}, err
 			}

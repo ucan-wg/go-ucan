@@ -3,9 +3,9 @@ package invocation
 import (
 	"time"
 
+	"github.com/MetaMask/go-did-it"
 	"github.com/ipfs/go-cid"
 
-	"github.com/ucan-wg/go-ucan/did"
 	"github.com/ucan-wg/go-ucan/pkg/args"
 )
 

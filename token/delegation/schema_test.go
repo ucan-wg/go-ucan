@@ -8,10 +8,9 @@ import (
 	"github.com/ipld/go-ipld-prime"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gotest.tools/v3/golden"
 
-	"github.com/ucan-wg/go-ucan/did/didtest"
 	"github.com/ucan-wg/go-ucan/token/delegation"
+	"github.com/ucan-wg/go-ucan/token/internal/didtest"
 	"github.com/ucan-wg/go-ucan/token/internal/envelope"
 )
 
@@ -21,7 +20,6 @@ var schemaBytes []byte
 func TestSchemaRoundTrip(t *testing.T) {
 	t.Parallel()
 
-	delegationJson := golden.Get(t, "new.dagjson")
 	privKey := didtest.PersonaAlice.PrivKey()
 
 	t.Run("via buffers", func(t *testing.T) {
@@ -30,7 +28,7 @@ func TestSchemaRoundTrip(t *testing.T) {
 		// format:    dagJson   -->   PayloadModel   -->   dagCbor   -->   PayloadModel   -->   dagJson
 		// function:      DecodeDagJson()           Seal()        Unseal()          EncodeDagJson()
 
-		p1, err := delegation.FromDagJson(delegationJson)
+		p1, err := delegation.FromDagJson(newDagJson)
 		require.NoError(t, err)
 
 		_, newCID, err := p1.ToSealed(privKey)
@@ -47,13 +45,13 @@ func TestSchemaRoundTrip(t *testing.T) {
 		readJson, err := p2.ToDagJson(privKey)
 		require.NoError(t, err)
 
-		assert.JSONEq(t, string(delegationJson), string(readJson))
+		assert.JSONEq(t, string(newDagJson), string(readJson))
 	})
 
 	t.Run("via streaming", func(t *testing.T) {
 		t.Parallel()
 
-		buf := bytes.NewBuffer(delegationJson)
+		buf := bytes.NewBuffer(newDagJson)
 
 		// format:    dagJson   -->   PayloadModel   -->   dagCbor   -->   PayloadModel   -->   dagJson
 		// function:      DecodeDagJson()           Seal()         Unseal()         EncodeDagJson()
@@ -77,17 +75,7 @@ func TestSchemaRoundTrip(t *testing.T) {
 		readJson := &bytes.Buffer{}
 		require.NoError(t, p2.ToDagJsonWriter(readJson, privKey))
 
-		assert.JSONEq(t, string(delegationJson), readJson.String())
-	})
-
-	t.Run("fails with wrong PrivKey", func(t *testing.T) {
-		t.Parallel()
-
-		p1, err := delegation.FromDagJson(delegationJson)
-		require.NoError(t, err)
-
-		_, _, err = p1.ToSealed(didtest.PersonaBob.PrivKey())
-		require.EqualError(t, err, "private key doesn't match the issuer")
+		assert.JSONEq(t, string(newDagJson), readJson.String())
 	})
 }
 
@@ -99,11 +87,10 @@ func BenchmarkSchemaLoad(b *testing.B) {
 }
 
 func BenchmarkRoundTrip(b *testing.B) {
-	delegationJson := golden.Get(b, "new.dagjson")
 	privKey := didtest.PersonaAlice.PrivKey()
 
 	b.Run("via buffers", func(b *testing.B) {
-		p1, _ := delegation.FromDagJson(delegationJson)
+		p1, _ := delegation.FromDagJson(newDagJson)
 		cborBytes, _, _ := p1.ToSealed(privKey)
 		p2, _, _ := delegation.FromSealed(cborBytes)
 
@@ -112,7 +99,7 @@ func BenchmarkRoundTrip(b *testing.B) {
 		b.Run("FromDagJson", func(b *testing.B) {
 			b.ReportAllocs()
 			for i := 0; i < b.N; i++ {
-				_, _ = delegation.FromDagJson(delegationJson)
+				_, _ = delegation.FromDagJson(newDagJson)
 			}
 		})
 
@@ -139,7 +126,7 @@ func BenchmarkRoundTrip(b *testing.B) {
 	})
 
 	b.Run("via streaming", func(b *testing.B) {
-		p1, _ := delegation.FromDagJsonReader(bytes.NewReader(delegationJson))
+		p1, _ := delegation.FromDagJsonReader(bytes.NewReader(newDagJson))
 		cborBuf := &bytes.Buffer{}
 		_, _ = p1.ToSealedWriter(cborBuf, privKey)
 		cborBytes := cborBuf.Bytes()
@@ -149,7 +136,7 @@ func BenchmarkRoundTrip(b *testing.B) {
 
 		b.Run("FromDagJsonReader", func(b *testing.B) {
 			b.ReportAllocs()
-			reader := bytes.NewReader(delegationJson)
+			reader := bytes.NewReader(newDagJson)
 			for i := 0; i < b.N; i++ {
 				_, _ = reader.Seek(0, 0)
 				_, _ = delegation.FromDagJsonReader(reader)

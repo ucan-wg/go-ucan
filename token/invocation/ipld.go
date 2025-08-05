@@ -1,25 +1,24 @@
 package invocation
 
 import (
-	"fmt"
 	"io"
 
+	"github.com/MetaMask/go-did-it"
+	"github.com/MetaMask/go-did-it/crypto"
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/codec"
 	"github.com/ipld/go-ipld-prime/codec/dagcbor"
 	"github.com/ipld/go-ipld-prime/codec/dagjson"
 	"github.com/ipld/go-ipld-prime/datamodel"
-	"github.com/libp2p/go-libp2p/core/crypto"
 
-	"github.com/ucan-wg/go-ucan/did"
 	"github.com/ucan-wg/go-ucan/token/internal/envelope"
 )
 
 // ToSealed wraps the invocation token in an envelope, generates the
 // signature, encodes the result to DAG-CBOR and calculates the CID of
 // the resulting binary data.
-func (t *Token) ToSealed(privKey crypto.PrivKey) ([]byte, cid.Cid, error) {
+func (t *Token) ToSealed(privKey crypto.PrivateKeySigningBytes) ([]byte, cid.Cid, error) {
 	data, err := t.ToDagCbor(privKey)
 	if err != nil {
 		return nil, cid.Undef, err
@@ -34,7 +33,7 @@ func (t *Token) ToSealed(privKey crypto.PrivKey) ([]byte, cid.Cid, error) {
 }
 
 // ToSealedWriter is the same as ToSealed but accepts an io.Writer.
-func (t *Token) ToSealedWriter(w io.Writer, privKey crypto.PrivKey) (cid.Cid, error) {
+func (t *Token) ToSealedWriter(w io.Writer, privKey crypto.PrivateKeySigningBytes) (cid.Cid, error) {
 	cidWriter := envelope.NewCIDWriter(w)
 
 	if err := t.ToDagCborWriter(cidWriter, privKey); err != nil {
@@ -48,8 +47,8 @@ func (t *Token) ToSealedWriter(w io.Writer, privKey crypto.PrivKey) (cid.Cid, er
 // verifies that the envelope's signature is correct based on the public
 // key taken from the issuer (iss) field and calculates the CID of the
 // incoming data.
-func FromSealed(data []byte) (*Token, cid.Cid, error) {
-	tkn, err := FromDagCbor(data)
+func FromSealed(data []byte, resolvOpts ...did.ResolutionOption) (*Token, cid.Cid, error) {
+	tkn, err := FromDagCbor(data, resolvOpts...)
 	if err != nil {
 		return nil, cid.Undef, err
 	}
@@ -63,10 +62,10 @@ func FromSealed(data []byte) (*Token, cid.Cid, error) {
 }
 
 // FromSealedReader is the same as Unseal but accepts an io.Reader.
-func FromSealedReader(r io.Reader) (*Token, cid.Cid, error) {
+func FromSealedReader(r io.Reader, resolvOpts ...did.ResolutionOption) (*Token, cid.Cid, error) {
 	cidReader := envelope.NewCIDReader(r)
 
-	tkn, err := FromDagCborReader(cidReader)
+	tkn, err := FromDagCborReader(cidReader, resolvOpts...)
 	if err != nil {
 		return nil, cid.Undef, err
 	}
@@ -81,7 +80,7 @@ func FromSealedReader(r io.Reader) (*Token, cid.Cid, error) {
 
 // Encode marshals a Token to the format specified by the provided
 // codec.Encoder.
-func (t *Token) Encode(privKey crypto.PrivKey, encFn codec.Encoder) ([]byte, error) {
+func (t *Token) Encode(privKey crypto.PrivateKeySigningBytes, encFn codec.Encoder) ([]byte, error) {
 	node, err := t.toIPLD(privKey)
 	if err != nil {
 		return nil, err
@@ -91,7 +90,7 @@ func (t *Token) Encode(privKey crypto.PrivKey, encFn codec.Encoder) ([]byte, err
 }
 
 // EncodeWriter is the same as Encode, but accepts an io.Writer.
-func (t *Token) EncodeWriter(w io.Writer, privKey crypto.PrivKey, encFn codec.Encoder) error {
+func (t *Token) EncodeWriter(w io.Writer, privKey crypto.PrivateKeySigningBytes, encFn codec.Encoder) error {
 	node, err := t.toIPLD(privKey)
 	if err != nil {
 		return err
@@ -101,53 +100,53 @@ func (t *Token) EncodeWriter(w io.Writer, privKey crypto.PrivKey, encFn codec.En
 }
 
 // ToDagCbor marshals the Token to the DAG-CBOR format.
-func (t *Token) ToDagCbor(privKey crypto.PrivKey) ([]byte, error) {
+func (t *Token) ToDagCbor(privKey crypto.PrivateKeySigningBytes) ([]byte, error) {
 	return t.Encode(privKey, dagcbor.Encode)
 }
 
 // ToDagCborWriter is the same as ToDagCbor, but it accepts an io.Writer.
-func (t *Token) ToDagCborWriter(w io.Writer, privKey crypto.PrivKey) error {
+func (t *Token) ToDagCborWriter(w io.Writer, privKey crypto.PrivateKeySigningBytes) error {
 	return t.EncodeWriter(w, privKey, dagcbor.Encode)
 }
 
 // ToDagJson marshals the Token to the DAG-JSON format.
-func (t *Token) ToDagJson(privKey crypto.PrivKey) ([]byte, error) {
+func (t *Token) ToDagJson(privKey crypto.PrivateKeySigningBytes) ([]byte, error) {
 	return t.Encode(privKey, dagjson.Encode)
 }
 
 // ToDagJsonWriter is the same as ToDagJson, but it accepts an io.Writer.
-func (t *Token) ToDagJsonWriter(w io.Writer, privKey crypto.PrivKey) error {
+func (t *Token) ToDagJsonWriter(w io.Writer, privKey crypto.PrivateKeySigningBytes) error {
 	return t.EncodeWriter(w, privKey, dagjson.Encode)
 }
 
 // Decode unmarshals the input data using the format specified by the
 // provided codec.Decoder into a Token.
 //
-// An error is returned if the conversion fails, or if the resulting
+// An error is returned if the conversion fails or if the resulting
 // Token is invalid.
-func Decode(b []byte, decFn codec.Decoder) (*Token, error) {
+func Decode(b []byte, decFn codec.Decoder, resolvOpts ...did.ResolutionOption) (*Token, error) {
 	node, err := ipld.Decode(b, decFn)
 	if err != nil {
 		return nil, err
 	}
-	return FromIPLD(node)
+	return FromIPLD(node, resolvOpts...)
 }
 
 // DecodeReader is the same as Decode, but accept an io.Reader.
-func DecodeReader(r io.Reader, decFn codec.Decoder) (*Token, error) {
+func DecodeReader(r io.Reader, decFn codec.Decoder, resolvOpts ...did.ResolutionOption) (*Token, error) {
 	node, err := ipld.DecodeStreaming(r, decFn)
 	if err != nil {
 		return nil, err
 	}
-	return FromIPLD(node)
+	return FromIPLD(node, resolvOpts...)
 }
 
 // FromDagCbor unmarshals the input data into a Token.
 //
-// An error is returned if the conversion fails, or if the resulting
+// An error is returned if the conversion fails or if the resulting
 // Token is invalid.
-func FromDagCbor(data []byte) (*Token, error) {
-	pay, err := envelope.FromDagCbor[*tokenPayloadModel](data)
+func FromDagCbor(data []byte, resolvOpts ...did.ResolutionOption) (*Token, error) {
+	pay, err := envelope.FromDagCbor[*tokenPayloadModel](data, resolvOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -161,26 +160,26 @@ func FromDagCbor(data []byte) (*Token, error) {
 }
 
 // FromDagCborReader is the same as FromDagCbor, but accept an io.Reader.
-func FromDagCborReader(r io.Reader) (*Token, error) {
-	return DecodeReader(r, dagcbor.Decode)
+func FromDagCborReader(r io.Reader, resolvOpts ...did.ResolutionOption) (*Token, error) {
+	return DecodeReader(r, dagcbor.Decode, resolvOpts...)
 }
 
 // FromDagJson unmarshals the input data into a Token.
 //
-// An error is returned if the conversion fails, or if the resulting
+// An error is returned if the conversion fails or if the resulting
 // Token is invalid.
-func FromDagJson(data []byte) (*Token, error) {
-	return Decode(data, dagjson.Decode)
+func FromDagJson(data []byte, resolvOpts ...did.ResolutionOption) (*Token, error) {
+	return Decode(data, dagjson.Decode, resolvOpts...)
 }
 
 // FromDagJsonReader is the same as FromDagJson, but accept an io.Reader.
-func FromDagJsonReader(r io.Reader) (*Token, error) {
-	return DecodeReader(r, dagjson.Decode)
+func FromDagJsonReader(r io.Reader, resolvOpts ...did.ResolutionOption) (*Token, error) {
+	return DecodeReader(r, dagjson.Decode, resolvOpts...)
 }
 
 // FromIPLD decode the given IPLD representation into a Token.
-func FromIPLD(node datamodel.Node) (*Token, error) {
-	pay, err := envelope.FromIPLD[*tokenPayloadModel](node)
+func FromIPLD(node datamodel.Node, resolvOpts ...did.ResolutionOption) (*Token, error) {
+	pay, err := envelope.FromIPLD[*tokenPayloadModel](node, resolvOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -193,19 +192,10 @@ func FromIPLD(node datamodel.Node) (*Token, error) {
 	return tkn, err
 }
 
-func (t *Token) toIPLD(privKey crypto.PrivKey) (datamodel.Node, error) {
-	// sanity check that privKey and issuer are matching
-	issPub, err := t.issuer.PubKey()
-	if err != nil {
-		return nil, err
-	}
-	if !issPub.Equals(privKey.GetPublic()) {
-		return nil, fmt.Errorf("private key doesn't match the issuer")
-	}
-
+func (t *Token) toIPLD(privKey crypto.PrivateKeySigningBytes) (datamodel.Node, error) {
 	var aud *string
 
-	if t.audience != did.Undef {
+	if t.audience != nil {
 		a := t.audience.String()
 		aud = &a
 	}
