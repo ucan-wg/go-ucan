@@ -11,16 +11,17 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/libp2p/go-libp2p/core/crypto"
-	"github.com/ucan-wg/go-ucan/did"
+	"github.com/MetaMask/go-did-it"
+	"github.com/MetaMask/go-did-it/crypto"
+
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/policy"
 	"github.com/ucan-wg/go-ucan/pkg/policy/literal"
 	"github.com/ucan-wg/go-ucan/token/delegation"
 
-	example "github.com/INFURA/go-ucan-toolkit/_example"
-	protocol "github.com/INFURA/go-ucan-toolkit/_example/_protocol-issuer"
-	"github.com/INFURA/go-ucan-toolkit/issuer"
+	example "github.com/ucan-wg/go-ucan/toolkit/_example"
+	protocol "github.com/ucan-wg/go-ucan/toolkit/_example/_protocol-issuer"
+	"github.com/ucan-wg/go-ucan/toolkit/issuer"
 )
 
 func main() {
@@ -42,7 +43,7 @@ func main() {
 	}
 }
 
-func run(ctx context.Context, issuerUrl string, servicePrivKey crypto.PrivKey) error {
+func run(ctx context.Context, issuerUrl string, servicePrivKey crypto.PrivateKeySigningBytes) error {
 	issuingLogic := func(iss did.DID, aud did.DID, cmd command.Command) (*delegation.Token, error) {
 		log.Printf("issuing delegation to %v for %v", aud, cmd)
 

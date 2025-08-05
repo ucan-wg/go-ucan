@@ -142,12 +142,29 @@ func (ctn Reader) GetDelegation(cid cid.Cid) (*delegation.Token, error) {
 	return nil, delegation.ErrDelegationNotFound
 }
 
+// GetDelegationBundle is the same as GetToken but only return a delegation.Bundle, with the right type.
+// If not found, delegation.ErrDelegationNotFound is returned.
+func (ctn Reader) GetDelegationBundle(cid cid.Cid) (*delegation.Bundle, error) {
+	bndl, ok := ctn[cid]
+	if !ok {
+		return nil, delegation.ErrDelegationNotFound
+	}
+	if tkn, ok := bndl.token.(*delegation.Token); ok {
+		return &delegation.Bundle{
+			Cid:     cid,
+			Decoded: tkn,
+			Sealed:  bndl.sealed,
+		}, nil
+	}
+	return nil, delegation.ErrDelegationNotFound
+}
+
 // GetAllDelegations returns all the delegation.Token in the container.
-func (ctn Reader) GetAllDelegations() iter.Seq[delegation.Bundle] {
-	return func(yield func(delegation.Bundle) bool) {
+func (ctn Reader) GetAllDelegations() iter.Seq[*delegation.Bundle] {
+	return func(yield func(*delegation.Bundle) bool) {
 		for c, bndl := range ctn {
 			if t, ok := bndl.token.(*delegation.Token); ok {
-				if !yield(delegation.Bundle{
+				if !yield(&delegation.Bundle{
 					Cid:     c,
 					Decoded: t,
 					Sealed:  bndl.sealed,

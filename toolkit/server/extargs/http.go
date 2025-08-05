@@ -13,6 +13,7 @@ import (
 	"github.com/ipld/go-ipld-prime/fluent/qp"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
 	"github.com/multiformats/go-multihash"
+
 	"github.com/ucan-wg/go-ucan/pkg/args"
 	"github.com/ucan-wg/go-ucan/pkg/policy"
 	"github.com/ucan-wg/go-ucan/token/invocation"
@@ -88,7 +89,7 @@ func (hea *HttpExtArgs) verifyHash() error {
 
 	mhBytes, err := n.AsBytes()
 	if err != nil {
-		return fmt.Errorf("http args hash should be a string")
+		return fmt.Errorf("http args hash should be bytes")
 	}
 
 	data, err := ipld.Encode(hea.argsIpld, dagcbor.Encode)
@@ -112,7 +113,7 @@ func (hea *HttpExtArgs) verifyHash() error {
 // If that hash is inserted at the HttpArgsKey key in the invocation arguments,
 // this increases the security as the UCAN token cannot be used with a different
 // HTTP request.
-// For convenience, the hash is returned as a read to use invocation argument.
+// For convenience, the hash is returned as a ready-to-use invocation argument.
 func MakeHttpHash(req *http.Request) (invocation.Option, error) {
 	// Note: the hash is computed on the full IPLD args, including HttpArgsKey
 	computedArgs, err := makeHttpArgs(req)

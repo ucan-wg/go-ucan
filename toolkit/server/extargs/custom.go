@@ -8,13 +8,13 @@ import (
 	"github.com/ipld/go-ipld-prime/datamodel"
 	"github.com/ipld/go-ipld-prime/fluent/qp"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
+
 	"github.com/ucan-wg/go-ucan/pkg/args"
 	"github.com/ucan-wg/go-ucan/pkg/policy"
 )
 
-const InfuraArgsKey = "inf"
-
-type InfuraExtArgs struct {
+type CustomExtArgs struct {
+	key          string
 	pol          policy.Policy
 	originalArgs args.ReadOnly
 	assembler    func(ma datamodel.MapAssembler)
@@ -24,44 +24,44 @@ type InfuraExtArgs struct {
 	argsIpld ipld.Node
 }
 
-func NewInfuraExtArgs(pol policy.Policy, assembler func(ma datamodel.MapAssembler)) *InfuraExtArgs {
-	return &InfuraExtArgs{pol: pol, assembler: assembler}
+func NewCustomExtArgs(key string, pol policy.Policy, assembler func(ma datamodel.MapAssembler)) *CustomExtArgs {
+	return &CustomExtArgs{key: key, pol: pol, assembler: assembler}
 }
 
-func (ia *InfuraExtArgs) Verify() error {
-	if err := ia.makeArgs(); err != nil {
+func (cea *CustomExtArgs) Verify() error {
+	if err := cea.makeArgs(); err != nil {
 		return err
 	}
 
-	// Note: InfuraExtArgs doesn't support verifying a hash computed client-side like the other
+	// Note: CustomExtArgs doesn't support verifying a hash computed client-side like the other
 	// external args, as the arguments are by nature dynamic. The client can't generate a meaningful hash.
 
-	ok, leaf := ia.pol.PartialMatch(ia.argsIpld)
+	ok, leaf := cea.pol.PartialMatch(cea.argsIpld)
 	if !ok {
 		return fmt.Errorf("the following UCAN policy is not satisfied: %v", leaf.String())
 	}
 	return nil
 }
 
-func (ia *InfuraExtArgs) Args() (*args.Args, error) {
-	if err := ia.makeArgs(); err != nil {
+func (cea *CustomExtArgs) Args() (*args.Args, error) {
+	if err := cea.makeArgs(); err != nil {
 		return nil, err
 	}
-	return ia.args, nil
+	return cea.args, nil
 }
 
-func (ia *InfuraExtArgs) makeArgs() error {
+func (cea *CustomExtArgs) makeArgs() error {
 	var outerErr error
-	ia.once.Do(func() {
+	cea.once.Do(func() {
 		var err error
 
-		ia.args, err = makeInfuraArgs(ia.assembler)
+		cea.args, err = makeCustomArgs(cea.key, cea.assembler)
 		if err != nil {
 			outerErr = err
 			return
 		}
 
-		ia.argsIpld, err = ia.args.ToIPLD()
+		cea.argsIpld, err = cea.args.ToIPLD()
 		if err != nil {
 			outerErr = err
 			return
@@ -70,14 +70,14 @@ func (ia *InfuraExtArgs) makeArgs() error {
 	return outerErr
 }
 
-func makeInfuraArgs(assembler func(ma datamodel.MapAssembler)) (*args.Args, error) {
+func makeCustomArgs(key string, assembler func(ma datamodel.MapAssembler)) (*args.Args, error) {
 	n, err := qp.BuildMap(basicnode.Prototype.Any, -1, assembler)
 	if err != nil {
 		return nil, err
 	}
 
 	res := args.New()
-	err = res.Add(InfuraArgsKey, n)
+	err = res.Add(key, n)
 	if err != nil {
 		return nil, err
 	}

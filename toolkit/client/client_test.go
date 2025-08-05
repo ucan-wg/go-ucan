@@ -6,8 +6,9 @@ import (
 	"iter"
 	"time"
 
-	"github.com/ucan-wg/go-ucan/did"
-	"github.com/ucan-wg/go-ucan/did/didtest"
+	"github.com/MetaMask/go-did-it"
+	"github.com/MetaMask/go-did-it/didtest"
+
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/policy"
 	"github.com/ucan-wg/go-ucan/token/delegation"
@@ -21,7 +22,7 @@ func ExampleNewClient() {
 	// requester is an adaptor for a real world issuer, we use a mock in that example
 	requester := &requesterMock{persona: servicePersona}
 
-	client, err := NewClient(clientPersona.PrivKey(), requester)
+	client, err := NewClient(clientPersona.PrivKey(), clientPersona.DID(), requester)
 	handleError(err)
 
 	cont, err := client.PrepareInvoke(

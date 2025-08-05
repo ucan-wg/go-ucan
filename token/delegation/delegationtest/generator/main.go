@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/ucan-wg/go-ucan/token/internal/didtest"
+	"github.com/MetaMask/go-did-it/didtest"
 )
 
 func main() {

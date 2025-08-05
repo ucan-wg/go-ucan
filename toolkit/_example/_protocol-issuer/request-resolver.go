@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/ucan-wg/go-ucan/did"
-	"github.com/ucan-wg/go-ucan/pkg/command"
+	"github.com/MetaMask/go-did-it"
 
-	"github.com/INFURA/go-ucan-toolkit/issuer"
+	"github.com/ucan-wg/go-ucan/pkg/command"
+	"github.com/ucan-wg/go-ucan/toolkit/issuer"
 )
 
 func RequestResolver(r *http.Request) (*issuer.ResolvedRequest, error) {

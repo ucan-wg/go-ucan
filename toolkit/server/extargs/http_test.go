@@ -5,9 +5,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/MetaMask/go-did-it/didtest"
 	"github.com/multiformats/go-multihash"
 	"github.com/stretchr/testify/require"
-	"github.com/ucan-wg/go-ucan/did/didtest"
+
 	"github.com/ucan-wg/go-ucan/pkg/args"
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/policy"
@@ -199,4 +200,11 @@ func TestHttpHash(t *testing.T) {
 			}
 		})
 	}
+}
+
+func must[T any](t T, err error) T {
+	if err != nil {
+		panic(err)
+	}
+	return t
 }

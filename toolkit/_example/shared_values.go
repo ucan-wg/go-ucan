@@ -3,8 +3,10 @@ package example
 import (
 	"encoding/base64"
 
-	"github.com/libp2p/go-libp2p/core/crypto"
-	"github.com/ucan-wg/go-ucan/did"
+	"github.com/MetaMask/go-did-it"
+	didkeyctl "github.com/MetaMask/go-did-it/controller/did-key"
+	"github.com/MetaMask/go-did-it/crypto"
+	"github.com/MetaMask/go-did-it/crypto/ed25519"
 )
 
 // Endpoints
@@ -16,20 +18,20 @@ var AliceIssuerUrl = ":8082"
 
 // Service
 
-var ServicePrivKey crypto.PrivKey
+var ServicePrivKey crypto.PrivateKeySigningBytes
 var ServiceDid did.DID
 
 // Alice
 
-var AlicePrivKey crypto.PrivKey
+var AlicePrivKey crypto.PrivateKeySigningBytes
 var AliceDid did.DID
 
 func init() {
-	servPrivRaw, _ := base64.StdEncoding.DecodeString("CAESQGs7hPBRBmxH1UmHrdcPrBkecuFUuCWHK0kMJvZYCBqIa35SGxUdXVGuigQDkMpf7xO4C2C2Acl8QTtSrYS7Cnc=")
-	ServicePrivKey, _ = crypto.UnmarshalPrivateKey(servPrivRaw)
-	ServiceDid, _ = did.FromPrivKey(ServicePrivKey)
+	servPrivRaw, _ := base64.StdEncoding.DecodeString("HVcbgoj30c+7zoQzUgpl7Jc7bkXoyvo9bMX5OHaAohpv036EMxuWXGqmEWhFKHPEuRAaIGSURK8pyUYOAseiiQ==")
+	ServicePrivKey, _ = ed25519.PrivateKeyFromBytes(servPrivRaw)
+	ServiceDid = didkeyctl.FromPrivateKey(ServicePrivKey)
 
-	alicePrivRaw, _ := base64.StdEncoding.DecodeString("CAESQFESA31nDYUhXXwbCNSFvg7M+TOFgyxy0tVX6o+TkJAKqAwDvtGxZeGyUjibGd/op+xOLvzE6BrTIOw62K3yLp8=")
-	AlicePrivKey, _ = crypto.UnmarshalPrivateKey(alicePrivRaw)
-	AliceDid, _ = did.FromPrivKey(AlicePrivKey)
+	alicePrivRaw, _ := base64.StdEncoding.DecodeString("jIIk/4ZBgIzx7fU41AWYRUDjgQmgFTIXxN4WeZAPCjwE04oLfiHgNjwIIZi97a6WwSIL5tFGdkrqDkSmDx95tw==")
+	AlicePrivKey, _ = ed25519.PrivateKeyFromBytes(alicePrivRaw)
+	AliceDid = didkeyctl.FromPrivateKey(AlicePrivKey)
 }

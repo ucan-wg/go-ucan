@@ -4,7 +4,9 @@ import (
 	"net/http"
 	"testing"
 
+	_ "github.com/MetaMask/go-did-it/verifiers/did-key"
 	"github.com/stretchr/testify/require"
+
 	"github.com/ucan-wg/go-ucan/pkg/container"
 	"github.com/ucan-wg/go-ucan/pkg/container/containertest"
 )

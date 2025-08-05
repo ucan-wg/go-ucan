@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"testing"
 
+	"github.com/MetaMask/go-did-it/didtest"
 	"github.com/ipfs/go-cid"
 	"github.com/stretchr/testify/require"
 
@@ -11,7 +12,6 @@ import (
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/policy/policytest"
 	"github.com/ucan-wg/go-ucan/token/delegation/delegationtest"
-	"github.com/ucan-wg/go-ucan/token/internal/didtest"
 	"github.com/ucan-wg/go-ucan/token/invocation"
 )
 

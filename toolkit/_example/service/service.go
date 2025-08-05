@@ -9,10 +9,10 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/ucan-wg/go-ucan/did"
+	"github.com/MetaMask/go-did-it"
 
-	example "github.com/INFURA/go-ucan-toolkit/_example"
-	"github.com/INFURA/go-ucan-toolkit/server/exectx"
+	example "github.com/ucan-wg/go-ucan/toolkit/_example"
+	"github.com/ucan-wg/go-ucan/toolkit/server/exectx"
 )
 
 func main() {

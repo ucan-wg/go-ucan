@@ -8,7 +8,7 @@ Please note that UCAN in itself doesn't enforce any protocol, topology or transp
 
 Your situation may be different from this, and would call for a different setup.
 
-Remember that everything in `go-ucan-toolkit` is essentially helpers, pre-made building blocks. You can use them, change them or make your own.
+Remember that everything in `/toolkit` is essentially helpers, pre-made building blocks. You can use them, change them or make your own.
 
 ## Scenario 1
 

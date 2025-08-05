@@ -8,31 +8,28 @@ In this package, we cross the chasm of the pure UCAN world into our practical ne
 
 ## Example
 
-Below is an example of `args` in Dag-Json format, where the values are recomposed server-side from the HTTP request (header and JSONRPC body):
+Below is an example of `args` in Dag-Json format, where the values are recomposed server-side from the HTTP request:
 
 ```json
 {
   "http": {
     "scheme": "https",
     "method": "POST",
-    "host": "mainnet.infura.io",
+    "host": "example.com",
     "path": ""
   },
-  "jsonrpc": {
-    "jsonrpc": "2.0",
-    "method": "eth_blockbynumber",
-    "params": [],
-    "id": 1
+  "custom": {
+    "foo": "bar"
   }
 }
 ```
 Those `args` can be evaluated against a delegation's policy, for example:
 ```json
 {
-  "cmd": "/infura/jsonrpc",
+  "cmd": "/foo/bar",
   "pol": [
-    ["==", ".http.host", "mainnet.infura.io"],
-    ["like", ".jsonrpc.method", "eth_*"]
+    ["==", ".http.host", "example.com"],
+    ["like", ".custom.foo", "ba*"]
   ]
 }
 ```
@@ -50,7 +47,7 @@ There is a way to get around that, and have the best of both worlds, but **it co
 ```json
 {
   "http": "zQmSnuWmxptJZdLJpKRarxBMS2Ju2oANVrgbr2xWbie9b2D",
-  "jsonrpc": "zQmP8jTG1m9GSDJLCbeWhVSVgEzCPPwXRdCRuJtQ5Tz9Kc9"
+  "custom": "zQmP8jTG1m9GSDJLCbeWhVSVgEzCPPwXRdCRuJtQ5Tz9Kc9"
 }
 ```
 
@@ -63,4 +60,4 @@ Therefore, the server-side logic is made to have this hashing optional:
 - the client can opt out of passing that hash, and won't benefit from the enforced security
 
 The particular hash selected is SHA2-256 of the DAG-CBOR encoded argument, expressed in the form of a Multihash in raw bytes.
-The arguments being hashed are the complete map of values, including the root key being replaced (for example `jsonrpc` or `http`). 
+The arguments being hashed are the complete map of values, including the root key being replaced (for example `http` or `custom` here). 

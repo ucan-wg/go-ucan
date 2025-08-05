@@ -8,12 +8,13 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/ucan-wg/go-ucan/did"
+	"github.com/MetaMask/go-did-it"
+
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/token/delegation"
 
-	"github.com/INFURA/go-ucan-toolkit/client"
-	"github.com/INFURA/go-ucan-toolkit/issuer"
+	"github.com/ucan-wg/go-ucan/toolkit/client"
+	"github.com/ucan-wg/go-ucan/toolkit/issuer"
 )
 
 var _ client.DelegationRequester = &Requester{}
@@ -55,5 +56,5 @@ func (r Requester) RequestDelegation(ctx context.Context, audience did.DID, cmd 
 		return nil, err
 	}
 
-	return issuer.DecodeResponse(res)
+	return issuer.DecodeResponse(res, audience, cmd, subject)
 }

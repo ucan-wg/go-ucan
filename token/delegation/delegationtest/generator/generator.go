@@ -12,6 +12,7 @@ import (
 	"github.com/MetaMask/go-did-it"
 	didkeyctl "github.com/MetaMask/go-did-it/controller/did-key"
 	"github.com/MetaMask/go-did-it/crypto"
+	"github.com/MetaMask/go-did-it/didtest"
 	"github.com/ipfs/go-cid"
 
 	"github.com/ucan-wg/go-ucan/pkg/command"
@@ -19,7 +20,6 @@ import (
 	"github.com/ucan-wg/go-ucan/pkg/policy/policytest"
 	"github.com/ucan-wg/go-ucan/token/delegation"
 	"github.com/ucan-wg/go-ucan/token/delegation/delegationtest"
-	"github.com/ucan-wg/go-ucan/token/internal/didtest"
 )
 
 const (

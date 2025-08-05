@@ -12,14 +12,17 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/ucan-wg/go-ucan/did"
+	"github.com/MetaMask/go-did-it"
+	didkeyctl "github.com/MetaMask/go-did-it/controller/did-key"
+	"github.com/MetaMask/go-did-it/crypto/ed25519"
+
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/container"
 
-	example "github.com/INFURA/go-ucan-toolkit/_example"
-	protocol "github.com/INFURA/go-ucan-toolkit/_example/_protocol-issuer"
-	"github.com/INFURA/go-ucan-toolkit/client"
-	"github.com/INFURA/go-ucan-toolkit/server/bearer"
+	example "github.com/ucan-wg/go-ucan/toolkit/_example"
+	protocol "github.com/ucan-wg/go-ucan/toolkit/_example/_protocol-issuer"
+	"github.com/ucan-wg/go-ucan/toolkit/client"
+	"github.com/ucan-wg/go-ucan/toolkit/server/bearer"
 )
 
 func main() {
@@ -43,14 +46,15 @@ func main() {
 
 func run(ctx context.Context, aliceUrl string, aliceDid did.DID, serverUrl string, serviceDid did.DID) error {
 	// Let's generate a keypair for our client:
-	priv, d, err := did.GenerateEd25519()
+	pub, priv, err := ed25519.GenerateKeyPair()
 	if err != nil {
 		return err
 	}
+	d := didkeyctl.FromPublicKey(pub)
 
 	log.Printf("Bob DID is %s", d.String())
 
-	cli, err := client.NewClient(priv, protocol.NewRequester("http://"+aliceUrl))
+	cli, err := client.NewClient(priv, d, protocol.NewRequester("http://"+aliceUrl))
 	if err != nil {
 		return err
 	}
@@ -69,13 +73,13 @@ func run(ctx context.Context, aliceUrl string, aliceDid did.DID, serverUrl strin
 		select {
 		case <-ctx.Done():
 			return nil
-		case <-time.After(5 * time.Second):
+		case <-time.After(1 * time.Second):
 		}
 	}
 }
 
 func makeRequest(ctx context.Context, clientDid did.DID, serviceUrl string, aliceDid did.DID, proofs container.Writer) error {
-	// we construct a URL that include the our DID and Alice DID as path, as requested by the UCAN policy we get issued
+	// we construct a URL that include our DID and Alice DID as path, as requested by the UCAN policy we get issued
 	u, err := url.JoinPath("http://"+serviceUrl, aliceDid.String(), clientDid.String())
 	if err != nil {
 		return err

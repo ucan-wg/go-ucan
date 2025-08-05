@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"slices"
 
-	"github.com/INFURA/go-ethlibs/jsonrpc"
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime/datamodel"
+
 	"github.com/ucan-wg/go-ucan/pkg/args"
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/container"
@@ -16,8 +16,7 @@ import (
 	"github.com/ucan-wg/go-ucan/pkg/policy"
 	"github.com/ucan-wg/go-ucan/token/delegation"
 	"github.com/ucan-wg/go-ucan/token/invocation"
-
-	"github.com/INFURA/go-ucan-toolkit/server/extargs"
+	"github.com/ucan-wg/go-ucan/toolkit/server/extargs"
 )
 
 var _ delegation.Loader = &UcanCtx{}
@@ -33,9 +32,8 @@ type UcanCtx struct {
 	meta     *meta.Meta    // all meta combined, with no overwriting
 
 	// argument sources
-	http    *extargs.HttpExtArgs
-	jsonrpc *extargs.JsonRpcExtArgs
-	infura  *extargs.InfuraExtArgs
+	http   *extargs.HttpExtArgs
+	custom map[string]*extargs.CustomExtArgs
 }
 
 // FromContainer prepare a UcanCtx from a UCAN container, for further evaluation in a server pipeline.
@@ -79,7 +77,7 @@ func FromContainer(cont container.Reader) (*UcanCtx, error) {
 	chainTo := inv.Issuer()
 	for _, c := range inv.Proof() {
 		dlg := ctx.dlgs[c]
-		if dlg.Audience() != chainTo {
+		if !dlg.Audience().Equal(chainTo) {
 			return nil, fmt.Errorf("proof chain is broken or not ordered correctly")
 		}
 		chainTo = dlg.Issuer()
@@ -137,28 +135,19 @@ func (ctn *UcanCtx) VerifyHttp(req *http.Request) error {
 	return ctn.http.Verify()
 }
 
-// VerifyJsonRpc verify the delegation's policies against arguments constructed from the JsonRpc request.
-// These arguments will be set in the `.jsonrpc` argument key, at the root.
-// This function can only be called once per context.
+// VerifyCustom verify the delegation's policies against arbitrary arguments provider through an IPLD MapAssembler.
+// These arguments will be set under the given argument key, at the root.
+// This function can only be called once per context and key.
 // After being used, those constructed arguments will be used in ExecutionAllowed as well.
-func (ctn *UcanCtx) VerifyJsonRpc(req *jsonrpc.Request) error {
-	if ctn.jsonrpc != nil {
-		panic("only use once per request context")
+func (ctn *UcanCtx) VerifyCustom(key string, assembler func(ma datamodel.MapAssembler)) error {
+	if ctn.custom == nil {
+		ctn.custom = make(map[string]*extargs.CustomExtArgs)
 	}
-	ctn.jsonrpc = extargs.NewJsonRpcExtArgs(ctn.policies, ctn.inv.Arguments(), req)
-	return ctn.jsonrpc.Verify()
-}
-
-// VerifyInfura verify the delegation's policies against arbitrary arguments provider through an IPLD MapAssembler.
-// These arguments will be set in the `.inf` argument key, at the root.
-// This function can only be called once per context.
-// After being used, those constructed arguments will be used in ExecutionAllowed as well.
-func (ctn *UcanCtx) VerifyInfura(assembler func(ma datamodel.MapAssembler)) error {
-	if ctn.infura != nil {
-		panic("only use once per request context")
+	if _, ok := ctn.custom[key]; ok {
+		panic("only use once per request context and key")
 	}
-	ctn.infura = extargs.NewInfuraExtArgs(ctn.policies, assembler)
-	return ctn.infura.Verify()
+	ctn.custom[key] = extargs.NewCustomExtArgs(key, ctn.policies, assembler)
+	return ctn.custom[key].Verify()
 }
 
 // ExecutionAllowed does the final verification of the invocation.
@@ -174,19 +163,14 @@ func (ctn *UcanCtx) ExecutionAllowed() error {
 			}
 			newArgs.Include(httpArgs)
 		}
-		if ctn.jsonrpc != nil {
-			jsonRpcArgs, err := ctn.jsonrpc.Args()
-			if err != nil {
-				return nil, err
+		if ctn.custom != nil {
+			for _, cea := range ctn.custom {
+				customArgs, err := cea.Args()
+				if err != nil {
+					return nil, err
+				}
+				newArgs.Include(customArgs)
 			}
-			newArgs.Include(jsonRpcArgs)
-		}
-		if ctn.infura != nil {
-			infuraArgs, err := ctn.infura.Args()
-			if err != nil {
-				return nil, err
-			}
-			newArgs.Include(infuraArgs)
 		}
 
 		return newArgs, nil

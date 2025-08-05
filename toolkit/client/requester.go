@@ -5,8 +5,9 @@ import (
 	"iter"
 	"time"
 
+	"github.com/MetaMask/go-did-it"
 	"github.com/avast/retry-go/v4"
-	"github.com/ucan-wg/go-ucan/did"
+
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/token/delegation"
 )

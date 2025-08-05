@@ -7,18 +7,19 @@ import (
 	"github.com/ipld/go-ipld-prime/datamodel"
 	"github.com/ipld/go-ipld-prime/fluent/qp"
 	"github.com/stretchr/testify/require"
+
 	"github.com/ucan-wg/go-ucan/pkg/policy"
 	"github.com/ucan-wg/go-ucan/pkg/policy/literal"
 )
 
-func ExampleInfuraExtArgs() {
-	// Note: this is an example for how to build arguments, but you likely want to use InfuraExtArgs
+func ExampleCustomExtArgs() {
+	// Note: this is an example for how to build arguments, but you likely want to use CustomExtArgs
 	// through UcanCtx.
 
 	pol := policy.Policy{} // policies from the delegations
 
 	// We will construct the following args:
-	// {
+	// "key": {
 	//  "ntwk":"eth-mainnet",
 	//  "quota":{
 	//    "ur":1234,
@@ -29,7 +30,7 @@ func ExampleInfuraExtArgs() {
 	//    "up":1234
 	//  }
 	// }
-	infArgs := NewInfuraExtArgs(pol, func(ma datamodel.MapAssembler) {
+	customArgs := NewCustomExtArgs("key", pol, func(ma datamodel.MapAssembler) {
 		qp.MapEntry(ma, "ntwk", qp.String("eth-mainnet"))
 		qp.MapEntry(ma, "quota", qp.Map(6, func(ma datamodel.MapAssembler) {
 			qp.MapEntry(ma, "ur", qp.Int(1234))
@@ -41,14 +42,14 @@ func ExampleInfuraExtArgs() {
 		}))
 	})
 
-	err := infArgs.Verify()
+	err := customArgs.Verify()
 	fmt.Println(err)
 
 	// Output:
 	// <nil>
 }
 
-func TestInfura(t *testing.T) {
+func TestCustom(t *testing.T) {
 	assembler := func(ma datamodel.MapAssembler) {
 		qp.MapEntry(ma, "ntwk", qp.String("eth-mainnet"))
 		qp.MapEntry(ma, "quota", qp.Map(6, func(ma datamodel.MapAssembler) {
@@ -74,24 +75,24 @@ func TestInfura(t *testing.T) {
 		{
 			name: "matching args",
 			pol: policy.MustConstruct(
-				policy.Equal(".inf.ntwk", literal.String("eth-mainnet")),
-				policy.LessThanOrEqual(".inf.quota.ur", literal.Int(1234)),
+				policy.Equal(".key.ntwk", literal.String("eth-mainnet")),
+				policy.LessThanOrEqual(".key.quota.ur", literal.Int(1234)),
 			),
 			expected: true,
 		},
 		{
 			name: "wrong network",
 			pol: policy.MustConstruct(
-				policy.Equal(".inf.ntwk", literal.String("avalanche-fuji")),
-				policy.LessThanOrEqual(".inf.quota.ur", literal.Int(1234)),
+				policy.Equal(".key.ntwk", literal.String("avalanche-fuji")),
+				policy.LessThanOrEqual(".key.quota.ur", literal.Int(1234)),
 			),
 			expected: false,
 		},
 		{
 			name: "unrespected quota",
 			pol: policy.MustConstruct(
-				policy.Equal(".inf.ntwk", literal.String("eth-mainnet")),
-				policy.LessThanOrEqual(".inf.quota.ur", literal.Int(100)),
+				policy.Equal(".key.ntwk", literal.String("eth-mainnet")),
+				policy.LessThanOrEqual(".key.quota.ur", literal.Int(100)),
 			),
 			expected: false,
 		},
@@ -99,7 +100,7 @@ func TestInfura(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			extArgs := NewInfuraExtArgs(tc.pol, assembler)
+			extArgs := NewCustomExtArgs("key", tc.pol, assembler)
 
 			_, err := extArgs.Args()
 			require.NoError(t, err)

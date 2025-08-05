@@ -4,8 +4,9 @@ import (
 	"iter"
 	"math"
 
+	"github.com/MetaMask/go-did-it"
 	"github.com/ipfs/go-cid"
-	"github.com/ucan-wg/go-ucan/did"
+
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/token/delegation"
 )
@@ -23,12 +24,12 @@ func FindProof(dlgs func() iter.Seq[*delegation.Bundle], issuer did.DID, cmd com
 	// TODO: maybe that should be part of delegation.Token directly?
 	dlgMatch := func(dlg *delegation.Token, issuer did.DID, cmd command.Command, subject did.DID) bool {
 		// The Subject of each delegation must equal the invocation's Subject (or Audience if defined). - 4f
-		if dlg.Subject() != subject {
+		if !dlg.Subject().Equal(subject) {
 			return false
 		}
 		// The first proof must be issued to the Invoker (audience DID). - 4c
 		// The Issuer of each delegation must be the Audience in the next one. - 4d
-		if dlg.Audience() != issuer {
+		if !dlg.Audience().Equal(issuer) {
 			return false
 		}
 		// The command of each delegation must "allow" the one before it. - 4g
@@ -72,7 +73,7 @@ func FindProof(dlgs func() iter.Seq[*delegation.Bundle], issuer did.DID, cmd com
 			at := cur.bundle
 
 			// if it's a root delegation, we found a valid proof
-			if at.Decoded.Issuer() == at.Decoded.Subject() {
+			if at.Decoded.Issuer().Equal(at.Decoded.Subject()) {
 				if len(bestProof) == 0 || len(cur.path) < len(bestProof) || len(cur.path) == len(bestProof) && cur.size < bestSize {
 					bestProof = append([]cid.Cid{}, cur.path...) // make a copy
 					bestSize = cur.size

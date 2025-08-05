@@ -6,6 +6,7 @@ toolchain go1.24.5
 
 require (
 	github.com/MetaMask/go-did-it v1.0.0-pre1
+	github.com/avast/retry-go/v4 v4.6.1
 	github.com/ipfs/go-cid v0.5.0
 	github.com/ipld/go-ipld-prime v0.21.0
 	github.com/multiformats/go-multibase v0.2.0

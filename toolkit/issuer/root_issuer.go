@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"iter"
 
-	"github.com/libp2p/go-libp2p/core/crypto"
-	"github.com/ucan-wg/go-ucan/did"
+	"github.com/MetaMask/go-did-it"
+	didkeyctl "github.com/MetaMask/go-did-it/controller/did-key"
+	"github.com/MetaMask/go-did-it/crypto"
+
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/token/delegation"
-
-	"github.com/INFURA/go-ucan-toolkit/client"
+	"github.com/ucan-wg/go-ucan/toolkit/client"
 )
 
 // RootIssuingLogic is a function that decides what powers are given to a client.
@@ -29,16 +30,13 @@ var _ client.DelegationRequester = &RootIssuer{}
 // Feel free to replace this component with your own flavor.
 type RootIssuer struct {
 	did     did.DID
-	privKey crypto.PrivKey
+	privKey crypto.PrivateKeySigningBytes
 
 	logic RootIssuingLogic
 }
 
-func NewRootIssuer(privKey crypto.PrivKey, logic RootIssuingLogic) (*RootIssuer, error) {
-	d, err := did.FromPrivKey(privKey)
-	if err != nil {
-		return nil, err
-	}
+func NewRootIssuer(privKey crypto.PrivateKeySigningBytes, logic RootIssuingLogic) (*RootIssuer, error) {
+	d := didkeyctl.FromPrivateKey(privKey)
 	return &RootIssuer{
 		did:     d,
 		privKey: privKey,
@@ -47,7 +45,7 @@ func NewRootIssuer(privKey crypto.PrivKey, logic RootIssuingLogic) (*RootIssuer,
 }
 
 func (r *RootIssuer) RequestDelegation(ctx context.Context, audience did.DID, cmd command.Command, subject did.DID) (iter.Seq2[*delegation.Bundle, error], error) {
-	if subject != r.did {
+	if !subject.Equal(r.did) {
 		return nil, fmt.Errorf("subject DID doesn't match the issuer DID")
 	}
 

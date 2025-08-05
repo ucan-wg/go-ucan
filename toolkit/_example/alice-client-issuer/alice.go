@@ -13,19 +13,20 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/libp2p/go-libp2p/core/crypto"
-	"github.com/ucan-wg/go-ucan/did"
+	"github.com/MetaMask/go-did-it"
+	"github.com/MetaMask/go-did-it/crypto"
+
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/container"
 	"github.com/ucan-wg/go-ucan/pkg/policy"
 	"github.com/ucan-wg/go-ucan/pkg/policy/literal"
 	"github.com/ucan-wg/go-ucan/token/delegation"
 
-	example "github.com/INFURA/go-ucan-toolkit/_example"
-	protocol "github.com/INFURA/go-ucan-toolkit/_example/_protocol-issuer"
-	"github.com/INFURA/go-ucan-toolkit/client"
-	"github.com/INFURA/go-ucan-toolkit/issuer"
-	"github.com/INFURA/go-ucan-toolkit/server/bearer"
+	example "github.com/ucan-wg/go-ucan/toolkit/_example"
+	protocol "github.com/ucan-wg/go-ucan/toolkit/_example/_protocol-issuer"
+	"github.com/ucan-wg/go-ucan/toolkit/client"
+	"github.com/ucan-wg/go-ucan/toolkit/issuer"
+	"github.com/ucan-wg/go-ucan/toolkit/server/bearer"
 )
 
 func main() {
@@ -49,7 +50,7 @@ func main() {
 	}
 }
 
-func run(ctx context.Context, ownIssuerUrl string, priv crypto.PrivKey, d did.DID,
+func run(ctx context.Context, ownIssuerUrl string, priv crypto.PrivateKeySigningBytes, d did.DID,
 	serviceIssuerUrl string, serviceUrl string, serviceDid did.DID) error {
 	log.Printf("Alice DID is %s", d.String())
 
@@ -67,7 +68,7 @@ func run(ctx context.Context, ownIssuerUrl string, priv crypto.PrivKey, d did.DI
 		return delegation.New(iss, aud, cmd, policies, subject)
 	}
 
-	cli, err := client.NewWithIssuer(priv, protocol.NewRequester("http://"+serviceIssuerUrl), issuingLogic)
+	cli, err := client.NewWithIssuer(priv, d, protocol.NewRequester("http://"+serviceIssuerUrl), issuingLogic)
 	if err != nil {
 		return err
 	}

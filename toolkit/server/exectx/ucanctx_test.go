@@ -1,29 +1,26 @@
 package exectx_test
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/INFURA/go-ethlibs/jsonrpc"
+	"github.com/MetaMask/go-did-it/didtest"
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime/datamodel"
 	"github.com/ipld/go-ipld-prime/fluent/qp"
 	"github.com/stretchr/testify/require"
-	"github.com/ucan-wg/go-ucan/did/didtest"
+
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/container"
 	"github.com/ucan-wg/go-ucan/pkg/policy"
 	"github.com/ucan-wg/go-ucan/pkg/policy/literal"
 	"github.com/ucan-wg/go-ucan/token/delegation"
 	"github.com/ucan-wg/go-ucan/token/invocation"
-
-	"github.com/INFURA/go-ucan-toolkit/server/exectx"
+	"github.com/ucan-wg/go-ucan/toolkit/server/exectx"
 )
 
 const (
@@ -45,16 +42,11 @@ func TestUcanCtxFullFlow(t *testing.T) {
 		// some basic HTTP constraints
 		policy.Equal(".http.method", literal.String("GET")),
 		policy.Like(".http.path", "/foo/*"),
-		// some JsonRpc constraints
-		policy.Or(
-			policy.Like(".jsonrpc.method", "eth_*"),
-			policy.Equal(".jsonrpc.method", literal.String("debug_traceCall")),
-		),
-		// some infura constraints
+		// some custom constraints
 		// Network
-		policy.Equal(".inf.ntwk", literal.String(network)),
+		policy.Equal(".custom.ntwk", literal.String(network)),
 		// Quota
-		policy.LessThanOrEqual(".inf.quota.ur", literal.Int(1234)),
+		policy.LessThanOrEqual(".custom.quota.ur", literal.Int(1234)),
 	)
 
 	dlg, err := delegation.Root(service.DID(), user.DID(), cmd, pol,
@@ -84,12 +76,7 @@ func TestUcanCtxFullFlow(t *testing.T) {
 
 	// MAKING A REQUEST: we pass the container in the Bearer HTTP header
 
-	jrpc := jsonrpc.NewRequest()
-	jrpc.Method = "eth_call"
-	jrpc.Params = jsonrpc.MustParams("0x599784", true)
-	jrpcBytes, err := jrpc.MarshalJSON()
-	require.NoError(t, err)
-	req, err := http.NewRequest(http.MethodGet, "/foo/bar", bytes.NewReader(jrpcBytes))
+	req, err := http.NewRequest(http.MethodGet, "/foo/bar", nil)
 	require.NoError(t, err)
 	req.Header.Set("Authorization", "Bearer "+string(contBytes))
 
@@ -132,33 +119,13 @@ func TestUcanCtxFullFlow(t *testing.T) {
 		})
 	}
 
-	// SERVER: JsonRpc checks
+	// SERVER: custom args checks
 
-	jsonrpcMw := func(next http.Handler) http.Handler {
+	customArgsMw := func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ucanCtx, ok := exectx.FromContext(r.Context())
 			require.True(t, ok)
-
-			var jrpc jsonrpc.Request
-			err := json.NewDecoder(r.Body).Decode(&jrpc)
-			require.NoError(t, err)
-
-			err = ucanCtx.VerifyJsonRpc(&jrpc)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusUnauthorized)
-				return
-			}
-			next.ServeHTTP(w, r)
-		})
-	}
-
-	// SERVER: custom infura checks
-
-	infuraMw := func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ucanCtx, ok := exectx.FromContext(r.Context())
-			require.True(t, ok)
-			err := ucanCtx.VerifyInfura(func(ma datamodel.MapAssembler) {
+			err := ucanCtx.VerifyCustom("custom", func(ma datamodel.MapAssembler) {
 				qp.MapEntry(ma, "ntwk", qp.String(network))
 				qp.MapEntry(ma, "quota", qp.Map(1, func(ma datamodel.MapAssembler) {
 					qp.MapEntry(ma, "ur", qp.Int(1234))
@@ -183,7 +150,7 @@ func TestUcanCtxFullFlow(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}
 
-	sut := authMw(httpMw(jsonrpcMw(infuraMw(http.HandlerFunc(handler)))))
+	sut := authMw(httpMw(customArgsMw(http.HandlerFunc(handler))))
 
 	rec := httptest.NewRecorder()
 	sut.ServeHTTP(rec, req)

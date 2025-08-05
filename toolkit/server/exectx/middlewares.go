@@ -4,9 +4,9 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/ucan-wg/go-ucan/did"
+	"github.com/MetaMask/go-did-it"
 
-	"github.com/INFURA/go-ucan-toolkit/server/bearer"
+	"github.com/ucan-wg/go-ucan/toolkit/server/bearer"
 )
 
 // ExtractMW returns an HTTP middleware tasked with:
@@ -38,7 +38,7 @@ func ExtractMW(next http.Handler, serviceDID did.DID) http.Handler {
 			return
 		}
 
-		if ucanCtx.Invocation().Subject() != serviceDID {
+		if !ucanCtx.Invocation().Subject().Equal(serviceDID) {
 			http.Error(w, "UCAN delegation doesn't match the service DID", http.StatusUnauthorized)
 			return
 		}

@@ -6,12 +6,12 @@ import (
 	"iter"
 	"net/http"
 
-	"github.com/ucan-wg/go-ucan/did"
+	"github.com/MetaMask/go-did-it"
+
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/container"
 	"github.com/ucan-wg/go-ucan/token/delegation"
-
-	"github.com/INFURA/go-ucan-toolkit/client"
+	"github.com/ucan-wg/go-ucan/toolkit/client"
 )
 
 type RequestResolver func(r *http.Request) (*ResolvedRequest, error)
@@ -60,7 +60,7 @@ func HttpWrapper(requester client.DelegationRequester, resolver RequestResolver)
 	})
 }
 
-func DecodeResponse(res *http.Response) (iter.Seq2[*delegation.Bundle, error], error) {
+func DecodeResponse(res *http.Response, audience did.DID, cmd command.Command, subject did.DID) (iter.Seq2[*delegation.Bundle, error], error) {
 	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
 		msg, err := io.ReadAll(res.Body)
@@ -73,9 +73,20 @@ func DecodeResponse(res *http.Response) (iter.Seq2[*delegation.Bundle, error], e
 	if err != nil {
 		return nil, err
 	}
+
+	// the container doesn't guarantee the ordering, so we must order the delegation in a chain
+	proof := client.FindProof(func() iter.Seq[*delegation.Bundle] {
+		return cont.GetAllDelegations()
+	}, audience, cmd, subject)
+
 	return func(yield func(*delegation.Bundle, error) bool) {
-		for bundle := range cont.GetAllDelegations() {
-			if !yield(&bundle, nil) {
+		for _, c := range proof {
+			bndl, err := cont.GetDelegationBundle(c)
+			if err != nil {
+				yield(nil, err)
+				return
+			}
+			if !yield(bndl, nil) {
 				return
 			}
 		}

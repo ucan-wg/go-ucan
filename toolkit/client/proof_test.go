@@ -4,8 +4,9 @@ import (
 	"iter"
 	"testing"
 
+	"github.com/MetaMask/go-did-it/didtest"
 	"github.com/stretchr/testify/require"
-	"github.com/ucan-wg/go-ucan/did/didtest"
+
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/token/delegation"
 	"github.com/ucan-wg/go-ucan/token/delegation/delegationtest"

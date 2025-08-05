@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"iter"
 
+	"github.com/MetaMask/go-did-it"
+	"github.com/MetaMask/go-did-it/crypto"
 	"github.com/ipfs/go-cid"
-	"github.com/libp2p/go-libp2p/core/crypto"
-	"github.com/ucan-wg/go-ucan/did"
+
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/container"
 	"github.com/ucan-wg/go-ucan/pkg/policy"
@@ -17,17 +18,13 @@ import (
 
 type Client struct {
 	did     did.DID
-	privKey crypto.PrivKey
+	privKey crypto.PrivateKeySigningBytes
 
 	pool      *Pool
 	requester DelegationRequester
 }
 
-func NewClient(privKey crypto.PrivKey, requester DelegationRequester) (*Client, error) {
-	d, err := did.FromPrivKey(privKey)
-	if err != nil {
-		return nil, err
-	}
+func NewClient(privKey crypto.PrivateKeySigningBytes, d did.DID, requester DelegationRequester) (*Client, error) {
 	return &Client{
 		did:       d,
 		privKey:   privKey,

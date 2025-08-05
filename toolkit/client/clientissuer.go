@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"iter"
 
+	"github.com/MetaMask/go-did-it"
+	"github.com/MetaMask/go-did-it/crypto"
 	"github.com/ipfs/go-cid"
-	"github.com/libp2p/go-libp2p/core/crypto"
-	"github.com/ucan-wg/go-ucan/did"
+
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/token/delegation"
 )
@@ -29,8 +30,8 @@ type WithIssuer struct {
 	logic DlgIssuingLogic
 }
 
-func NewWithIssuer(privKey crypto.PrivKey, requester DelegationRequester, logic DlgIssuingLogic) (*WithIssuer, error) {
-	client, err := NewClient(privKey, requester)
+func NewWithIssuer(privKey crypto.PrivateKeySigningBytes, d did.DID, requester DelegationRequester, logic DlgIssuingLogic) (*WithIssuer, error) {
+	client, err := NewClient(privKey, d, requester)
 	if err != nil {
 		return nil, err
 	}
