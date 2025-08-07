@@ -1,0 +1,39 @@
+package client
+
+import (
+	"iter"
+	"testing"
+
+	"github.com/MetaMask/go-did-it/didtest"
+	"github.com/stretchr/testify/require"
+
+	"github.com/ucan-wg/go-ucan/pkg/command"
+	"github.com/ucan-wg/go-ucan/token/delegation"
+	"github.com/ucan-wg/go-ucan/token/delegation/delegationtest"
+)
+
+func TestFindProof(t *testing.T) {
+	dlgs := func() iter.Seq[*delegation.Bundle] {
+		return func(yield func(*delegation.Bundle) bool) {
+			for _, bundle := range delegationtest.AllBundles {
+				if !yield(&bundle) {
+					return
+				}
+			}
+		}
+	}
+
+	require.Equal(t, delegationtest.ProofAliceBob,
+		FindProof(dlgs, didtest.PersonaBob.DID(), delegationtest.NominalCommand, didtest.PersonaAlice.DID()))
+	require.Equal(t, delegationtest.ProofAliceBobCarol,
+		FindProof(dlgs, didtest.PersonaCarol.DID(), delegationtest.NominalCommand, didtest.PersonaAlice.DID()))
+	require.Equal(t, delegationtest.ProofAliceBobCarolDan,
+		FindProof(dlgs, didtest.PersonaDan.DID(), delegationtest.NominalCommand, didtest.PersonaAlice.DID()))
+	require.Equal(t, delegationtest.ProofAliceBobCarolDanErin,
+		FindProof(dlgs, didtest.PersonaErin.DID(), delegationtest.NominalCommand, didtest.PersonaAlice.DID()))
+	require.Equal(t, delegationtest.ProofAliceBobCarolDanErinFrank,
+		FindProof(dlgs, didtest.PersonaFrank.DID(), delegationtest.NominalCommand, didtest.PersonaAlice.DID()))
+
+	// wrong command
+	require.Empty(t, FindProof(dlgs, didtest.PersonaBob.DID(), command.New("foo"), didtest.PersonaAlice.DID()))
+}

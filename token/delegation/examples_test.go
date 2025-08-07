@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/MetaMask/go-did-it/didtest"
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/codec/dagcbor"
@@ -17,7 +18,6 @@ import (
 	"github.com/ucan-wg/go-ucan/pkg/policy"
 	"github.com/ucan-wg/go-ucan/pkg/policy/literal"
 	"github.com/ucan-wg/go-ucan/token/delegation"
-	"github.com/ucan-wg/go-ucan/token/internal/didtest"
 	"github.com/ucan-wg/go-ucan/token/internal/envelope"
 )
 

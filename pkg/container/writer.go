@@ -73,12 +73,12 @@ func (ctn Writer) ToBase64URLWriter(w io.Writer) error {
 	return ctn.toWriter(headerBase64URL, w)
 }
 
-// ToBase64URL encode the container into pre-gzipped base64 string, with URL-safe encoding and no padding.
+// ToBase64URLGzipped encode the container into pre-gzipped base64 string, with URL-safe encoding and no padding.
 func (ctn Writer) ToBase64URLGzipped() (string, error) {
 	return ctn.toString(headerBase64URLGzip)
 }
 
-// ToBase64URLWriter is the same as ToBase64URL, but with an io.Writer.
+// ToBase64URLGzipWriter is the same as ToBase64URL, but with an io.Writer.
 func (ctn Writer) ToBase64URLGzipWriter(w io.Writer) error {
 	return ctn.toWriter(headerBase64URLGzip, w)
 }

@@ -6,12 +6,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/MetaMask/go-did-it/didtest"
 	"github.com/stretchr/testify/require"
 
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/policy"
 	"github.com/ucan-wg/go-ucan/token/delegation"
-	"github.com/ucan-wg/go-ucan/token/internal/didtest"
 )
 
 //go:embed testdata/new.dagjson
