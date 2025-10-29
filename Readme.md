@@ -41,6 +41,7 @@ The UCAN specification is separated in multiple sub-spec:
 - [Main specification](https://github.com/ucan-wg/spec)
 - [Delegation](https://github.com/ucan-wg/delegation/tree/v1_ipld)
 - [Invocation](https://github.com/ucan-wg/invocation)
+- [Container](https://github.com/ucan-wg/container)
 
 Not implemented yet:
 - [Revocation](https://github.com/ucan-wg/revocation/tree/first-draft)
@@ -53,11 +54,9 @@ Not implemented yet:
 
 ## Status
 
-`go-ucan` currently support the required parts of the UCAN specification: the main specification, delegation and invocation.
+`go-ucan` currently support the required parts of the UCAN specification: the main specification, delegation and invocation. It leverages the sibling project [`go-did-it`](https://github.com/MetaMask/go-did-it) for easy and extensible DID support.
 
 Besides that, `go-ucan` also includes:
-- a simplified [DID](https://www.w3.org/TR/did-core/) and [did-key](https://w3c-ccg.github.io/did-method-key/) implementation
-- a [token container](https://github.com/ucan-wg/go-ucan/tree/v1/pkg/container) with CBOR and CAR format, to package and carry tokens together, see [SPEC](pkg/container/SPEC.md)
 - support for encrypted values in token's metadata
 
 ## Getting Help

@@ -1,5 +1,7 @@
 # Token container
 
+The specification has been promoted to https://github.com/ucan-wg/container.
+
 ## Why do I need that?
 
 Some common situation asks to package multiple tokens together:
