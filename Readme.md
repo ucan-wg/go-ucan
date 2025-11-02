@@ -17,7 +17,7 @@
         <img alt="Go benchmarks" src="https://img.shields.io/badge/Benchmarks-go-blue">
     </a>
     <a href="https://github.com/ucan-wg/go-ucan/blob/v1/LICENSE.md">
-        <img alt="Apache 2.0 + MIT License" src="https://img.shields.io/badge/License-Apache--2.0+MIT-green">
+        <img alt="Apache 2.0 OR MIT License" src="https://img.shields.io/badge/License-Apache--2.0_OR_MIT-green">
     </a>
     <a href="https://pkg.go.dev/github.com/ucan-wg/go-ucan">
       <img src="https://img.shields.io/badge/Docs-godoc-blue" alt="Docs">
@@ -73,4 +73,4 @@ Artwork by [Bruno Monts](https://www.instagram.com/bruno_monts). Thank you [Rene
 
 ## License
 
-This project is licensed under the double license [Apache 2.0 + MIT](https://github.com/ucan-wg/go-ucan/blob/v1/LICENSE.md).
+This project is licensed under the dual license [Apache 2.0 OR MIT](https://github.com/ucan-wg/go-ucan/blob/v1/LICENSE.md).
