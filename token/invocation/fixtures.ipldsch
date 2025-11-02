@@ -1,0 +1,18 @@
+type Fixtures struct {
+  version String
+  comments String
+  valid [Vector]
+  invalid [Vector]
+}
+
+type Vector struct {
+  name String
+  description String
+  invocation Bytes
+  proofs [Bytes]
+  error optional Error
+}
+
+type Error struct {
+  name String
+}
