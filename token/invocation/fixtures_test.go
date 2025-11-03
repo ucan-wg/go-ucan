@@ -4,7 +4,6 @@ import (
 	_ "embed"
 	"fmt"
 	"os"
-	"sync"
 	"testing"
 
 	"github.com/ipfs/go-cid"
@@ -21,24 +20,10 @@ import (
 //go:embed fixtures.ipldsch
 var schemaBytes []byte
 
-var (
-	once      sync.Once
-	ts        *schema.TypeSystem
-	errSchema error
-)
-
-func mustLoadSchema() *schema.TypeSystem {
-	once.Do(func() {
-		ts, errSchema = ipld.LoadSchemaBytes(schemaBytes)
-	})
-	if errSchema != nil {
-		panic(fmt.Errorf("failed to load IPLD schema: %s", errSchema))
-	}
-	return ts
-}
-
-func fixturesType() schema.Type {
-	return mustLoadSchema().TypeByName("Fixtures")
+func fixturesType(t *testing.T) schema.Type {
+	ts, err := ipld.LoadSchemaBytes(schemaBytes)
+	require.NoError(t, err)
+	return ts.TypeByName("Fixtures")
 }
 
 type ErrorModel struct {
@@ -70,7 +55,7 @@ func TestFixtures(t *testing.T) {
 	require.NoError(t, err)
 
 	var fixtures FixturesModel
-	_, err = ipld.UnmarshalStreaming(fixturesFile, dagjson.Decode, &fixtures, fixturesType())
+	_, err = ipld.UnmarshalStreaming(fixturesFile, dagjson.Decode, &fixtures, fixturesType(t))
 	require.NoError(t, err)
 
 	for _, vector := range fixtures.Valid {
