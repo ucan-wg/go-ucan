@@ -316,7 +316,7 @@
       ]
     },
     {
-      "description": "a proof chain more than one delegation long where one or more proofs have an not before time in the past",
+      "description": "a proof chain more than one delegation long where one or more proofs have a not before time in the past",
       "invocation": {
         "/": {
           "bytes": "glhAKjwCYxC46BAlemzISFY7HeEuwpKbpaGBfBXRMJ/5+DhSsJacos3Jx8gncdFD/QoN5PdYMzLpYAIr0qZyL3M5CKJhaEg0Ae0B7QETcXN1Y2FuL2ludkAxLjAuMC1yYy4xqGNjbWRpL21zZy9zZW5kY2V4cPZjaWF0Gmj1e4BjaXNzeDhkaWQ6a2V5Ono2TWtnR3lrTjlBUk5GakV6b3dWcTRtTFAya0w0TnN5QWFER1hlSkZRNXFFMWJmZ2NwcmaC2CpYJQABcRIggGQKZ7/wsq5gK+P8q4RqwOZCrhyiIITDpHM/bZIPpyTYKlglAAFxEiBawsobXE0KoPwaSppn8fE4S0xycGpJ5svc7uwKNRryVWNzdWJ4OGRpZDprZXk6ejZNa21KY2VWb1FTSHM0NWNSZUVYb0x0V20xd29zQ0c4Ukx4Zkt3aHhvcXpvVGtDZGFyZ3OgZW5vbmNlUAEBAwgBAQMIAQEDCAEBAwg"
