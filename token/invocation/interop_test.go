@@ -3,7 +3,6 @@ package invocation_test
 import (
 	_ "embed"
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/ipfs/go-cid"
@@ -12,12 +11,18 @@ import (
 	"github.com/ipld/go-ipld-prime/codec/dagjson"
 	"github.com/ipld/go-ipld-prime/schema"
 	"github.com/stretchr/testify/require"
+
 	"github.com/ucan-wg/go-ucan/token/delegation"
 	"github.com/ucan-wg/go-ucan/token/internal/envelope"
 	"github.com/ucan-wg/go-ucan/token/invocation"
 )
 
-//go:embed fixtures.ipldsch
+// This comes from https://github.com/ucan-wg/spec/blob/main/fixtures/1.0.0/invocation.json
+//
+//go:embed testdata/interop_invocation.json
+var interopInvocation []byte
+
+//go:embed testdata/interop.ipldsch
 var schemaBytes []byte
 
 func fixturesType(t *testing.T) schema.Type {
@@ -45,17 +50,9 @@ type FixturesModel struct {
 	Invalid  []VectorModel
 }
 
-type NamedError interface {
-	error
-	Name() string
-}
-
-func TestFixtures(t *testing.T) {
-	fixturesFile, err := os.Open("./testdata/invocations.json")
-	require.NoError(t, err)
-
+func TestInterop(t *testing.T) {
 	var fixtures FixturesModel
-	_, err = ipld.UnmarshalStreaming(fixturesFile, dagjson.Decode, &fixtures, fixturesType(t))
+	_, err := ipld.Unmarshal(interopInvocation, dagjson.Decode, &fixtures, fixturesType(t))
 	require.NoError(t, err)
 
 	for _, vector := range fixtures.Valid {
