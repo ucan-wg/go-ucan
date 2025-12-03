@@ -3,6 +3,7 @@ package container
 import (
 	"bytes"
 	"io"
+	"slices"
 
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/codec/cbor"
@@ -109,8 +110,13 @@ func (ctn Writer) toWriter(header header, w io.Writer) (err error) {
 	}()
 	node, err := qp.BuildMap(basicnode.Prototype.Any, 1, func(ma datamodel.MapAssembler) {
 		qp.MapEntry(ma, containerVersionTag, qp.List(int64(len(ctn)), func(la datamodel.ListAssembler) {
-			for data, _ := range ctn {
-				qp.ListEntry(la, qp.Bytes([]byte(data)))
+			tokens := make([][]byte, 0, len(ctn))
+			for data := range ctn {
+				tokens = append(tokens, []byte(data))
+			}
+			slices.SortFunc(tokens, bytes.Compare)
+			for _, data := range tokens {
+				qp.ListEntry(la, qp.Bytes(data))
 			}
 		}))
 	})
