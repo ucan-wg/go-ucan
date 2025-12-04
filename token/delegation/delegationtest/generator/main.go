@@ -6,7 +6,11 @@ import (
 
 func main() {
 	gen := &generator{}
-	err := gen.chainPersonas(didtest.Personas(), acc{}, noopVariant())
+	err := gen.createSelfDelegations(didtest.Personas())
+	if err != nil {
+		panic(err)
+	}
+	err = gen.chainPersonas(didtest.Personas(), acc{}, noopVariant())
 	if err != nil {
 		panic(err)
 	}

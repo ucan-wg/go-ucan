@@ -238,7 +238,7 @@ func tokenFromModel(m tokenPayloadModel) (*Token, error) {
 
 	tkn.issuer, err = did.Parse(m.Iss)
 	if err != nil {
-		return nil, fmt.Errorf("parse iss: %w", err)
+		return nil, fmt.Errorf("parse issuer: %w", err)
 	}
 
 	if tkn.audience, err = did.Parse(m.Aud); err != nil {
