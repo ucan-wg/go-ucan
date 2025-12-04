@@ -9,6 +9,48 @@ import (
 )
 
 var (
+	TokenAliceAliceCID    = cid.MustParse("bafyreiddqsv5rrpcormtcs3dg7hzwjr2grxyyozc2f2surxdbnctdqpfzi")
+	TokenAliceAliceSealed = mustGetBundle(TokenAliceAliceCID).Sealed
+	TokenAliceAliceBundle = mustGetBundle(TokenAliceAliceCID)
+	TokenAliceAlice       = mustGetBundle(TokenAliceAliceCID).Decoded
+)
+
+var (
+	TokenBobBobCID    = cid.MustParse("bafyreid4dwdov4yijvnb7xxhcndsxifzw5yry4sm4frex6relttlnledo4")
+	TokenBobBobSealed = mustGetBundle(TokenBobBobCID).Sealed
+	TokenBobBobBundle = mustGetBundle(TokenBobBobCID)
+	TokenBobBob       = mustGetBundle(TokenBobBobCID).Decoded
+)
+
+var (
+	TokenCarolCarolCID    = cid.MustParse("bafyreiekuehdsubdfllqecsat4gsfveyqq6442ejuiqfsgu3tplrus5l3e")
+	TokenCarolCarolSealed = mustGetBundle(TokenCarolCarolCID).Sealed
+	TokenCarolCarolBundle = mustGetBundle(TokenCarolCarolCID)
+	TokenCarolCarol       = mustGetBundle(TokenCarolCarolCID).Decoded
+)
+
+var (
+	TokenDanDanCID    = cid.MustParse("bafyreigzd442yhyizbx54kd76ewxssh5owuxv26ziittnblnj4h3a555dm")
+	TokenDanDanSealed = mustGetBundle(TokenDanDanCID).Sealed
+	TokenDanDanBundle = mustGetBundle(TokenDanDanCID)
+	TokenDanDan       = mustGetBundle(TokenDanDanCID).Decoded
+)
+
+var (
+	TokenErinErinCID    = cid.MustParse("bafyreigl5lbogpzq7iyz6qkzhicv4zscu26j62k4ydgcqogdiqmks5tz7q")
+	TokenErinErinSealed = mustGetBundle(TokenErinErinCID).Sealed
+	TokenErinErinBundle = mustGetBundle(TokenErinErinCID)
+	TokenErinErin       = mustGetBundle(TokenErinErinCID).Decoded
+)
+
+var (
+	TokenFrankFrankCID    = cid.MustParse("bafyreic6hgmqf2vwszboldlqeobpy2plpkcmj4dhhug76akcnafb2pt6em")
+	TokenFrankFrankSealed = mustGetBundle(TokenFrankFrankCID).Sealed
+	TokenFrankFrankBundle = mustGetBundle(TokenFrankFrankCID)
+	TokenFrankFrank       = mustGetBundle(TokenFrankFrankCID).Decoded
+)
+
+var (
 	TokenAliceBobCID    = cid.MustParse("bafyreifa35rjstdm37cjudzs72ab22rnh5blny725khtapox63fnsj6pbe")
 	TokenAliceBobSealed = mustGetBundle(TokenAliceBobCID).Sealed
 	TokenAliceBobBundle = mustGetBundle(TokenAliceBobCID)
@@ -170,6 +212,12 @@ var (
 )
 
 var AllTokens = []*delegation.Token{
+	TokenAliceAlice,
+	TokenBobBob,
+	TokenCarolCarol,
+	TokenDanDan,
+	TokenErinErin,
+	TokenFrankFrank,
 	TokenAliceBob,
 	TokenBobCarol,
 	TokenCarolDan,
@@ -196,6 +244,12 @@ var AllTokens = []*delegation.Token{
 }
 
 var AllBundles = []delegation.Bundle{
+	TokenAliceAliceBundle,
+	TokenBobBobBundle,
+	TokenCarolCarolBundle,
+	TokenDanDanBundle,
+	TokenErinErinBundle,
+	TokenFrankFrankBundle,
 	TokenAliceBobBundle,
 	TokenBobCarolBundle,
 	TokenCarolDanBundle,
@@ -222,6 +276,12 @@ var AllBundles = []delegation.Bundle{
 }
 
 var cidToName = map[cid.Cid]string{
+	TokenAliceAliceCID:                       "TokenAliceAlice",
+	TokenBobBobCID:                           "TokenBobBob",
+	TokenCarolCarolCID:                       "TokenCarolCarol",
+	TokenDanDanCID:                           "TokenDanDan",
+	TokenErinErinCID:                         "TokenErinErin",
+	TokenFrankFrankCID:                       "TokenFrankFrank",
 	TokenAliceBobCID:                         "TokenAliceBob",
 	TokenBobCarolCID:                         "TokenBobCarol",
 	TokenCarolDanCID:                         "TokenCarolDan",

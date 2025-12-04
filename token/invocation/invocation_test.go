@@ -3,6 +3,7 @@ package invocation_test
 import (
 	_ "embed"
 	"testing"
+	"time"
 
 	"github.com/MetaMask/go-did-it/didtest"
 	"github.com/ipfs/go-cid"
@@ -18,144 +19,255 @@ import (
 //go:embed testdata/new.dagjson
 var newDagJson []byte
 
-const (
-	missingTknCIDStr = "bafyreigwypmw6eul6vadi6g6lnfbsfo2zck7gfzsbjoroqs3djhnzzc7mm"
-)
+//go:embed testdata/selfsigned.dagjson
+var selfsignedDagJson []byte
+
+const missingTknCIDStr = "bafyreigwypmw6eul6vadi6g6lnfbsfo2zck7gfzsbjoroqs3djhnzzc7mm"
 
 var emptyArguments = args.New()
 
 func TestToken_ExecutionAllowed(t *testing.T) {
-	t.Parallel()
+	for _, tc := range []struct {
+		name   string
+		issuer didtest.Persona
+		cmd    command.Command
+		args   *args.Args
+		proofs []cid.Cid
+		opts   []invocation.Option
+		err    error
+	}{
+		// Passes
+		{
+			name:   "passes - only root",
+			issuer: didtest.PersonaBob,
+			cmd:    delegationtest.NominalCommand,
+			args:   emptyArguments,
+			proofs: delegationtest.ProofAliceBob,
+			err:    nil,
+		},
+		{
+			name:   "passes - valid chain",
+			issuer: didtest.PersonaFrank,
+			cmd:    delegationtest.NominalCommand,
+			args:   emptyArguments,
+			proofs: delegationtest.ProofAliceBobCarolDanErinFrank,
+			err:    nil,
+		},
+		{
+			name:   "passes - proof chain attenuates command",
+			issuer: didtest.PersonaFrank,
+			cmd:    delegationtest.AttenuatedCommand,
+			args:   emptyArguments,
+			proofs: delegationtest.ProofAliceBobCarolDanErinFrank_ValidAttenuatedCommand,
+			err:    nil,
+		},
+		{
+			name:   "passes - invocation attenuates command",
+			issuer: didtest.PersonaFrank,
+			cmd:    delegationtest.AttenuatedCommand,
+			args:   emptyArguments,
+			proofs: delegationtest.ProofAliceBobCarolDanErinFrank,
+			err:    nil,
+		},
+		{
+			name:   "passes - arguments satisfy empty policy",
+			issuer: didtest.PersonaFrank,
+			cmd:    delegationtest.NominalCommand,
+			args:   policytest.SpecValidArguments,
+			proofs: delegationtest.ProofAliceBobCarolDanErinFrank,
+			err:    nil,
+		},
+		{
+			name:   "passes - arguments satisfy example policy",
+			issuer: didtest.PersonaFrank,
+			cmd:    delegationtest.NominalCommand,
+			args:   policytest.SpecValidArguments,
+			proofs: delegationtest.ProofAliceBobCarolDanErinFrank_ValidExamplePolicy,
+			err:    nil,
+		},
+		{
+			name:   "passes - self-signed invocation doesn't require proof",
+			issuer: didtest.PersonaAlice,
+			cmd:    delegationtest.NominalCommand,
+			args:   emptyArguments,
+			proofs: nil,
+			err:    nil,
+		},
+		{
+			name:   "passes - self-signed invocation accepts a delegation to itself",
+			issuer: didtest.PersonaAlice,
+			cmd:    delegationtest.NominalCommand,
+			args:   emptyArguments,
+			proofs: []cid.Cid{delegationtest.TokenAliceAliceCID},
+			err:    nil,
+		},
 
-	t.Run("passes - only root", func(t *testing.T) {
-		t.Parallel()
+		// Fails
+		{
+			name:   "fails - no proof",
+			issuer: didtest.PersonaCarol,
+			cmd:    delegationtest.NominalCommand,
+			args:   emptyArguments,
+			proofs: delegationtest.ProofEmpty,
+			err:    invocation.ErrNoProof,
+		},
+		{
+			name:   "fails - missing referenced delegation",
+			issuer: didtest.PersonaCarol,
+			cmd:    delegationtest.NominalCommand,
+			args:   emptyArguments,
+			proofs: []cid.Cid{cid.MustParse(missingTknCIDStr), delegationtest.TokenAliceBobCID},
+			err:    invocation.ErrMissingDelegation,
+		},
+		{
+			name:   "fails - referenced delegation expired",
+			issuer: didtest.PersonaFrank,
+			cmd:    delegationtest.NominalCommand,
+			args:   emptyArguments,
+			proofs: delegationtest.ProofAliceBobCarolDanErinFrank_InvalidExpired,
+			err:    invocation.ErrTokenInvalidNow,
+		},
+		{
+			name:   "fails - referenced delegation inactive",
+			issuer: didtest.PersonaFrank,
+			cmd:    delegationtest.NominalCommand,
+			args:   emptyArguments,
+			proofs: delegationtest.ProofAliceBobCarolDanErinFrank_InvalidInactive,
+			err:    invocation.ErrTokenInvalidNow,
+		},
+		{
+			name:   "fails - last (or only) delegation not root",
+			issuer: didtest.PersonaFrank,
+			cmd:    delegationtest.NominalCommand,
+			args:   emptyArguments,
+			proofs: []cid.Cid{delegationtest.TokenErinFrankCID, delegationtest.TokenDanErinCID, delegationtest.TokenCarolDanCID},
+			err:    invocation.ErrLastNotRoot,
+		},
+		{
+			name:   "fails - broken chain",
+			issuer: didtest.PersonaFrank,
+			cmd:    delegationtest.NominalCommand,
+			args:   emptyArguments,
+			proofs: []cid.Cid{delegationtest.TokenCarolDanCID, delegationtest.TokenAliceBobCID},
+			err:    invocation.ErrBrokenChain,
+		},
+		{
+			name:   "fails - first not issued to invoker",
+			issuer: didtest.PersonaFrank,
+			cmd:    delegationtest.NominalCommand,
+			args:   emptyArguments,
+			proofs: []cid.Cid{delegationtest.TokenBobCarolCID, delegationtest.TokenAliceBobCID},
+			err:    invocation.ErrBrokenChain,
+		},
+		{
+			name:   "fails - proof chain expands command",
+			issuer: didtest.PersonaFrank,
+			cmd:    delegationtest.NominalCommand,
+			args:   emptyArguments,
+			proofs: delegationtest.ProofAliceBobCarolDanErinFrank_InvalidExpandedCommand,
+			err:    invocation.ErrCommandNotCovered,
+		},
+		{
+			name:   "fails - invocation expands command",
+			issuer: didtest.PersonaFrank,
+			cmd:    delegationtest.ExpandedCommand,
+			args:   emptyArguments,
+			proofs: delegationtest.ProofAliceBobCarolDanErinFrank,
+			err:    invocation.ErrCommandNotCovered,
+		},
+		{
+			name:   "fails - inconsistent subject",
+			issuer: didtest.PersonaFrank,
+			cmd:    delegationtest.ExpandedCommand,
+			args:   emptyArguments,
+			proofs: delegationtest.ProofAliceBobCarolDanErinFrank_InvalidSubject,
+			err:    invocation.ErrWrongSub,
+		},
+		{
+			name:   "fails - arguments don't satisfy example policy",
+			issuer: didtest.PersonaFrank,
+			cmd:    delegationtest.NominalCommand,
+			args:   policytest.SpecInvalidArguments,
+			proofs: delegationtest.ProofAliceBobCarolDanErinFrank_ValidExamplePolicy,
+			err:    invocation.ErrPolicyNotSatisfied,
+		},
+		{
+			name:   "fails - self-signed invocation refuses a delegation to itself for a different DID",
+			issuer: didtest.PersonaAlice,
+			cmd:    delegationtest.NominalCommand,
+			args:   emptyArguments,
+			proofs: []cid.Cid{delegationtest.TokenBobBobCID},
+			err:    invocation.ErrBrokenChain,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.opts = append(tc.opts, invocation.WithArguments(tc.args))
 
-		testPasses(t, didtest.PersonaBob, delegationtest.NominalCommand, emptyArguments, delegationtest.ProofAliceBob)
-	})
+			tkn, err := invocation.New(tc.issuer.DID(), tc.cmd, didtest.PersonaAlice.DID(), tc.proofs, tc.opts...)
+			require.NoError(t, err)
 
-	t.Run("passes - valid chain", func(t *testing.T) {
-		t.Parallel()
+			err = tkn.ExecutionAllowed(delegationtest.GetDelegationLoader())
 
-		testPasses(t, didtest.PersonaFrank, delegationtest.NominalCommand, emptyArguments, delegationtest.ProofAliceBobCarolDanErinFrank)
-	})
+			if tc.err != nil {
+				require.ErrorIs(t, err, tc.err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
 
-	t.Run("passes - proof chain attenuates command", func(t *testing.T) {
-		t.Parallel()
+const (
+	nonce      = "6roDhGi0kiNriQAz7J3d+bOeoI/tj8ENikmQNbtjnD0"
+	subjectCmd = "/foo/bar"
+)
 
-		testPasses(t, didtest.PersonaFrank, delegationtest.AttenuatedCommand, emptyArguments, delegationtest.ProofAliceBobCarolDanErinFrank_ValidAttenuatedCommand)
-	})
+func TestConstructors(t *testing.T) {
+	cmd, err := command.Parse(subjectCmd)
+	require.NoError(t, err)
 
-	t.Run("passes - invocation attenuates command", func(t *testing.T) {
-		t.Parallel()
+	iat, err := time.Parse(time.RFC3339, "2100-01-01T00:00:00Z")
+	require.NoError(t, err)
 
-		testPasses(t, didtest.PersonaFrank, delegationtest.AttenuatedCommand, emptyArguments, delegationtest.ProofAliceBobCarolDanErinFrank)
-	})
+	exp, err := time.Parse(time.RFC3339, "2200-01-01T00:00:00Z")
+	require.NoError(t, err)
 
-	t.Run("passes - arguments satisfy empty policy", func(t *testing.T) {
-		t.Parallel()
-
-		testPasses(t, didtest.PersonaFrank, delegationtest.NominalCommand, policytest.SpecValidArguments, delegationtest.ProofAliceBobCarolDanErinFrank)
-	})
-
-	t.Run("passes - arguments satify example policy", func(t *testing.T) {
-		t.Parallel()
-
-		testPasses(t, didtest.PersonaFrank, delegationtest.NominalCommand, policytest.SpecValidArguments, delegationtest.ProofAliceBobCarolDanErinFrank_ValidExamplePolicy)
-	})
-
-	t.Run("fails - no proof", func(t *testing.T) {
-		t.Parallel()
-
-		testFails(t, invocation.ErrNoProof, didtest.PersonaCarol, delegationtest.NominalCommand, emptyArguments, delegationtest.ProofEmpty)
-	})
-
-	t.Run("fails - missing referenced delegation", func(t *testing.T) {
-		t.Parallel()
-
-		missingTknCID, err := cid.Parse(missingTknCIDStr)
+	t.Run("New", func(t *testing.T) {
+		tkn, err := invocation.New(
+			didtest.PersonaAlice.DID(), cmd, didtest.PersonaBob.DID(),
+			delegationtest.ProofAliceBob,
+			invocation.WithNonce([]byte(nonce)),
+			invocation.WithIssuedAt(iat),
+			invocation.WithExpiration(exp),
+			invocation.WithArgument("foo", "bar"),
+			invocation.WithMeta("baz", 123),
+		)
 		require.NoError(t, err)
 
-		prf := []cid.Cid{missingTknCID, delegationtest.TokenAliceBobCID}
-		testFails(t, invocation.ErrMissingDelegation, didtest.PersonaCarol, delegationtest.NominalCommand, emptyArguments, prf)
+		require.False(t, tkn.IsSelfSigned())
+
+		data, err := tkn.ToDagJson(didtest.PersonaAlice.PrivKey())
+		require.NoError(t, err)
+
+		require.JSONEq(t, string(newDagJson), string(data))
 	})
 
-	t.Run("fails - referenced delegation expired", func(t *testing.T) {
-		t.Parallel()
+	t.Run("Self-Signed", func(t *testing.T) {
+		tkn, err := invocation.NewSelfSigned(
+			didtest.PersonaAlice.DID(), cmd,
+			invocation.WithNonce([]byte(nonce)),
+			invocation.WithIssuedAt(iat),
+			invocation.WithExpiration(exp),
+			invocation.WithArgument("foo", "bar"),
+			invocation.WithMeta("baz", 123),
+		)
+		require.NoError(t, err)
 
-		testFails(t, invocation.ErrTokenInvalidNow, didtest.PersonaFrank, delegationtest.NominalCommand, emptyArguments, delegationtest.ProofAliceBobCarolDanErinFrank_InvalidExpired)
+		require.True(t, tkn.IsSelfSigned())
 
+		data, err := tkn.ToDagJson(didtest.PersonaAlice.PrivKey())
+		require.NoError(t, err)
+
+		require.JSONEq(t, string(selfsignedDagJson), string(data))
 	})
-
-	t.Run("fails - referenced delegation inactive", func(t *testing.T) {
-		t.Parallel()
-
-		testFails(t, invocation.ErrTokenInvalidNow, didtest.PersonaFrank, delegationtest.NominalCommand, emptyArguments, delegationtest.ProofAliceBobCarolDanErinFrank_InvalidInactive)
-	})
-
-	t.Run("fails - last (or only) delegation not root", func(t *testing.T) {
-		t.Parallel()
-
-		prf := []cid.Cid{delegationtest.TokenErinFrankCID, delegationtest.TokenDanErinCID, delegationtest.TokenCarolDanCID}
-		testFails(t, invocation.ErrLastNotRoot, didtest.PersonaFrank, delegationtest.NominalCommand, emptyArguments, prf)
-	})
-
-	t.Run("fails - broken chain", func(t *testing.T) {
-		t.Parallel()
-
-		prf := []cid.Cid{delegationtest.TokenCarolDanCID, delegationtest.TokenAliceBobCID}
-		testFails(t, invocation.ErrBrokenChain, didtest.PersonaFrank, delegationtest.NominalCommand, emptyArguments, prf)
-	})
-
-	t.Run("fails - first not issued to invoker", func(t *testing.T) {
-		t.Parallel()
-
-		prf := []cid.Cid{delegationtest.TokenBobCarolCID, delegationtest.TokenAliceBobCID}
-		testFails(t, invocation.ErrBrokenChain, didtest.PersonaFrank, delegationtest.NominalCommand, emptyArguments, prf)
-	})
-
-	t.Run("fails - proof chain expands command", func(t *testing.T) {
-		t.Parallel()
-
-		testFails(t, invocation.ErrCommandNotCovered, didtest.PersonaFrank, delegationtest.NominalCommand, emptyArguments, delegationtest.ProofAliceBobCarolDanErinFrank_InvalidExpandedCommand)
-	})
-
-	t.Run("fails - invocation expands command", func(t *testing.T) {
-		t.Parallel()
-
-		testFails(t, invocation.ErrCommandNotCovered, didtest.PersonaFrank, delegationtest.ExpandedCommand, emptyArguments, delegationtest.ProofAliceBobCarolDanErinFrank)
-	})
-
-	t.Run("fails - inconsistent subject", func(t *testing.T) {
-		t.Parallel()
-
-		testFails(t, invocation.ErrWrongSub, didtest.PersonaFrank, delegationtest.ExpandedCommand, emptyArguments, delegationtest.ProofAliceBobCarolDanErinFrank_InvalidSubject)
-	})
-
-	t.Run("passes - arguments satisfy example policy", func(t *testing.T) {
-		t.Parallel()
-
-		testFails(t, invocation.ErrPolicyNotSatisfied, didtest.PersonaFrank, delegationtest.NominalCommand, policytest.SpecInvalidArguments, delegationtest.ProofAliceBobCarolDanErinFrank_ValidExamplePolicy)
-	})
-
-}
-
-func test(t *testing.T, persona didtest.Persona, cmd command.Command, args *args.Args, prf []cid.Cid, opts ...invocation.Option) error {
-	t.Helper()
-
-	opts = append(opts, invocation.WithArguments(args))
-
-	tkn, err := invocation.New(persona.DID(), cmd, didtest.PersonaAlice.DID(), prf, opts...)
-	require.NoError(t, err)
-
-	return tkn.ExecutionAllowed(delegationtest.GetDelegationLoader())
-}
-
-func testFails(t *testing.T, expErr error, persona didtest.Persona, cmd command.Command, args *args.Args, prf []cid.Cid, opts ...invocation.Option) {
-	err := test(t, persona, cmd, args, prf, opts...)
-	require.ErrorIs(t, err, expErr)
-}
-
-func testPasses(t *testing.T, persona didtest.Persona, cmd command.Command, args *args.Args, prf []cid.Cid, opts ...invocation.Option) {
-	err := test(t, persona, cmd, args, prf, opts...)
-	require.NoError(t, err)
 }

@@ -71,6 +71,25 @@ type generator struct {
 	chains []proof
 }
 
+func (g *generator) createSelfDelegations(personas []didtest.Persona) error {
+	for _, persona := range personas {
+		_, err := g.createDelegation(newDelegationParams{
+			privKey: persona.PrivKey(),
+			aud:     persona.DID(),
+			cmd:     delegationtest.NominalCommand,
+			pol:     policytest.EmptyPolicy,
+			sub:     persona.DID(),
+			opts: []delegation.Option{
+				delegation.WithNonce(constantNonce),
+			},
+		}, persona.Name()+persona.Name(), noopVariant())
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (g *generator) chainPersonas(personas []didtest.Persona, acc acc, vari variant) error {
 	acc.name += personas[0].Name()
 

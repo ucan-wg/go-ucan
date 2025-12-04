@@ -2,6 +2,7 @@ package invocation_test
 
 import (
 	"bytes"
+	_ "embed"
 	"encoding/base64"
 	"testing"
 
@@ -14,9 +15,12 @@ import (
 	"github.com/ucan-wg/go-ucan/token/invocation"
 )
 
+//go:embed testdata/full_example.dagjson
+var fullExampleDagJson []byte
+
 const (
 	issuerPrivKeyCfg = "BeAgktAj8irGgWjp4PGk/fV67e5CcML/KRmmHSldco3etP5lRiuYQ+VVO/39ol3XXruJC8deSuBxoEXzgdYpYw=="
-	newCID           = "zdpuB1NjhETofEUp5iYzoHjSc2KKgZvSoT6FBaLMoVzzsxiR1"
+	fullExampleCID   = "zdpuB1NjhETofEUp5iYzoHjSc2KKgZvSoT6FBaLMoVzzsxiR1"
 )
 
 func TestSchemaRoundTrip(t *testing.T) {
@@ -30,12 +34,12 @@ func TestSchemaRoundTrip(t *testing.T) {
 		// format:    dagJson   -->   PayloadModel   -->   dagCbor   -->   PayloadModel   -->   dagJson
 		// function:      DecodeDagJson()           Seal()        Unseal()          EncodeDagJson()
 
-		p1, err := invocation.FromDagJson(newDagJson)
+		p1, err := invocation.FromDagJson(fullExampleDagJson)
 		require.NoError(t, err)
 
 		cborBytes, id, err := p1.ToSealed(privKey)
 		require.NoError(t, err)
-		assert.Equal(t, newCID, envelope.CIDToBase58BTC(id))
+		assert.Equal(t, fullExampleCID, envelope.CIDToBase58BTC(id))
 
 		p2, c2, err := invocation.FromSealed(cborBytes)
 		require.NoError(t, err)
@@ -44,13 +48,13 @@ func TestSchemaRoundTrip(t *testing.T) {
 		readJson, err := p2.ToDagJson(privKey)
 		require.NoError(t, err)
 
-		assert.JSONEq(t, string(newDagJson), string(readJson))
+		assert.JSONEq(t, string(fullExampleDagJson), string(readJson))
 	})
 
 	t.Run("via streaming", func(t *testing.T) {
 		t.Parallel()
 
-		buf := bytes.NewBuffer(newDagJson)
+		buf := bytes.NewBuffer(fullExampleDagJson)
 
 		// format:    dagJson   -->   PayloadModel   -->   dagCbor   -->   PayloadModel   -->   dagJson
 		// function:      DecodeDagJson()           Seal()         Unseal()         EncodeDagJson()
@@ -61,7 +65,7 @@ func TestSchemaRoundTrip(t *testing.T) {
 		cborBytes := &bytes.Buffer{}
 		id, err := p1.ToSealedWriter(cborBytes, privKey)
 		require.NoError(t, err)
-		assert.Equal(t, newCID, envelope.CIDToBase58BTC(id))
+		assert.Equal(t, fullExampleCID, envelope.CIDToBase58BTC(id))
 
 		p2, c2, err := invocation.FromSealedReader(cborBytes)
 		require.NoError(t, err)
@@ -70,7 +74,7 @@ func TestSchemaRoundTrip(t *testing.T) {
 		readJson := &bytes.Buffer{}
 		require.NoError(t, p2.ToDagJsonWriter(readJson, privKey))
 
-		assert.JSONEq(t, string(newDagJson), readJson.String())
+		assert.JSONEq(t, string(fullExampleDagJson), readJson.String())
 	})
 }
 
