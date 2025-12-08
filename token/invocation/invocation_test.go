@@ -197,7 +197,7 @@ func TestToken_ExecutionAllowed(t *testing.T) {
 			cmd:    delegationtest.NominalCommand,
 			args:   emptyArguments,
 			proofs: []cid.Cid{delegationtest.TokenBobBobCID},
-			err:    invocation.ErrBrokenChain,
+			err:    invocation.ErrWrongSub,
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -205,6 +205,8 @@ func TestToken_ExecutionAllowed(t *testing.T) {
 
 			tkn, err := invocation.New(tc.issuer.DID(), tc.cmd, didtest.PersonaAlice.DID(), tc.proofs, tc.opts...)
 			require.NoError(t, err)
+
+			t.Log(tkn.String())
 
 			err = tkn.ExecutionAllowed(delegationtest.GetDelegationLoader())
 

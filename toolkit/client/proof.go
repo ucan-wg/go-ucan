@@ -21,8 +21,7 @@ import (
 // Note: the returned delegation(s) don't have to match exactly the parameters, as long as they allow them.
 // Note: the implemented algorithm won't perform well with a large number of delegations.
 func FindProof(dlgs func() iter.Seq[*delegation.Bundle], issuer did.DID, cmd command.Command, subject did.DID) []cid.Cid {
-	// TODO: maybe that should be part of delegation.Token directly?
-	dlgMatch := func(dlg *delegation.Token, issuer did.DID, cmd command.Command, subject did.DID) bool {
+	continuePath := func(dlg *delegation.Token, issuer did.DID, cmd command.Command, subject did.DID) bool {
 		// The Subject of each delegation must equal the invocation's Subject (or Audience if defined). - 4f
 		if !dlg.Subject().Equal(subject) {
 			return false
@@ -47,7 +46,7 @@ func FindProof(dlgs func() iter.Seq[*delegation.Bundle], issuer did.DID, cmd com
 	var candidateLeaf []*delegation.Bundle
 
 	for bundle := range dlgs() {
-		if !dlgMatch(bundle.Decoded, issuer, cmd, subject) {
+		if !continuePath(bundle.Decoded, issuer, cmd, subject) {
 			continue
 		}
 		candidateLeaf = append(candidateLeaf, bundle)
@@ -83,7 +82,12 @@ func FindProof(dlgs func() iter.Seq[*delegation.Bundle], issuer did.DID, cmd com
 
 			// find parent delegation for our current delegation
 			for candidate := range dlgs() {
-				if !dlgMatch(candidate.Decoded, at.Decoded.Issuer(), at.Decoded.Command(), subject) {
+				// Prune the delegations that don't match the current proof.
+				if !continuePath(candidate.Decoded, at.Decoded.Issuer(), at.Decoded.Command(), subject) {
+					continue
+				}
+				// Prune the self-delegations as they can't get us closer to what we are looking for.
+				if candidate.Decoded.Issuer().Equal(candidate.Decoded.Audience()) {
 					continue
 				}
 
