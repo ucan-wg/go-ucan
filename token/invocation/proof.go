@@ -18,11 +18,11 @@ import (
 //  1. When a token is read/unsealed from its containing envelope (`envelope` package):
 //     a. The envelope can be decoded.
 //     b. The envelope contains a Signature, VarsigHeader and Payload.
-//     c. The Payload contains an iss field that contains a valid `did:key`.
-//     d. The public key can be extracted from the `did:key`.
-//     e. The public key type is supported by go-ucan.
+//     c. The Payload contains an iss field that contains a valid DID.
+//     d. One or more public keys can be derived from the DID.
+//     e. One or more public keys are supported by go-ucan.
 //     f. The Signature can be decoded per the VarsigHeader.
-//     g. The SigPayload can be verified using the Signature and public key.
+//     g. The SigPayload can be verified using the Signature and one public key.
 //     h. The field key of the TokenPayload matches the expected tag.
 //
 //  2. When the token is created or passes step one (token constructor or decoder):
@@ -35,7 +35,7 @@ import (
 //     c. All the delegation must be active (nbf in the past or absent).
 //
 //  4. When the proof chain is being validated (verifyProofs below):
-//     a. There must be at least one delegation in the proof chain.
+//     a. Self-signed invocations (issuer == subject) are allowed and don't require further proof. Otherwise, proof is required.
 //     b. All referenced delegations must be available.
 //     c. The first proof must be issued to the Invoker (audience DID).
 //     d. The Issuer of each delegation must be the Audience in the next one.
@@ -51,8 +51,11 @@ import (
 // - principal alignment
 // - command alignment
 func (t *Token) verifyProofs(delegations []*delegation.Token) error {
-	// There must be at least one delegation referenced - 4a
-	if len(delegations) < 1 {
+	// Self-signed invocations (issuer == subject) are allowed and don't require further proof. Otherwise, proof is required. - 4a
+	if len(delegations) == 0 && t.issuer.Equal(t.subject) {
+		return nil
+	}
+	if len(delegations) == 0 {
 		return ErrNoProof
 	}
 

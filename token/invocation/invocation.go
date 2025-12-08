@@ -109,10 +109,23 @@ func New(iss did.DID, cmd command.Command, sub did.DID, prf []cid.Cid, opts ...O
 	return &tkn, nil
 }
 
+// NewSelfSigned is similar to New, but self-signs the invocation, and therefore does not require a proof.
+// It's similar to having an invocation with a delegation from the invoker to itself.
+// This can be useful in some protocols where the invoker is the same as the subject, or to prove ownership of a resource.
+//
+// You can read it as "(Issuer - I) executes (command) on itself".
+func NewSelfSigned(iss did.DID, cmd command.Command, opts ...Option) (*Token, error) {
+	return New(iss, cmd, iss, nil, opts...)
+}
+
+// ExecutionAllowed verifies that the invocation respects the rules and can be executed.
+// IMPORTANT: this function does NOT verify that the subject (and audience if set) makes sense in your context.
 func (t *Token) ExecutionAllowed(loader delegation.Loader) error {
 	return t.executionAllowed(loader, t.arguments)
 }
 
+// ExecutionAllowedWithArgsHook is the same as ExecutionAllowed, but allows to modify the arguments before verifying them.
+// IMPORTANT: this function does NOT verify that the subject (and audience if set) makes sense in your context.
 func (t *Token) ExecutionAllowedWithArgsHook(loader delegation.Loader, hook func(args args.ReadOnly) (*args.Args, error)) error {
 	newArgs, err := hook(t.arguments.ReadOnly())
 	if err != nil {
@@ -204,6 +217,11 @@ func (t *Token) Cause() *cid.Cid {
 	return t.cause
 }
 
+// IsSelfSigned returns true if the token is self-signed, ie it has the same issuer and subject.
+func (t *Token) IsSelfSigned() bool {
+	return t.issuer.Equal(t.subject)
+}
+
 // IsValidNow verifies that the token can be used at the current time, based on expiration or "not before" fields.
 // This does NOT do any other kind of verifications.
 func (t *Token) IsValidNow() bool {
@@ -276,7 +294,7 @@ func tokenFromModel(m tokenPayloadModel) (*Token, error) {
 	)
 
 	if tkn.issuer, err = did.Parse(m.Iss); err != nil {
-		return nil, fmt.Errorf("parse iss: %w", err)
+		return nil, fmt.Errorf("parse issuer: %w", err)
 	}
 
 	if tkn.subject, err = did.Parse(m.Sub); err != nil {

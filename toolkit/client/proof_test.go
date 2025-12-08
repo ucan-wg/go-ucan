@@ -4,7 +4,9 @@ import (
 	"iter"
 	"testing"
 
+	"github.com/MetaMask/go-did-it"
 	"github.com/MetaMask/go-did-it/didtest"
+	"github.com/ipfs/go-cid"
 	"github.com/stretchr/testify/require"
 
 	"github.com/ucan-wg/go-ucan/pkg/command"
@@ -23,17 +25,76 @@ func TestFindProof(t *testing.T) {
 		}
 	}
 
-	require.Equal(t, delegationtest.ProofAliceBob,
-		FindProof(dlgs, didtest.PersonaBob.DID(), delegationtest.NominalCommand, didtest.PersonaAlice.DID()))
-	require.Equal(t, delegationtest.ProofAliceBobCarol,
-		FindProof(dlgs, didtest.PersonaCarol.DID(), delegationtest.NominalCommand, didtest.PersonaAlice.DID()))
-	require.Equal(t, delegationtest.ProofAliceBobCarolDan,
-		FindProof(dlgs, didtest.PersonaDan.DID(), delegationtest.NominalCommand, didtest.PersonaAlice.DID()))
-	require.Equal(t, delegationtest.ProofAliceBobCarolDanErin,
-		FindProof(dlgs, didtest.PersonaErin.DID(), delegationtest.NominalCommand, didtest.PersonaAlice.DID()))
-	require.Equal(t, delegationtest.ProofAliceBobCarolDanErinFrank,
-		FindProof(dlgs, didtest.PersonaFrank.DID(), delegationtest.NominalCommand, didtest.PersonaAlice.DID()))
+	for _, tc := range []struct {
+		name     string
+		issuer   did.DID
+		command  command.Command
+		subject  did.DID
+		expected []cid.Cid
+	}{
+		// Passes
+		{
+			name:     "Alice --> Alice (self-delegation)",
+			issuer:   didtest.PersonaAlice.DID(),
+			command:  delegationtest.NominalCommand,
+			subject:  didtest.PersonaAlice.DID(),
+			expected: []cid.Cid{delegationtest.TokenAliceAliceCID},
+		},
+		{
+			name:     "Alice --> Bob",
+			issuer:   didtest.PersonaBob.DID(),
+			command:  delegationtest.NominalCommand,
+			subject:  didtest.PersonaAlice.DID(),
+			expected: delegationtest.ProofAliceBob,
+		},
+		{
+			name:     "Alice --> Bob --> Carol",
+			issuer:   didtest.PersonaCarol.DID(),
+			command:  delegationtest.NominalCommand,
+			subject:  didtest.PersonaAlice.DID(),
+			expected: delegationtest.ProofAliceBobCarol,
+		},
+		{
+			name:     "Alice --> Bob --> Carol --> Dan",
+			issuer:   didtest.PersonaDan.DID(),
+			command:  delegationtest.NominalCommand,
+			subject:  didtest.PersonaAlice.DID(),
+			expected: delegationtest.ProofAliceBobCarolDan,
+		},
+		{
+			name:     "Alice --> Bob --> Carol --> Dan --> Erin",
+			issuer:   didtest.PersonaErin.DID(),
+			command:  delegationtest.NominalCommand,
+			subject:  didtest.PersonaAlice.DID(),
+			expected: delegationtest.ProofAliceBobCarolDanErin,
+		},
+		{
+			name:     "Alice --> Bob --> Carol --> Dan --> Erin --> Frank",
+			issuer:   didtest.PersonaFrank.DID(),
+			command:  delegationtest.NominalCommand,
+			subject:  didtest.PersonaAlice.DID(),
+			expected: delegationtest.ProofAliceBobCarolDanErinFrank,
+		},
 
-	// wrong command
-	require.Empty(t, FindProof(dlgs, didtest.PersonaBob.DID(), command.New("foo"), didtest.PersonaAlice.DID()))
+		// Fails
+		{
+			name:     "wrong command",
+			issuer:   didtest.PersonaBob.DID(),
+			command:  command.New("foo"),
+			subject:  didtest.PersonaAlice.DID(),
+			expected: nil,
+		},
+		{
+			name:     "wrong subject",
+			issuer:   didtest.PersonaBob.DID(),
+			command:  delegationtest.NominalCommand,
+			subject:  didtest.PersonaDan.DID(),
+			expected: nil,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			res := FindProof(dlgs, tc.issuer, tc.command, tc.subject)
+			require.Equal(t, tc.expected, res)
+		})
+	}
 }
