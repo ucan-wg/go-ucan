@@ -42,6 +42,23 @@ func WithMeta(key string, val any) Option {
 	}
 }
 
+// WithMetaMap adds all key/value pairs in the provided map to the
+// Token's "meta" field.
+//
+// WithMetaMap can be used multiple times in the same call.
+// Accepted types for the value are: bool, string, int, int32, int64, []byte,
+// and ipld.Node.
+func WithMetaMap(m map[string]any) Option {
+	return func(t *Token) error {
+		for k, v := range m {
+			if err := t.meta.Add(k, v); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+}
+
 // WithEncryptedMetaString adds a key/value pair in the "meta" field.
 // The string value is encrypted with the given key.
 // The ciphertext will be 40 bytes larger than the plaintext due to encryption overhead.
