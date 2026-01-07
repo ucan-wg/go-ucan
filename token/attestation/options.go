@@ -1,55 +1,54 @@
-package invocation
+package attestation
 
 import (
 	"time"
-
-	"github.com/MetaMask/go-did-it"
-	"github.com/ipfs/go-cid"
-
-	"github.com/ucan-wg/go-ucan/pkg/args"
 )
 
 // Option is a type that allows optional fields to be set during the
-// creation of an invocation Token.
+// creation of a Token.
 type Option func(*Token) error
 
-// WithArgument adds a key/value pair to the Token's Arguments field.
-func WithArgument(key string, val any) Option {
+// WithClaim adds a key/value pair in the "claims" field.
+//
+// WithClaims can be used multiple times in the same call.
+// Accepted types for the value are: bool, string, int, int32, int64, []byte,
+// and ipld.Node.
+func WithClaim(key string, val any) Option {
 	return func(t *Token) error {
-		return t.arguments.Add(key, val)
+		return t.claims.Add(key, val)
 	}
 }
 
-// WithArguments merges the provided arguments into the Token's existing
-// arguments.
+// WithClaimsMap adds all key/value pairs in the provided map to the
+// Token's "claims" field.
 //
-// If duplicate keys are encountered, the new value is silently dropped
-// without causing an error.  Since duplicate keys can only be encountered
-// due to previous calls to WithArgument or WithArguments, calling only
-// this function to set the Token's arguments is equivalent to assigning
-// the arguments to the Token.
-func WithArguments(args *args.Args) Option {
+// WithClaimsMap can be used multiple times in the same call.
+// Accepted types for the value are: bool, string, int, int32, int64, []byte,
+// and ipld.Node.
+func WithClaimMap(m map[string]any) Option {
 	return func(t *Token) error {
-		t.arguments.Include(args)
-		return nil
-	}
-}
-
-// WithAudience sets the Token's audience to the provided did.DID.
-//
-// This can be used if the resource on which the token operates on is different
-// from the subject. In that situation, the subject is akin to the "service" and
-// the audience is akin to the resource.
-//
-// If the provided did.DID is the same as the Token's subject, the
-// audience is not set.
-func WithAudience(aud did.DID) Option {
-	return func(t *Token) error {
-		if t.subject != aud {
-			t.audience = aud
+		for k, v := range m {
+			if err := t.claims.Add(k, v); err != nil {
+				return err
+			}
 		}
-
 		return nil
+	}
+}
+
+// WithEncryptedClaimsString adds a key/value pair in the "claims" field.
+// The string value is encrypted with the given aesKey.
+func WithEncryptedClaimsString(key, val string, encryptionKey []byte) Option {
+	return func(t *Token) error {
+		return t.claims.AddEncrypted(key, val, encryptionKey)
+	}
+}
+
+// WithEncryptedClaimsBytes adds a key/value pair in the "claims" field.
+// The []byte value is encrypted with the given aesKey.
+func WithEncryptedClaimsBytes(key string, val, encryptionKey []byte) Option {
+	return func(t *Token) error {
+		return t.claims.AddEncrypted(key, val, encryptionKey)
 	}
 }
 
@@ -163,15 +162,6 @@ func WithIssuedAtIn(after time.Duration) Option {
 func WithoutIssuedAt() Option {
 	return func(t *Token) error {
 		t.issuedAt = nil
-
-		return nil
-	}
-}
-
-// WithCause sets the Token's cause field to the provided cid.Cid.
-func WithCause(cause *cid.Cid) Option {
-	return func(t *Token) error {
-		t.cause = cause
 
 		return nil
 	}

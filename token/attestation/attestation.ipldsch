@@ -1,0 +1,22 @@
+type DID string
+
+# The Attestation payload
+type Payload struct {
+    # Issuer DID (sender)
+    iss DID
+    # Audience DID (receiver) TODO: should that exist?
+    # aud DID
+
+    # Arbitrary claims
+    claims optional {String: Any}
+
+    # Arbitrary Metadata
+    meta optional {String : Any}
+
+    # A unique, random nonce
+    nonce Bytes
+    # The timestamp at which the Invocation becomes invalid
+    exp nullable Int
+    # The Timestamp at which the Invocation was created
+    iat optional Int
+}
