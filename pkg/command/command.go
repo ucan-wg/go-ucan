@@ -42,6 +42,12 @@ func Parse(s string) (Command, error) {
 		return "", ErrRequiresLowercase
 	}
 
+	// The leading slash is mandatory and a trailing slash has already been
+	// rejected, so an empty segment can only appear as adjacent separators.
+	if strings.Contains(s, separator+separator) {
+		return "", ErrEmptySegment
+	}
+
 	// The leading slash will result in the first element from strings.Split
 	// being an empty string which is removed as strings.Join will ignore it.
 	return Command(s), nil
