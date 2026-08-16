@@ -19,3 +19,9 @@ var ErrDisallowsTrailingSlash = fmt.Errorf("a command must not include a trailin
 //
 // [uppercase unicode characters]: https://github.com/ucan-wg/spec#segment-structure
 var ErrRequiresLowercase = fmt.Errorf("UCAN path segments must must not contain upper-case characters")
+
+// ErrEmptySegment is returned when parsing a string in which two [segment
+// separators] are adjacent, as in "/crud//create".
+//
+// [segment separators]: https://github.com/ucan-wg/spec#segment-structure
+var ErrEmptySegment = fmt.Errorf("a command must not contain empty segments")
