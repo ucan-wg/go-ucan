@@ -148,5 +148,12 @@ func invalidTestcases(t *testing.T) []errorTestcase {
 			},
 			err: command.ErrRequiresLowercase,
 		},
+		{
+			testcase: testcase{
+				name: "an empty segment is present",
+				inp:  "/elem0//elem2",
+			},
+			err: command.ErrEmptySegment,
+		},
 	}
 }
