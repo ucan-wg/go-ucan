@@ -9,9 +9,6 @@
     <a href="https://github.com/ucan-wg/go-ucan/tags">
         <img alt="GitHub Tag" src="https://img.shields.io/github/v/tag/ucan-wg/go-ucan">
     </a>
-    <a href="https://github.com/ucan-wg/go-ucan/tags">
-        <img alt="GitHub Tag" src="https://img.shields.io/github/v/tag/ucan-wg/go-ucan">
-    </a>
     <a href="https://github.com/ucan-wg/go-ucan/actions?query=">
       <img src="https://github.com/ucan-wg/go-ucan/actions/workflows/gotest.yml/badge.svg" alt="Build Status">
     </a>
