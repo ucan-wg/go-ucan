@@ -6,7 +6,9 @@
   <h1 align="center">go-ucan</h1>
 
   <p>
-    <img src="https://img.shields.io/badge/UCAN-v1.0.0--rc.1-blue" alt="UCAN v1.0.0-rc.1">
+    <a href="https://github.com/ucan-wg/go-ucan/tags">
+        <img alt="GitHub Tag" src="https://img.shields.io/github/v/tag/ucan-wg/go-ucan">
+    </a>
     <a href="https://github.com/ucan-wg/go-ucan/tags">
         <img alt="GitHub Tag" src="https://img.shields.io/github/v/tag/ucan-wg/go-ucan">
     </a>
