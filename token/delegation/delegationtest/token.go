@@ -5,8 +5,9 @@ import (
 	"path/filepath"
 	"sync"
 
-	_ "github.com/MetaMask/go-did-it/verifiers/did-key"
 	"github.com/ipfs/go-cid"
+	_ "github.com/ucan-wg/go-did-it/crypto/all"
+	_ "github.com/ucan-wg/go-did-it/verifiers/did-key"
 
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/token/delegation"

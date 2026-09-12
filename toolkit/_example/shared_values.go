@@ -3,10 +3,10 @@ package example
 import (
 	"encoding/base64"
 
-	"github.com/MetaMask/go-did-it"
-	didkeyctl "github.com/MetaMask/go-did-it/controller/did-key"
-	"github.com/MetaMask/go-did-it/crypto"
-	"github.com/MetaMask/go-did-it/crypto/ed25519"
+	"github.com/ucan-wg/go-did-it"
+	didkeyctl "github.com/ucan-wg/go-did-it/controller/did-key"
+	"github.com/ucan-wg/go-did-it/crypto"
+	"github.com/ucan-wg/go-did-it/crypto/ed25519"
 )
 
 // Endpoints
@@ -18,12 +18,12 @@ var AliceIssuerUrl = ":8082"
 
 // Service
 
-var ServicePrivKey crypto.PrivateKeySigningBytes
+var ServicePrivKey crypto.PrivateKeySigningBytesVarsig
 var ServiceDid did.DID
 
 // Alice
 
-var AlicePrivKey crypto.PrivateKeySigningBytes
+var AlicePrivKey crypto.PrivateKeySigningBytesVarsig
 var AliceDid did.DID
 
 func init() {

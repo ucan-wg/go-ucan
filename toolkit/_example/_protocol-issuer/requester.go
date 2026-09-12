@@ -8,7 +8,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/MetaMask/go-did-it"
+	"github.com/ucan-wg/go-did-it"
 
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/token/delegation"

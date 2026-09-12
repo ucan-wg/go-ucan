@@ -7,14 +7,14 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/MetaMask/go-did-it"
-	didkeyctl "github.com/MetaMask/go-did-it/controller/did-key"
-	"github.com/MetaMask/go-did-it/crypto/ed25519"
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/codec/dagcbor"
 	"github.com/ipld/go-ipld-prime/codec/dagjson"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
+	"github.com/ucan-wg/go-did-it"
+	didkeyctl "github.com/ucan-wg/go-did-it/controller/did-key"
+	"github.com/ucan-wg/go-did-it/crypto/ed25519"
 
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/token/invocation"

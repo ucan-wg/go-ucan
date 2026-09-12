@@ -7,8 +7,6 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/MetaMask/go-did-it/crypto"
-	"github.com/MetaMask/go-did-it/crypto/ed25519"
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/codec/dagcbor"
 	"github.com/ipld/go-ipld-prime/datamodel"
@@ -17,6 +15,8 @@ import (
 	"github.com/ipld/go-ipld-prime/node/bindnode"
 	"github.com/ipld/go-ipld-prime/schema"
 	"github.com/stretchr/testify/require"
+	"github.com/ucan-wg/go-did-it/crypto"
+	"github.com/ucan-wg/go-did-it/crypto/ed25519"
 
 	"github.com/ucan-wg/go-ucan/token/internal/envelope"
 )
@@ -84,7 +84,7 @@ func (*Example) Tag() string {
 	return exampleTag
 }
 
-func examplePrivKey(t *testing.T) crypto.PrivateKeySigningBytes {
+func examplePrivKey(t *testing.T) crypto.PrivateKeySigningBytesVarsig {
 	t.Helper()
 
 	privBytes, err := base64.StdEncoding.DecodeString(examplePrivKeyB64)

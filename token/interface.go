@@ -4,9 +4,9 @@ import (
 	"io"
 	"time"
 
-	"github.com/MetaMask/go-did-it/crypto"
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime/codec"
+	"github.com/ucan-wg/go-did-it/crypto"
 )
 
 type Token interface {
@@ -23,21 +23,21 @@ type Token interface {
 type Marshaller interface {
 	// ToSealed wraps the token in an envelope, generates the signature, encodes
 	// the result to DAG-CBOR and calculates the CID of the resulting binary data.
-	ToSealed(privKey crypto.PrivateKeySigningBytes) ([]byte, cid.Cid, error)
+	ToSealed(privKey crypto.PrivateKeySigningBytesVarsig) ([]byte, cid.Cid, error)
 	// ToSealedWriter is the same as ToSealed but accepts an io.Writer.
-	ToSealedWriter(w io.Writer, privKey crypto.PrivateKeySigningBytes) (cid.Cid, error)
+	ToSealedWriter(w io.Writer, privKey crypto.PrivateKeySigningBytesVarsig) (cid.Cid, error)
 	// Encode marshals a Token to the format specified by the provided codec.Encoder.
-	Encode(privKey crypto.PrivateKeySigningBytes, encFn codec.Encoder) ([]byte, error)
+	Encode(privKey crypto.PrivateKeySigningBytesVarsig, encFn codec.Encoder) ([]byte, error)
 	// EncodeWriter is the same as Encode, but accepts an io.Writer.
-	EncodeWriter(w io.Writer, privKey crypto.PrivateKeySigningBytes, encFn codec.Encoder) error
+	EncodeWriter(w io.Writer, privKey crypto.PrivateKeySigningBytesVarsig, encFn codec.Encoder) error
 	// ToDagCbor marshals the Token to the DAG-CBOR format.
-	ToDagCbor(privKey crypto.PrivateKeySigningBytes) ([]byte, error)
+	ToDagCbor(privKey crypto.PrivateKeySigningBytesVarsig) ([]byte, error)
 	// ToDagCborWriter is the same as ToDagCbor, but it accepts an io.Writer.
-	ToDagCborWriter(w io.Writer, privKey crypto.PrivateKeySigningBytes) error
+	ToDagCborWriter(w io.Writer, privKey crypto.PrivateKeySigningBytesVarsig) error
 	// ToDagJson marshals the Token to the DAG-JSON format.
-	ToDagJson(privKey crypto.PrivateKeySigningBytes) ([]byte, error)
+	ToDagJson(privKey crypto.PrivateKeySigningBytesVarsig) ([]byte, error)
 	// ToDagJsonWriter is the same as ToDagJson, but it accepts an io.Writer.
-	ToDagJsonWriter(w io.Writer, privKey crypto.PrivateKeySigningBytes) error
+	ToDagJsonWriter(w io.Writer, privKey crypto.PrivateKeySigningBytesVarsig) error
 }
 
 // Bundle carries together a decoded token with its Cid and raw signed data.

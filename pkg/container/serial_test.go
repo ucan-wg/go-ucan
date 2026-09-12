@@ -9,11 +9,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/MetaMask/go-did-it"
-	"github.com/MetaMask/go-did-it/controller/did-key"
-	"github.com/MetaMask/go-did-it/crypto/ed25519"
 	"github.com/ipfs/go-cid"
 	"github.com/stretchr/testify/require"
+	"github.com/ucan-wg/go-did-it"
+	"github.com/ucan-wg/go-did-it/controller/did-key"
+	_ "github.com/ucan-wg/go-did-it/crypto/all"
+	"github.com/ucan-wg/go-did-it/crypto/ed25519"
 
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/policy"

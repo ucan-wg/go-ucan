@@ -3,11 +3,9 @@
 // from the [envelope]-enclosed, signed and DAG-CBOR-encoded form that
 // should most commonly be used for transport and storage.
 //
-// [delegation]: https://github.com/ucan-wg/delegation/tree/v1_ipld
+// [delegation]: https://github.com/ucan-wg/delegation/
 // [envelope]: https://github.com/ucan-wg/spec#envelope
 package delegation
-
-// TODO: change the "delegation" link above when the specification is merged
 
 import (
 	"encoding/base64"
@@ -16,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/MetaMask/go-did-it"
+	"github.com/ucan-wg/go-did-it"
 
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/meta"

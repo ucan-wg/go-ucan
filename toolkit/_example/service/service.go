@@ -9,7 +9,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/MetaMask/go-did-it"
+	"github.com/ucan-wg/go-did-it"
+	_ "github.com/ucan-wg/go-did-it/crypto/all"
 
 	example "github.com/ucan-wg/go-ucan/toolkit/_example"
 	"github.com/ucan-wg/go-ucan/toolkit/server/exectx"

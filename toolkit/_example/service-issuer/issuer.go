@@ -11,8 +11,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/MetaMask/go-did-it"
-	"github.com/MetaMask/go-did-it/crypto"
+	"github.com/ucan-wg/go-did-it"
+	"github.com/ucan-wg/go-did-it/crypto"
+	_ "github.com/ucan-wg/go-did-it/crypto/all"
 
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/policy"
@@ -43,7 +44,7 @@ func main() {
 	}
 }
 
-func run(ctx context.Context, issuerUrl string, servicePrivKey crypto.PrivateKeySigningBytes) error {
+func run(ctx context.Context, issuerUrl string, servicePrivKey crypto.PrivateKeySigningBytesVarsig) error {
 	issuingLogic := func(iss did.DID, aud did.DID, cmd command.Command) (*delegation.Token, error) {
 		log.Printf("issuing delegation to %v for %v", aud, cmd)
 

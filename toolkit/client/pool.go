@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/MetaMask/go-did-it"
 	"github.com/ipfs/go-cid"
+	"github.com/ucan-wg/go-did-it"
 
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/token/delegation"

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/MetaMask/go-did-it"
+	"github.com/ucan-wg/go-did-it"
 
 	"github.com/ucan-wg/go-ucan/pkg/policy/limits"
 )

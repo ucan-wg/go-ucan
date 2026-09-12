@@ -42,8 +42,8 @@ import (
 	"github.com/ipld/go-ipld-prime/schema"
 	"github.com/ucan-wg/go-varsig"
 
-	"github.com/MetaMask/go-did-it"
-	"github.com/MetaMask/go-did-it/crypto"
+	"github.com/ucan-wg/go-did-it"
+	"github.com/ucan-wg/go-did-it/crypto"
 )
 
 const (
@@ -210,7 +210,7 @@ func FromIPLD[T Tokener](node datamodel.Node, resolvOpts ...did.ResolutionOption
 
 // Encode marshals a Tokener to the format specified by the provided
 // codec.Encoder.
-func Encode(privKey crypto.PrivateKeySigningBytes, token Tokener, encFn codec.Encoder) ([]byte, error) {
+func Encode(privKey crypto.PrivateKeySigningBytesVarsig, token Tokener, encFn codec.Encoder) ([]byte, error) {
 	node, err := ToIPLD(privKey, token)
 	if err != nil {
 		return nil, err
@@ -221,7 +221,7 @@ func Encode(privKey crypto.PrivateKeySigningBytes, token Tokener, encFn codec.En
 
 // EncodeWriter is the same as Encode but outputs to an io.Writer instead
 // of encoding into a []byte.
-func EncodeWriter(w io.Writer, privKey crypto.PrivateKeySigningBytes, token Tokener, encFn codec.Encoder) error {
+func EncodeWriter(w io.Writer, privKey crypto.PrivateKeySigningBytesVarsig, token Tokener, encFn codec.Encoder) error {
 	node, err := ToIPLD(privKey, token)
 	if err != nil {
 		return err
@@ -231,29 +231,29 @@ func EncodeWriter(w io.Writer, privKey crypto.PrivateKeySigningBytes, token Toke
 }
 
 // ToDagCbor marshals the Tokener to the DAG-CBOR format.
-func ToDagCbor(privKey crypto.PrivateKeySigningBytes, token Tokener) ([]byte, error) {
+func ToDagCbor(privKey crypto.PrivateKeySigningBytesVarsig, token Tokener) ([]byte, error) {
 	return Encode(privKey, token, dagcbor.Encode)
 }
 
 // ToDagCborWriter is the same as ToDagCbor but outputs to an io.Writer
 // instead of encoding into a []byte.
-func ToDagCborWriter(w io.Writer, privKey crypto.PrivateKeySigningBytes, token Tokener) error {
+func ToDagCborWriter(w io.Writer, privKey crypto.PrivateKeySigningBytesVarsig, token Tokener) error {
 	return EncodeWriter(w, privKey, token, dagcbor.Encode)
 }
 
 // ToDagJson marshals the Tokener to the DAG-JSON format.
-func ToDagJson(privKey crypto.PrivateKeySigningBytes, token Tokener) ([]byte, error) {
+func ToDagJson(privKey crypto.PrivateKeySigningBytesVarsig, token Tokener) ([]byte, error) {
 	return Encode(privKey, token, dagjson.Encode)
 }
 
 // ToDagJsonWriter is the same as ToDagJson but outputs to an io.Writer
 // instead of encoding into a []byte.
-func ToDagJsonWriter(w io.Writer, privKey crypto.PrivateKeySigningBytes, token Tokener) error {
+func ToDagJsonWriter(w io.Writer, privKey crypto.PrivateKeySigningBytesVarsig, token Tokener) error {
 	return EncodeWriter(w, privKey, token, dagjson.Encode)
 }
 
 // ToIPLD wraps the Tokener in an IPLD datamodel.Node.
-func ToIPLD(privKey crypto.PrivateKeySigningBytes, token Tokener) (datamodel.Node, error) {
+func ToIPLD(privKey crypto.PrivateKeySigningBytesVarsig, token Tokener) (datamodel.Node, error) {
 	tokenPayloadNode := bindnode.Wrap(token, token.Prototype().Type()).Representation()
 
 	opts := []crypto.SigningOption{crypto.WithPayloadEncoding(varsig.PayloadEncodingDAGCBOR)}

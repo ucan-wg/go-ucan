@@ -8,11 +8,12 @@ import (
 	"os"
 	"testing"
 
-	_ "github.com/MetaMask/go-did-it/verifiers/did-key"
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/codec/dagcbor"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	_ "github.com/ucan-wg/go-did-it/crypto/all"
+	_ "github.com/ucan-wg/go-did-it/verifiers/did-key"
 
 	"github.com/ucan-wg/go-ucan/token/internal/envelope"
 )
