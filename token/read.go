@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/MetaMask/go-did-it"
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/codec"
 	"github.com/ipld/go-ipld-prime/codec/dagcbor"
 	"github.com/ipld/go-ipld-prime/codec/dagjson"
 	"github.com/ipld/go-ipld-prime/datamodel"
+	"github.com/ucan-wg/go-did-it"
 
 	"github.com/ucan-wg/go-ucan/token/delegation"
 	"github.com/ucan-wg/go-ucan/token/internal/envelope"

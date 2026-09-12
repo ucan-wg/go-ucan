@@ -5,10 +5,10 @@ import (
 	"encoding/base64"
 	"testing"
 
-	"github.com/MetaMask/go-did-it/crypto"
-	"github.com/MetaMask/go-did-it/crypto/ed25519"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/ucan-wg/go-did-it/crypto"
+	"github.com/ucan-wg/go-did-it/crypto/ed25519"
 
 	"github.com/ucan-wg/go-ucan/token/internal/envelope"
 	"github.com/ucan-wg/go-ucan/token/invocation"
@@ -74,7 +74,7 @@ func TestSchemaRoundTrip(t *testing.T) {
 	})
 }
 
-func privKey(t require.TestingT, privKeyCfg string) crypto.PrivateKeySigningBytes {
+func privKey(t require.TestingT, privKeyCfg string) crypto.PrivateKeySigningBytesVarsig {
 	privBytes, err := base64.StdEncoding.DecodeString(privKeyCfg)
 	require.NoError(t, err)
 

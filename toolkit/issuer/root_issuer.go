@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"iter"
 
-	"github.com/MetaMask/go-did-it"
-	didkeyctl "github.com/MetaMask/go-did-it/controller/did-key"
-	"github.com/MetaMask/go-did-it/crypto"
+	"github.com/ucan-wg/go-did-it"
+	didkeyctl "github.com/ucan-wg/go-did-it/controller/did-key"
+	"github.com/ucan-wg/go-did-it/crypto"
 
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/token/delegation"
@@ -30,12 +30,12 @@ var _ client.DelegationRequester = &RootIssuer{}
 // Feel free to replace this component with your own flavor.
 type RootIssuer struct {
 	did     did.DID
-	privKey crypto.PrivateKeySigningBytes
+	privKey crypto.PrivateKeySigningBytesVarsig
 
 	logic RootIssuingLogic
 }
 
-func NewRootIssuer(privKey crypto.PrivateKeySigningBytes, logic RootIssuingLogic) (*RootIssuer, error) {
+func NewRootIssuer(privKey crypto.PrivateKeySigningBytesVarsig, logic RootIssuingLogic) (*RootIssuer, error) {
 	d := didkeyctl.FromPrivateKey(privKey)
 	return &RootIssuer{
 		did:     d,

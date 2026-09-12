@@ -9,11 +9,11 @@ import (
 	"slices"
 	"time"
 
-	"github.com/MetaMask/go-did-it"
-	didkeyctl "github.com/MetaMask/go-did-it/controller/did-key"
-	"github.com/MetaMask/go-did-it/crypto"
-	"github.com/MetaMask/go-did-it/didtest"
 	"github.com/ipfs/go-cid"
+	"github.com/ucan-wg/go-did-it"
+	didkeyctl "github.com/ucan-wg/go-did-it/controller/did-key"
+	"github.com/ucan-wg/go-did-it/crypto"
+	"github.com/ucan-wg/go-did-it/didtest"
 
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/policy"
@@ -31,7 +31,7 @@ const (
 var constantNonce = []byte{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b}
 
 type newDelegationParams struct {
-	privKey crypto.PrivateKeySigningBytes // iss
+	privKey crypto.PrivateKeySigningBytesVarsig // iss
 	aud     did.DID
 	cmd     command.Command
 	pol     policy.Policy

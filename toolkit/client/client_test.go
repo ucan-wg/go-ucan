@@ -6,8 +6,9 @@ import (
 	"iter"
 	"time"
 
-	"github.com/MetaMask/go-did-it"
-	"github.com/MetaMask/go-did-it/didtest"
+	"github.com/ucan-wg/go-did-it"
+	_ "github.com/ucan-wg/go-did-it/crypto/all"
+	"github.com/ucan-wg/go-did-it/didtest"
 
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/policy"

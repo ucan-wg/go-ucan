@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/MetaMask/go-did-it/crypto"
-	"github.com/MetaMask/go-did-it/crypto/ed25519"
 	"github.com/multiformats/go-varint"
 	"github.com/stretchr/testify/require"
+	"github.com/ucan-wg/go-did-it/crypto"
+	"github.com/ucan-wg/go-did-it/crypto/ed25519"
 )
 
 // This comes from https://github.com/ucan-wg/spec/blob/main/fixtures/1.0.0/delegation.json
@@ -90,7 +90,7 @@ func TestInterop(t *testing.T) {
 	})
 }
 
-func decodeKey(key string) (crypto.PrivateKeySigningBytes, error) {
+func decodeKey(key string) (crypto.PrivateKeySigningBytesVarsig, error) {
 	bytes, err := base64.StdEncoding.DecodeString(key)
 	if err != nil {
 		return nil, err

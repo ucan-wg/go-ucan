@@ -13,8 +13,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/MetaMask/go-did-it"
-	"github.com/MetaMask/go-did-it/crypto"
+	"github.com/ucan-wg/go-did-it"
+	"github.com/ucan-wg/go-did-it/crypto"
+	_ "github.com/ucan-wg/go-did-it/crypto/all"
 
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/container"
@@ -50,7 +51,7 @@ func main() {
 	}
 }
 
-func run(ctx context.Context, ownIssuerUrl string, priv crypto.PrivateKeySigningBytes, d did.DID,
+func run(ctx context.Context, ownIssuerUrl string, priv crypto.PrivateKeySigningBytesVarsig, d did.DID,
 	serviceIssuerUrl string, serviceUrl string, serviceDid did.DID) error {
 	log.Printf("Alice DID is %s", d.String())
 

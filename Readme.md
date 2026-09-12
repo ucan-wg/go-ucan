@@ -54,7 +54,7 @@ Not implemented yet:
 
 ## Status
 
-`go-ucan` currently support the required parts of the UCAN specification: the main specification, delegation and invocation. It leverages the sibling project [`go-did-it`](https://github.com/MetaMask/go-did-it) for easy and extensible DID support.
+`go-ucan` currently support the required parts of the UCAN specification: the main specification, delegation and invocation. It leverages the sibling project [`go-did-it`](https://github.com/ucan-wg/go-did-it) for easy and extensible DID support.
 
 Besides that, `go-ucan` also includes:
 - support for encrypted values in token's metadata

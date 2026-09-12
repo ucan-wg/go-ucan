@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/MetaMask/go-did-it"
+	"github.com/ucan-wg/go-did-it"
 
 	"github.com/ucan-wg/go-ucan/toolkit/server/bearer"
 )

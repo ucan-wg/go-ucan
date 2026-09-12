@@ -8,11 +8,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/MetaMask/go-did-it/didtest"
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/codec/dagcbor"
 	"github.com/ipld/go-ipld-prime/codec/dagjson"
+	"github.com/ucan-wg/go-did-it/didtest"
 
 	"github.com/ucan-wg/go-ucan/pkg/command"
 	"github.com/ucan-wg/go-ucan/pkg/policy"

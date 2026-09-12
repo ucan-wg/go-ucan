@@ -4,9 +4,10 @@ import (
 	_ "embed"
 	"testing"
 
-	"github.com/MetaMask/go-did-it/didtest"
 	"github.com/ipfs/go-cid"
 	"github.com/stretchr/testify/require"
+	_ "github.com/ucan-wg/go-did-it/crypto/all"
+	"github.com/ucan-wg/go-did-it/didtest"
 
 	"github.com/ucan-wg/go-ucan/pkg/args"
 	"github.com/ucan-wg/go-ucan/pkg/command"

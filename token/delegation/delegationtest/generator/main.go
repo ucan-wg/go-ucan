@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/MetaMask/go-did-it/didtest"
+	"github.com/ucan-wg/go-did-it/didtest"
 )
 
 func main() {

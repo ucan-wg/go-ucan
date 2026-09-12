@@ -3,14 +3,14 @@ package invocation
 import (
 	"io"
 
-	"github.com/MetaMask/go-did-it"
-	"github.com/MetaMask/go-did-it/crypto"
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/codec"
 	"github.com/ipld/go-ipld-prime/codec/dagcbor"
 	"github.com/ipld/go-ipld-prime/codec/dagjson"
 	"github.com/ipld/go-ipld-prime/datamodel"
+	"github.com/ucan-wg/go-did-it"
+	"github.com/ucan-wg/go-did-it/crypto"
 
 	"github.com/ucan-wg/go-ucan/token/internal/envelope"
 )
@@ -18,7 +18,7 @@ import (
 // ToSealed wraps the invocation token in an envelope, generates the
 // signature, encodes the result to DAG-CBOR and calculates the CID of
 // the resulting binary data.
-func (t *Token) ToSealed(privKey crypto.PrivateKeySigningBytes) ([]byte, cid.Cid, error) {
+func (t *Token) ToSealed(privKey crypto.PrivateKeySigningBytesVarsig) ([]byte, cid.Cid, error) {
 	data, err := t.ToDagCbor(privKey)
 	if err != nil {
 		return nil, cid.Undef, err
@@ -33,7 +33,7 @@ func (t *Token) ToSealed(privKey crypto.PrivateKeySigningBytes) ([]byte, cid.Cid
 }
 
 // ToSealedWriter is the same as ToSealed but accepts an io.Writer.
-func (t *Token) ToSealedWriter(w io.Writer, privKey crypto.PrivateKeySigningBytes) (cid.Cid, error) {
+func (t *Token) ToSealedWriter(w io.Writer, privKey crypto.PrivateKeySigningBytesVarsig) (cid.Cid, error) {
 	cidWriter := envelope.NewCIDWriter(w)
 
 	if err := t.ToDagCborWriter(cidWriter, privKey); err != nil {
@@ -80,7 +80,7 @@ func FromSealedReader(r io.Reader, resolvOpts ...did.ResolutionOption) (*Token, 
 
 // Encode marshals a Token to the format specified by the provided
 // codec.Encoder.
-func (t *Token) Encode(privKey crypto.PrivateKeySigningBytes, encFn codec.Encoder) ([]byte, error) {
+func (t *Token) Encode(privKey crypto.PrivateKeySigningBytesVarsig, encFn codec.Encoder) ([]byte, error) {
 	node, err := t.toIPLD(privKey)
 	if err != nil {
 		return nil, err
@@ -90,7 +90,7 @@ func (t *Token) Encode(privKey crypto.PrivateKeySigningBytes, encFn codec.Encode
 }
 
 // EncodeWriter is the same as Encode, but accepts an io.Writer.
-func (t *Token) EncodeWriter(w io.Writer, privKey crypto.PrivateKeySigningBytes, encFn codec.Encoder) error {
+func (t *Token) EncodeWriter(w io.Writer, privKey crypto.PrivateKeySigningBytesVarsig, encFn codec.Encoder) error {
 	node, err := t.toIPLD(privKey)
 	if err != nil {
 		return err
@@ -100,22 +100,22 @@ func (t *Token) EncodeWriter(w io.Writer, privKey crypto.PrivateKeySigningBytes,
 }
 
 // ToDagCbor marshals the Token to the DAG-CBOR format.
-func (t *Token) ToDagCbor(privKey crypto.PrivateKeySigningBytes) ([]byte, error) {
+func (t *Token) ToDagCbor(privKey crypto.PrivateKeySigningBytesVarsig) ([]byte, error) {
 	return t.Encode(privKey, dagcbor.Encode)
 }
 
 // ToDagCborWriter is the same as ToDagCbor, but it accepts an io.Writer.
-func (t *Token) ToDagCborWriter(w io.Writer, privKey crypto.PrivateKeySigningBytes) error {
+func (t *Token) ToDagCborWriter(w io.Writer, privKey crypto.PrivateKeySigningBytesVarsig) error {
 	return t.EncodeWriter(w, privKey, dagcbor.Encode)
 }
 
 // ToDagJson marshals the Token to the DAG-JSON format.
-func (t *Token) ToDagJson(privKey crypto.PrivateKeySigningBytes) ([]byte, error) {
+func (t *Token) ToDagJson(privKey crypto.PrivateKeySigningBytesVarsig) ([]byte, error) {
 	return t.Encode(privKey, dagjson.Encode)
 }
 
 // ToDagJsonWriter is the same as ToDagJson, but it accepts an io.Writer.
-func (t *Token) ToDagJsonWriter(w io.Writer, privKey crypto.PrivateKeySigningBytes) error {
+func (t *Token) ToDagJsonWriter(w io.Writer, privKey crypto.PrivateKeySigningBytesVarsig) error {
 	return t.EncodeWriter(w, privKey, dagjson.Encode)
 }
 
@@ -192,7 +192,7 @@ func FromIPLD(node datamodel.Node, resolvOpts ...did.ResolutionOption) (*Token, 
 	return tkn, err
 }
 
-func (t *Token) toIPLD(privKey crypto.PrivateKeySigningBytes) (datamodel.Node, error) {
+func (t *Token) toIPLD(privKey crypto.PrivateKeySigningBytesVarsig) (datamodel.Node, error) {
 	var aud *string
 
 	if t.audience != nil {

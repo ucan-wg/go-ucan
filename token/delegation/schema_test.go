@@ -5,10 +5,10 @@ import (
 	_ "embed"
 	"testing"
 
-	"github.com/MetaMask/go-did-it/didtest"
 	"github.com/ipld/go-ipld-prime"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/ucan-wg/go-did-it/didtest"
 
 	"github.com/ucan-wg/go-ucan/token/delegation"
 	"github.com/ucan-wg/go-ucan/token/internal/envelope"
