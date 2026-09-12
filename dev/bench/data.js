@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1789214159677,
+  "lastUpdate": 1789214767143,
   "repoUrl": "https://github.com/ucan-wg/go-ucan",
   "entries": {
     "Go Benchmark": [
@@ -45480,6 +45480,654 @@ window.BENCHMARK_DATA = {
             "value": 213,
             "unit": "allocs/op",
             "extra": "23710 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "committer": {
+            "email": "batolettre@gmail.com",
+            "name": "Michael Muré",
+            "username": "MichaelMure"
+          },
+          "distinct": true,
+          "id": "46ec5c698dec427af6823ee9337b203163538299",
+          "message": "readme: fix duplicate tag",
+          "timestamp": "2026-09-12T14:04:50+02:00",
+          "tree_id": "2e7c9c1007ad4b19b1f1f510a6f5b00bf7c7d20d",
+          "url": "https://github.com/ucan-wg/go-ucan/commit/46ec5c698dec427af6823ee9337b203163538299"
+        },
+        "date": 1789214765806,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkContainerSerialisation/Bytes_write (github.com/ucan-wg/go-ucan/pkg/container)",
+            "value": 7558,
+            "unit": "ns/op\t   21616 B/op\t      45 allocs/op",
+            "extra": "153630 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContainerSerialisation/Bytes_write (github.com/ucan-wg/go-ucan/pkg/container) - ns/op",
+            "value": 7558,
+            "unit": "ns/op",
+            "extra": "153630 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContainerSerialisation/Bytes_write (github.com/ucan-wg/go-ucan/pkg/container) - B/op",
+            "value": 21616,
+            "unit": "B/op",
+            "extra": "153630 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContainerSerialisation/Bytes_write (github.com/ucan-wg/go-ucan/pkg/container) - allocs/op",
+            "value": 45,
+            "unit": "allocs/op",
+            "extra": "153630 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContainerSerialisation/Bytes_read (github.com/ucan-wg/go-ucan/pkg/container)",
+            "value": 918369,
+            "unit": "ns/op\t  148263 B/op\t    2845 allocs/op",
+            "extra": "1300 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContainerSerialisation/Bytes_read (github.com/ucan-wg/go-ucan/pkg/container) - ns/op",
+            "value": 918369,
+            "unit": "ns/op",
+            "extra": "1300 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContainerSerialisation/Bytes_read (github.com/ucan-wg/go-ucan/pkg/container) - B/op",
+            "value": 148263,
+            "unit": "B/op",
+            "extra": "1300 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContainerSerialisation/Bytes_read (github.com/ucan-wg/go-ucan/pkg/container) - allocs/op",
+            "value": 2845,
+            "unit": "allocs/op",
+            "extra": "1300 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContainerSerialisation/BytesGzipped_write (github.com/ucan-wg/go-ucan/pkg/container)",
+            "value": 302755,
+            "unit": "ns/op\t 1091395 B/op\t      60 allocs/op",
+            "extra": "3922 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContainerSerialisation/BytesGzipped_write (github.com/ucan-wg/go-ucan/pkg/container) - ns/op",
+            "value": 302755,
+            "unit": "ns/op",
+            "extra": "3922 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContainerSerialisation/BytesGzipped_write (github.com/ucan-wg/go-ucan/pkg/container) - B/op",
+            "value": 1091395,
+            "unit": "B/op",
+            "extra": "3922 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContainerSerialisation/BytesGzipped_write (github.com/ucan-wg/go-ucan/pkg/container) - allocs/op",
+            "value": 60,
+            "unit": "allocs/op",
+            "extra": "3922 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContainerSerialisation/BytesGzipped_read (github.com/ucan-wg/go-ucan/pkg/container)",
+            "value": 989811,
+            "unit": "ns/op\t  192417 B/op\t    2903 allocs/op",
+            "extra": "1214 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContainerSerialisation/BytesGzipped_read (github.com/ucan-wg/go-ucan/pkg/container) - ns/op",
+            "value": 989811,
+            "unit": "ns/op",
+            "extra": "1214 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContainerSerialisation/BytesGzipped_read (github.com/ucan-wg/go-ucan/pkg/container) - B/op",
+            "value": 192417,
+            "unit": "B/op",
+            "extra": "1214 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContainerSerialisation/BytesGzipped_read (github.com/ucan-wg/go-ucan/pkg/container) - allocs/op",
+            "value": 2903,
+            "unit": "allocs/op",
+            "extra": "1214 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContainerSerialisation/Base64StdPadding_write (github.com/ucan-wg/go-ucan/pkg/container)",
+            "value": 12954,
+            "unit": "ns/op\t   25984 B/op\t      47 allocs/op",
+            "extra": "94008 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContainerSerialisation/Base64StdPadding_write (github.com/ucan-wg/go-ucan/pkg/container) - ns/op",
+            "value": 12954,
+            "unit": "ns/op",
+            "extra": "94008 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContainerSerialisation/Base64StdPadding_write (github.com/ucan-wg/go-ucan/pkg/container) - B/op",
+            "value": 25984,
+            "unit": "B/op",
+            "extra": "94008 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContainerSerialisation/Base64StdPadding_write (github.com/ucan-wg/go-ucan/pkg/container) - allocs/op",
+            "value": 47,
+            "unit": "allocs/op",
+            "extra": "94008 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContainerSerialisation/Base64StdPadding_read (github.com/ucan-wg/go-ucan/pkg/container)",
+            "value": 948071,
+            "unit": "ns/op\t  150334 B/op\t    2847 allocs/op",
+            "extra": "1267 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContainerSerialisation/Base64StdPadding_read (github.com/ucan-wg/go-ucan/pkg/container) - ns/op",
+            "value": 948071,
+            "unit": "ns/op",
+            "extra": "1267 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContainerSerialisation/Base64StdPadding_read (github.com/ucan-wg/go-ucan/pkg/container) - B/op",
+            "value": 150334,
+            "unit": "B/op",
+            "extra": "1267 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContainerSerialisation/Base64StdPadding_read (github.com/ucan-wg/go-ucan/pkg/container) - allocs/op",
+            "value": 2847,
+            "unit": "allocs/op",
+            "extra": "1267 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContainerSerialisation/Base64StdPaddingGzipped_write (github.com/ucan-wg/go-ucan/pkg/container)",
+            "value": 331127,
+            "unit": "ns/op\t 1095092 B/op\t      63 allocs/op",
+            "extra": "3381 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContainerSerialisation/Base64StdPaddingGzipped_write (github.com/ucan-wg/go-ucan/pkg/container) - ns/op",
+            "value": 331127,
+            "unit": "ns/op",
+            "extra": "3381 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContainerSerialisation/Base64StdPaddingGzipped_write (github.com/ucan-wg/go-ucan/pkg/container) - B/op",
+            "value": 1095092,
+            "unit": "B/op",
+            "extra": "3381 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContainerSerialisation/Base64StdPaddingGzipped_write (github.com/ucan-wg/go-ucan/pkg/container) - allocs/op",
+            "value": 63,
+            "unit": "allocs/op",
+            "extra": "3381 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContainerSerialisation/Base64StdPaddingGzipped_read (github.com/ucan-wg/go-ucan/pkg/container)",
+            "value": 997749,
+            "unit": "ns/op\t  198546 B/op\t    2903 allocs/op",
+            "extra": "1219 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContainerSerialisation/Base64StdPaddingGzipped_read (github.com/ucan-wg/go-ucan/pkg/container) - ns/op",
+            "value": 997749,
+            "unit": "ns/op",
+            "extra": "1219 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContainerSerialisation/Base64StdPaddingGzipped_read (github.com/ucan-wg/go-ucan/pkg/container) - B/op",
+            "value": 198546,
+            "unit": "B/op",
+            "extra": "1219 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContainerSerialisation/Base64StdPaddingGzipped_read (github.com/ucan-wg/go-ucan/pkg/container) - allocs/op",
+            "value": 2903,
+            "unit": "allocs/op",
+            "extra": "1219 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContainerSerialisation/Base64URL_write (github.com/ucan-wg/go-ucan/pkg/container)",
+            "value": 12905,
+            "unit": "ns/op\t   25984 B/op\t      47 allocs/op",
+            "extra": "86119 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContainerSerialisation/Base64URL_write (github.com/ucan-wg/go-ucan/pkg/container) - ns/op",
+            "value": 12905,
+            "unit": "ns/op",
+            "extra": "86119 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContainerSerialisation/Base64URL_write (github.com/ucan-wg/go-ucan/pkg/container) - B/op",
+            "value": 25984,
+            "unit": "B/op",
+            "extra": "86119 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContainerSerialisation/Base64URL_write (github.com/ucan-wg/go-ucan/pkg/container) - allocs/op",
+            "value": 47,
+            "unit": "allocs/op",
+            "extra": "86119 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContainerSerialisation/Base64URL_read (github.com/ucan-wg/go-ucan/pkg/container)",
+            "value": 937518,
+            "unit": "ns/op\t  150331 B/op\t    2847 allocs/op",
+            "extra": "1264 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContainerSerialisation/Base64URL_read (github.com/ucan-wg/go-ucan/pkg/container) - ns/op",
+            "value": 937518,
+            "unit": "ns/op",
+            "extra": "1264 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContainerSerialisation/Base64URL_read (github.com/ucan-wg/go-ucan/pkg/container) - B/op",
+            "value": 150331,
+            "unit": "B/op",
+            "extra": "1264 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContainerSerialisation/Base64URL_read (github.com/ucan-wg/go-ucan/pkg/container) - allocs/op",
+            "value": 2847,
+            "unit": "allocs/op",
+            "extra": "1264 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContainerSerialisation/Base64URLGzip_write (github.com/ucan-wg/go-ucan/pkg/container)",
+            "value": 316869,
+            "unit": "ns/op\t 1095091 B/op\t      63 allocs/op",
+            "extra": "3270 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContainerSerialisation/Base64URLGzip_write (github.com/ucan-wg/go-ucan/pkg/container) - ns/op",
+            "value": 316869,
+            "unit": "ns/op",
+            "extra": "3270 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContainerSerialisation/Base64URLGzip_write (github.com/ucan-wg/go-ucan/pkg/container) - B/op",
+            "value": 1095091,
+            "unit": "B/op",
+            "extra": "3270 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContainerSerialisation/Base64URLGzip_write (github.com/ucan-wg/go-ucan/pkg/container) - allocs/op",
+            "value": 63,
+            "unit": "allocs/op",
+            "extra": "3270 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContainerSerialisation/Base64URLGzip_read (github.com/ucan-wg/go-ucan/pkg/container)",
+            "value": 996301,
+            "unit": "ns/op\t  198578 B/op\t    2904 allocs/op",
+            "extra": "1203 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContainerSerialisation/Base64URLGzip_read (github.com/ucan-wg/go-ucan/pkg/container) - ns/op",
+            "value": 996301,
+            "unit": "ns/op",
+            "extra": "1203 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContainerSerialisation/Base64URLGzip_read (github.com/ucan-wg/go-ucan/pkg/container) - B/op",
+            "value": 198578,
+            "unit": "B/op",
+            "extra": "1203 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContainerSerialisation/Base64URLGzip_read (github.com/ucan-wg/go-ucan/pkg/container) - allocs/op",
+            "value": 2904,
+            "unit": "allocs/op",
+            "extra": "1203 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGlob (github.com/ucan-wg/go-ucan/pkg/policy)",
+            "value": 45.93,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "25678728 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGlob (github.com/ucan-wg/go-ucan/pkg/policy) - ns/op",
+            "value": 45.93,
+            "unit": "ns/op",
+            "extra": "25678728 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGlob (github.com/ucan-wg/go-ucan/pkg/policy) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "25678728 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGlob (github.com/ucan-wg/go-ucan/pkg/policy) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "25678728 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAny/bool (github.com/ucan-wg/go-ucan/pkg/policy/literal)",
+            "value": 16.96,
+            "unit": "ns/op\t       1 B/op\t       1 allocs/op",
+            "extra": "68307759 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAny/bool (github.com/ucan-wg/go-ucan/pkg/policy/literal) - ns/op",
+            "value": 16.96,
+            "unit": "ns/op",
+            "extra": "68307759 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAny/bool (github.com/ucan-wg/go-ucan/pkg/policy/literal) - B/op",
+            "value": 1,
+            "unit": "B/op",
+            "extra": "68307759 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAny/bool (github.com/ucan-wg/go-ucan/pkg/policy/literal) - allocs/op",
+            "value": 1,
+            "unit": "allocs/op",
+            "extra": "68307759 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAny/string (github.com/ucan-wg/go-ucan/pkg/policy/literal)",
+            "value": 23.44,
+            "unit": "ns/op\t      16 B/op\t       1 allocs/op",
+            "extra": "49358757 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAny/string (github.com/ucan-wg/go-ucan/pkg/policy/literal) - ns/op",
+            "value": 23.44,
+            "unit": "ns/op",
+            "extra": "49358757 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAny/string (github.com/ucan-wg/go-ucan/pkg/policy/literal) - B/op",
+            "value": 16,
+            "unit": "B/op",
+            "extra": "49358757 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAny/string (github.com/ucan-wg/go-ucan/pkg/policy/literal) - allocs/op",
+            "value": 1,
+            "unit": "allocs/op",
+            "extra": "49358757 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAny/bytes (github.com/ucan-wg/go-ucan/pkg/policy/literal)",
+            "value": 51.67,
+            "unit": "ns/op\t      52 B/op\t       3 allocs/op",
+            "extra": "23491946 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAny/bytes (github.com/ucan-wg/go-ucan/pkg/policy/literal) - ns/op",
+            "value": 51.67,
+            "unit": "ns/op",
+            "extra": "23491946 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAny/bytes (github.com/ucan-wg/go-ucan/pkg/policy/literal) - B/op",
+            "value": 52,
+            "unit": "B/op",
+            "extra": "23491946 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAny/bytes (github.com/ucan-wg/go-ucan/pkg/policy/literal) - allocs/op",
+            "value": 3,
+            "unit": "allocs/op",
+            "extra": "23491946 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAny/map (github.com/ucan-wg/go-ucan/pkg/policy/literal)",
+            "value": 1722,
+            "unit": "ns/op\t    2248 B/op\t      37 allocs/op",
+            "extra": "626845 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAny/map (github.com/ucan-wg/go-ucan/pkg/policy/literal) - ns/op",
+            "value": 1722,
+            "unit": "ns/op",
+            "extra": "626845 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAny/map (github.com/ucan-wg/go-ucan/pkg/policy/literal) - B/op",
+            "value": 2248,
+            "unit": "B/op",
+            "extra": "626845 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAny/map (github.com/ucan-wg/go-ucan/pkg/policy/literal) - allocs/op",
+            "value": 37,
+            "unit": "allocs/op",
+            "extra": "626845 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSchemaLoad (github.com/ucan-wg/go-ucan/token/delegation)",
+            "value": 12765,
+            "unit": "ns/op\t   14475 B/op\t     147 allocs/op",
+            "extra": "92923 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSchemaLoad (github.com/ucan-wg/go-ucan/token/delegation) - ns/op",
+            "value": 12765,
+            "unit": "ns/op",
+            "extra": "92923 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSchemaLoad (github.com/ucan-wg/go-ucan/token/delegation) - B/op",
+            "value": 14475,
+            "unit": "B/op",
+            "extra": "92923 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSchemaLoad (github.com/ucan-wg/go-ucan/token/delegation) - allocs/op",
+            "value": 147,
+            "unit": "allocs/op",
+            "extra": "92923 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRoundTrip/via_buffers/FromDagJson (github.com/ucan-wg/go-ucan/token/delegation)",
+            "value": 104586,
+            "unit": "ns/op\t   16218 B/op\t     409 allocs/op",
+            "extra": "10000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRoundTrip/via_buffers/FromDagJson (github.com/ucan-wg/go-ucan/token/delegation) - ns/op",
+            "value": 104586,
+            "unit": "ns/op",
+            "extra": "10000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRoundTrip/via_buffers/FromDagJson (github.com/ucan-wg/go-ucan/token/delegation) - B/op",
+            "value": 16218,
+            "unit": "B/op",
+            "extra": "10000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRoundTrip/via_buffers/FromDagJson (github.com/ucan-wg/go-ucan/token/delegation) - allocs/op",
+            "value": 409,
+            "unit": "allocs/op",
+            "extra": "10000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRoundTrip/via_buffers/Seal (github.com/ucan-wg/go-ucan/token/delegation)",
+            "value": 44207,
+            "unit": "ns/op\t    9002 B/op\t     180 allocs/op",
+            "extra": "25854 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRoundTrip/via_buffers/Seal (github.com/ucan-wg/go-ucan/token/delegation) - ns/op",
+            "value": 44207,
+            "unit": "ns/op",
+            "extra": "25854 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRoundTrip/via_buffers/Seal (github.com/ucan-wg/go-ucan/token/delegation) - B/op",
+            "value": 9002,
+            "unit": "B/op",
+            "extra": "25854 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRoundTrip/via_buffers/Seal (github.com/ucan-wg/go-ucan/token/delegation) - allocs/op",
+            "value": 180,
+            "unit": "allocs/op",
+            "extra": "25854 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRoundTrip/via_buffers/Unseal (github.com/ucan-wg/go-ucan/token/delegation)",
+            "value": 94642,
+            "unit": "ns/op\t   15273 B/op\t     340 allocs/op",
+            "extra": "12690 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRoundTrip/via_buffers/Unseal (github.com/ucan-wg/go-ucan/token/delegation) - ns/op",
+            "value": 94642,
+            "unit": "ns/op",
+            "extra": "12690 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRoundTrip/via_buffers/Unseal (github.com/ucan-wg/go-ucan/token/delegation) - B/op",
+            "value": 15273,
+            "unit": "B/op",
+            "extra": "12690 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRoundTrip/via_buffers/Unseal (github.com/ucan-wg/go-ucan/token/delegation) - allocs/op",
+            "value": 340,
+            "unit": "allocs/op",
+            "extra": "12690 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRoundTrip/via_buffers/ToDagJson (github.com/ucan-wg/go-ucan/token/delegation)",
+            "value": 49219,
+            "unit": "ns/op\t   14515 B/op\t     219 allocs/op",
+            "extra": "24356 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRoundTrip/via_buffers/ToDagJson (github.com/ucan-wg/go-ucan/token/delegation) - ns/op",
+            "value": 49219,
+            "unit": "ns/op",
+            "extra": "24356 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRoundTrip/via_buffers/ToDagJson (github.com/ucan-wg/go-ucan/token/delegation) - B/op",
+            "value": 14515,
+            "unit": "B/op",
+            "extra": "24356 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRoundTrip/via_buffers/ToDagJson (github.com/ucan-wg/go-ucan/token/delegation) - allocs/op",
+            "value": 219,
+            "unit": "allocs/op",
+            "extra": "24356 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRoundTrip/via_streaming/FromDagJsonReader (github.com/ucan-wg/go-ucan/token/delegation)",
+            "value": 110611,
+            "unit": "ns/op\t   16171 B/op\t     408 allocs/op",
+            "extra": "10000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRoundTrip/via_streaming/FromDagJsonReader (github.com/ucan-wg/go-ucan/token/delegation) - ns/op",
+            "value": 110611,
+            "unit": "ns/op",
+            "extra": "10000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRoundTrip/via_streaming/FromDagJsonReader (github.com/ucan-wg/go-ucan/token/delegation) - B/op",
+            "value": 16171,
+            "unit": "B/op",
+            "extra": "10000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRoundTrip/via_streaming/FromDagJsonReader (github.com/ucan-wg/go-ucan/token/delegation) - allocs/op",
+            "value": 408,
+            "unit": "allocs/op",
+            "extra": "10000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRoundTrip/via_streaming/SealWriter (github.com/ucan-wg/go-ucan/token/delegation)",
+            "value": 45246,
+            "unit": "ns/op\t    8522 B/op\t     211 allocs/op",
+            "extra": "26432 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRoundTrip/via_streaming/SealWriter (github.com/ucan-wg/go-ucan/token/delegation) - ns/op",
+            "value": 45246,
+            "unit": "ns/op",
+            "extra": "26432 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRoundTrip/via_streaming/SealWriter (github.com/ucan-wg/go-ucan/token/delegation) - B/op",
+            "value": 8522,
+            "unit": "B/op",
+            "extra": "26432 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRoundTrip/via_streaming/SealWriter (github.com/ucan-wg/go-ucan/token/delegation) - allocs/op",
+            "value": 211,
+            "unit": "allocs/op",
+            "extra": "26432 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRoundTrip/via_streaming/UnsealReader (github.com/ucan-wg/go-ucan/token/delegation)",
+            "value": 95347,
+            "unit": "ns/op\t   15274 B/op\t     340 allocs/op",
+            "extra": "12610 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRoundTrip/via_streaming/UnsealReader (github.com/ucan-wg/go-ucan/token/delegation) - ns/op",
+            "value": 95347,
+            "unit": "ns/op",
+            "extra": "12610 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRoundTrip/via_streaming/UnsealReader (github.com/ucan-wg/go-ucan/token/delegation) - B/op",
+            "value": 15274,
+            "unit": "B/op",
+            "extra": "12610 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRoundTrip/via_streaming/UnsealReader (github.com/ucan-wg/go-ucan/token/delegation) - allocs/op",
+            "value": 340,
+            "unit": "allocs/op",
+            "extra": "12610 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRoundTrip/via_streaming/ToDagJsonReader (github.com/ucan-wg/go-ucan/token/delegation)",
+            "value": 48362,
+            "unit": "ns/op\t   12482 B/op\t     213 allocs/op",
+            "extra": "24750 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRoundTrip/via_streaming/ToDagJsonReader (github.com/ucan-wg/go-ucan/token/delegation) - ns/op",
+            "value": 48362,
+            "unit": "ns/op",
+            "extra": "24750 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRoundTrip/via_streaming/ToDagJsonReader (github.com/ucan-wg/go-ucan/token/delegation) - B/op",
+            "value": 12482,
+            "unit": "B/op",
+            "extra": "24750 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRoundTrip/via_streaming/ToDagJsonReader (github.com/ucan-wg/go-ucan/token/delegation) - allocs/op",
+            "value": 213,
+            "unit": "allocs/op",
+            "extra": "24750 times\n4 procs"
           }
         ]
       }
